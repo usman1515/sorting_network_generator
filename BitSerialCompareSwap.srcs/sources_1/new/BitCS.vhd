@@ -42,14 +42,14 @@ entity BitCS is
 end BitCS;
 
 architecture Behavioral of BitCS is
-  component MUX is
+  component MUX_PRIMITIVE is
     port (
       a   : in  std_logic;
       b   : in  std_logic;
       sel : in  std_logic;
       c   : out std_logic;
       d   : out std_logic);
-  end component MUX;
+  end component MUX_PRIMITIVE;
 
   signal state : std_logic_vector(1 downto 0) := "00";
 
@@ -81,7 +81,7 @@ begin
     end if;
   end process;
 
-  outMUX : MUX
+  outMUX : MUX_PRIMITIVE
     port map(a, b, state(1), c, d);
 
 
