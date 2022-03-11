@@ -32,15 +32,15 @@ use UNISIM.vcomponents.all;
 -- Xilinx HDL Language Template, version 2021.2
 entity MUX_PRIMITIVE is
   port (
-    a   : in std_logic;
-    b   : in std_logic;
-    sel : in std_logic;
-
-    c : out std_logic;
-    d : out std_logic);
+    a   : in  std_logic;
+    b   : in  std_logic;
+    sel : in  std_logic;
+    c   : out std_logic;
+    d   : out std_logic);
 end MUX_PRIMITIVE;
 
 architecture Behavioral of MUX_PRIMITIVE is
+
 begin
 
 -- See ug953 for details
@@ -79,4 +79,6 @@ begin
      -- LUT input (1-bit)
       );
 -- End of LUT6_2_inst instantiation
+
+
 end architecture Behavioral;

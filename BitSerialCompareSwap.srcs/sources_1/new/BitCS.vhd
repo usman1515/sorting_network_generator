@@ -37,7 +37,6 @@ entity BitCS is
     b     : in  std_logic;
     c     : out std_logic;
     d     : out std_logic;
-    CLK   : in  std_logic;
     start : in  std_logic);
 end BitCS;
 
@@ -53,12 +52,10 @@ architecture Behavioral of BitCS is
       d   : out std_logic);
   end component MUX_PRIMITIVE;
 
-  signal state : std_logic_vector(1 downto 0) := "00";
+  signal state : std_logic_vector(1 downto 0)  := "00";
 
 begin
-  outMUX : MUX_PRIMITIVE
-    port map(a, b, state(1), c, d);
-
+  
 -- Truthtable of State Machine for BitCS
 -- For more details see ug953
 -- | I5 |    I4 | I3 | I2 | I1 | I0 |     O6 |     O5 | INIT | INIT |
@@ -110,22 +107,18 @@ begin
     generic map (
       INIT => X"00000F04000000F2")      -- Specify LUT Contents
     port map (
-      O5 => state(0),                          -- 5-LUT output (1-bit)
-      O6 => state(1),                          -- 6/5-LUT output (1-bit)
+      O5 => state(0),                       -- 5-LUT output (1-bit)
+      O6 => state(1),                       -- 6/5-LUT output (1-bit)
       I0 => a,
-      -- LUT input (1-bit)
       I1 => b,
-      -- LUT input (1-bit)
       I2 => state(0),
-      -- LUT input (1-bit)
       I3 => state(1),
-      -- LUT input (1-bit)
       I4 => start,
-      -- LUT input (1-bit)
       I5 => '1'
-     -- LUT input (1-bit)
       );
 
+outMUX : MUX_PRIMITIVE
+    port map(a, b, state(1), c, d);
 
 
 end Behavioral;
