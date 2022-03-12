@@ -46,8 +46,8 @@ architecture Behavioral of BitCS_Sim is
   signal d     : std_logic := '0';
   signal start : std_logic := '0';
 
-  signal Av : std_logic_vector(7 downto 0);
-  signal Bv : std_logic_vector(7 downto 0);
+  signal Av : std_logic_vector(7 downto 0):= (others => '0');
+  signal Bv : std_logic_vector(7 downto 0):= (others => '0');
   signal Cv : std_logic_vector(7 downto 0) := (others => '0');
   signal Dv : std_logic_vector(7 downto 0) := (others => '0');
 
@@ -78,35 +78,71 @@ begin
   test_process : process
 
   begin
-    
-    
-    Av    <= "10100100";
-    Bv    <= "10100011";
     wait for 5*ckTime;
+    -- State transitions with start enabled.
     start <= '1';
-    for I in Av'low to Av'high loop
+    for i in std_logic range '0' to '1' loop
+      for j in std_logic range '0' to '1' loop
+        a <= i;
+        b <= j;
+        wait for ckTime;
+      end loop;
+    end loop;
+    for i in std_logic range '0' to '1' loop
+      for j in std_logic range '0' to '1' loop
+        a <= j;
+        b <= i;
+        wait for ckTime;
+      end loop;
+    end loop;
+
+-- Functional check:
+-- Av is first equal then larger, then equal and then smaller than Bv.
+    start <= '1';
+    Av    <= "10110110";
+    Bv    <= "10100111";
+    wait for ckTime;
+    for i in Av'low to Av'high loop
+      a <= Av(Av'high - i);
+      b <= Bv(Bv'high - i);
+
+      wait for ckTime/2;
+      Cv(Cv'high - i) <= c;
+      Dv(DV'high - i) <= d;
+      start           <= '0';
+      wait for ckTime/2;
       
-      a <= Av(Av'high - I);
-      b <= Bv(Bv'high - I);
-      wait for ckTime;
-      Cv(Cv'high - I) <= c;
-      Dv(DV'high - I) <= d;
-      start <= '0';
     end loop;
-    
+    assert ((Av = Cv) and (Bv = Dv)) report "Mismatch:: " &
+      " Av= " & integer'image(to_integer(unsigned(Av))) &
+      " Bv= " & integer'image(to_integer(unsigned(Bv))) &
+      " Cv= " & integer'image(to_integer(unsigned(Cv))) &
+      " Dv= " & integer'image(to_integer(unsigned(Dv))) &
+      " Expectation Av=Cv and Bv=Dv";
+
+-- Av is first equal then larger, then equal and then smaller than Bv.
     start <= '1';
-    Av    <= "10100011";
-    Bv    <= "10100100";
-    for I in Av'low to Av'high loop
-    
-      a <= Av(Av'high - I);
-      b <= Bv(Bv'high - I);
-      wait for ckTime;
-      Cv(Cv'high - I) <= c;
-      Dv(DV'high - I) <= d;
-      start <= '0';
+    Av    <= "10100111";
+    Bv    <= "10110110";
+    wait for ckTime;
+    for i in Av'low to Av'high loop
+      a <= Av(Av'high - i);
+      b <= Bv(Bv'high - i);
+
+      wait for ckTime/2;
+      Cv(Cv'high - i) <= c;
+      Dv(DV'high - i) <= d;
+      start           <= '0';
+      wait for ckTime/2;
+
     end loop;
-    
+    assert ((Av = Dv) and (Bv = Cv)) report "Mismatch:: " &
+      " Av= " & integer'image(to_integer(unsigned(Av))) &
+      " Bv= " & integer'image(to_integer(unsigned(Bv))) &
+      " Cv= " & integer'image(to_integer(unsigned(Cv))) &
+      " Dv= " & integer'image(to_integer(unsigned(Dv))) &
+      " Expectation Av=Dv and Bv=Cv";
+
     wait;
 
   end process;

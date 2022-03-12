@@ -24,7 +24,7 @@ use IEEE.STD_LOGIC_1164.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.all;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
@@ -41,7 +41,7 @@ architecture Behavioral of MUX_Sim is
 
   signal clock   : std_logic;
   signal input   : std_logic_vector(1 downto 0) := "00";
-  signal sel_s   : std_logic                    := '0';
+  signal sel_s   : std_logic_vector(0 downto 0) := "0";
   signal output0 : std_logic_vector(1 downto 0);
   signal output1 : std_logic_vector(1 downto 0);
   component MUX
@@ -59,7 +59,6 @@ architecture Behavioral of MUX_Sim is
       a   : in  std_logic;
       b   : in  std_logic;
       sel : in  std_logic;
-      CLK : in std_logic;
       c   : out std_logic;
       d   : out std_logic
       );
@@ -75,38 +74,29 @@ begin
   end process;
 
   uut_0 : MUX
-    port map(input(0), input(1), sel_s, output0(0), output0(1));
+    port map(input(0), input(1), sel_s(0), output0(0), output0(1));
 
   uut_1 : MUX_PRIMITIVE
-    port map(input(0), input(1), sel_s, clock, output1(0), output1(1));
+    port map(input(0), input(1), sel_s(0), output1(0), output1(1));
 
 
   test_process : process
   begin
     wait for 10 * ckTime;
-    input <= "00";
-    sel_s <= '0';
-    wait for ckTime;
-    input <= "01";
-    sel_s <= '0';
-    wait for ckTime;
-    input <= "10";
-    sel_s <= '0';
-    wait for ckTime;
-    input <= "11";
-    sel_s <= '0';
-    wait for ckTime;
-    input <= "00";
-    sel_s <= '1';
-    wait for ckTime;
-    input <= "01";
-    sel_s <= '1';
-    wait for ckTime;
-    input <= "10";
-    sel_s <= '1';
-    wait for ckTime;
-    input <= "11";
-    sel_s <= '1';
+    for i in 0 to 1 loop
+      for j in 0 to 3 loop
+        input <= std_logic_vector(to_unsigned(j, 2));
+        sel_s <= std_logic_vector(to_unsigned(i, 1));
+        wait for ckTime;
+        assert (output1 = output0) report "Mismatch:: " &
+          " Input= " & integer'image(to_integer(unsigned(input))) &
+          " sel= " & integer'image(j) &
+          " Output= " & integer'image(to_integer(unsigned(output1))) &
+          " Expectation= " & integer'image(to_integer(unsigned(output0)));
+      end loop;
+
+    end loop;
+
     wait;
 
   end process;
