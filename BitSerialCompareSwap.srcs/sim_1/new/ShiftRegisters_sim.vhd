@@ -104,7 +104,7 @@ begin
     wait for ckTime;
     A  <= "11001011";
     LD <= "1";
-    for i in 0 to w-2 loop
+    for i in 0 to w-1 loop
       wait for ckTime;
       LD <= "0";
      end loop;
