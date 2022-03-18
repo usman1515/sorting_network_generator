@@ -64,6 +64,8 @@ begin
                     state <= "01";
                 elsif a = '0' and b = '1' then
                     state <= "10";
+                else
+                    state <= "00";
                 end if;
             when "01" =>
                 if start = '1' then
@@ -71,6 +73,8 @@ begin
                         state <= "01";
                     elsif a = '0' and b = '1' then
                         state <= "10";
+                    else
+                        state <= "00";
                     end if;
                 else
                     state <= "01";
@@ -81,6 +85,8 @@ begin
                         state <= "01";
                     elsif a = '0' and b = '1' then
                         state <= "10";
+                    else
+                        state <= "00";
                     end if;
                 else
                     state <= "10";
