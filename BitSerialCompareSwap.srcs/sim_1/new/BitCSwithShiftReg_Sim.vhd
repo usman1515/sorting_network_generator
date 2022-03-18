@@ -84,6 +84,8 @@ architecture Behavioral of BitCSwithShiftReg_Sim is
     signal Cv : std_logic_vector(w-1 downto 0) := (others => '0');
     signal Dv : std_logic_vector(w-1 downto 0) := (others => '0');
 
+    signal larger_value : std_logic_vector(w-1 downto 0) := (others => '0');
+    signal smaller_value : std_logic_vector(w-1 downto 0) := (others => '0');
 begin
 
     clock_process : process
@@ -95,7 +97,7 @@ begin
     end process;
 
     uut_0 : BitCS
-        port map(a, b, c, d, start);
+        port map( a, b, c, d, start);
 
     LoadShiftRegister_1 : LoadShiftRegister
         generic map (
@@ -103,7 +105,7 @@ begin
         port map (
             CLK        => clock,
             input      => Av,
-            LD         => start,
+            LD         => LD,
             ser_output => a);
     LoadShiftRegister_2 : LoadShiftRegister
         generic map (
@@ -111,7 +113,7 @@ begin
         port map (
             CLK        => clock,
             input      => Bv,
-            LD         => start,
+            LD         => LD,
             ser_output => b);
 
     StoreShiftRegister_1 : StoreShiftRegister
@@ -135,34 +137,95 @@ begin
 
     begin
 
-        Av    <= "10100111";
-        Bv    <= "10110110";
-        start <= '1';
-        for i in Av'low to Av'high loop
-            wait for ckTime;
-            start <= '0';
-        end loop;
-        ST <='1';
+        larger_value    <= "10110110";
+        smaller_value    <= "10100111";
+        wait for ckTime/2;
+        Av <= larger_value;
+        Bv <= smaller_value;
         
         
-        Av    <= "10110110";
-        Bv    <= "10100111";
-        start <= '1';
-        for i in Av'low to Av'high loop
+        for i in 0 to w-1 loop
             wait for ckTime;
-            start <= '0';
-            ST<='0';
+            if i = 0 then
+                LD <= '1';
+            else
+                LD <= '0';
+            end if;
+            if i = 1 then
+                start <= '1';
+            else                
+                start <= '0';
+            end if;
+            if i = 2 then
+                ST <= '1';
+            else
+                ST <= '0';
+            end if;
         end loop;
-        ST <='1';
-        wait for ckTime;
-        ST<='0';
+        --        wait for ckTime;
+        --        LD <= '1';
+        --        start <='1';
+        --        wait for ckTime;
+        --        LD <= '0';
+        --        start <= '0';
+        --        for i in Av'low to Av'high-2 loop
+        --            wait for ckTime;
+        --        end loop;
 
-        --    assert ((Av = Dv) and (Bv = Cv)) report "Mismatch:: " &
-        --      " Av= " & integer'image(to_integer(unsigned(Av))) &
-        --      " Bv= " & integer'image(to_integer(unsigned(Bv))) &
-        --      " Cv= " & integer'image(to_integer(unsigned(Cv))) &
-        --      " Dv= " & integer'image(to_integer(unsigned(Dv))) &
-        --      " Expectation Av=Dv and Bv=Cv";
+
+
+        Av    <= smaller_value;
+        Bv    <= larger_value;
+
+        for i in 0 to w-1 loop
+            wait for ckTime;
+            if i = 0 then
+                LD <= '1';
+            else
+                LD <= '0';
+            end if;
+            if i = 1 then
+                start <= '1';
+            else                
+                start <= '0';
+            end if;
+            if i = 2 then
+                ST <= '1';
+            else
+                ST <= '0';
+            end if;
+        end loop;
+        assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &
+              " Av= " & integer'image(to_integer(unsigned(larger_value))) &
+              " Bv= " & integer'image(to_integer(unsigned(smaller_value))) &
+              " Cv= " & integer'image(to_integer(unsigned(Cv))) &
+              " Dv= " & integer'image(to_integer(unsigned(Dv))) &
+              " Expectation Av=Cv and Bv=Dv";
+              
+        for i in 0 to w-1 loop
+            wait for ckTime;
+            if i = 0 then
+                LD <= '1';
+            else
+                LD <= '0';
+            end if;
+            if i = 1 then
+                start <= '1';
+            else                
+                start <= '0';
+            end if;
+            if i = 2 then
+                ST <= '1';
+            else
+                ST <= '0';
+            end if;
+        end loop;
+        assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &
+              " Av= " & integer'image(to_integer(unsigned(smaller_value))) &
+              " Bv= " & integer'image(to_integer(unsigned(larger_value))) &
+              " Cv= " & integer'image(to_integer(unsigned(Cv))) &
+              " Dv= " & integer'image(to_integer(unsigned(Dv))) &
+              " Expectation Av=Dv and Bv=Cv";
         wait;
 
     end process;

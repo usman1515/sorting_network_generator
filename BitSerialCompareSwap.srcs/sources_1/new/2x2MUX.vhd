@@ -32,27 +32,27 @@ use IEEE.NUMERIC_STD.all;
 --use UNISIM.VComponents.all;
 
 entity MUX is
-  port (
-    a   : in std_logic;
-    b   : in std_logic;
-    sel : in std_logic;
-    
-    c : out std_logic;
-    d : out std_logic);
+    port (
+        a   : in std_logic;
+        b   : in std_logic;
+        sel : in std_logic;
+
+        c : out std_logic;
+        d : out std_logic);
 end MUX;
 
 architecture Behavioral of MUX is
 begin
 
-  process (a, b, sel)
-  begin  -- process
-    if sel = '1' then
-      c <= b;
-      d <= a;
-    else
-      c <= a;
-      d <= b;
-    end if;
-  end process;
+    process(a,b,sel)
+    begin  -- process
+        if sel = '1' then
+            c <= b;
+            d <= a;
+        else
+            c <= a;
+            d <= b;
+        end if;
+    end process;
 
 end architecture Behavioral;

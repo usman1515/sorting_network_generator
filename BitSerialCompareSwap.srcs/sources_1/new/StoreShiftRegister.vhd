@@ -47,16 +47,15 @@ end StoreShiftRegister;
 
 architecture Behavioral of StoreShiftRegister is
 
-  signal buf : std_logic_vector(w-2 downto 0) := (others => '0');
+  signal buf : std_logic_vector(w-1 downto 0) := (others => '0');
 begin
   process
   begin
     wait until rising_edge(CLK);
     buf <= buf(buf'high-1 downto buf'low) & ser_input;
     if ST = '1' then
-        output <= buf & ser_input;
+      output <= buf;
     end if;
   end process;
-  
 
 end Behavioral;

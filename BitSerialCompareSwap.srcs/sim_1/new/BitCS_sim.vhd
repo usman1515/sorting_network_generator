@@ -72,7 +72,7 @@ begin
 
 
   uut_0 : BitCS
-    port map(a, b, c, d, start);
+    port map( a, b, c, d, start);
 
 
   test_process : process
@@ -118,7 +118,7 @@ begin
       " Bv= " & integer'image(to_integer(unsigned(Bv))) &
       " Cv= " & integer'image(to_integer(unsigned(Cv))) &
       " Dv= " & integer'image(to_integer(unsigned(Dv))) &
-      " Expectation Av=Cv and Bv=Dv";
+      " Expectation Av=Cv and Bv=Cv";
 
 -- Av is first equal then larger, then equal and then smaller than Bv.
     start <= '1';
@@ -136,12 +136,12 @@ begin
       wait for ckTime/2;
 
     end loop;
-    assert ((Av = Dv) and (Bv = Cv)) report "Mismatch:: " &
+    assert ((Av = Cv) and (Bv = Dv)) report "Mismatch:: " &
       " Av= " & integer'image(to_integer(unsigned(Av))) &
       " Bv= " & integer'image(to_integer(unsigned(Bv))) &
       " Cv= " & integer'image(to_integer(unsigned(Cv))) &
       " Dv= " & integer'image(to_integer(unsigned(Dv))) &
-      " Expectation Av=Dv and Bv=Cv";
+      " Expectation Av=Cv and Bv=Cv";
 
     wait;
 
