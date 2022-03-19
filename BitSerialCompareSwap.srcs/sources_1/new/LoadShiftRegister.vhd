@@ -37,9 +37,9 @@ entity LoadShiftRegister is
     );
   port (
 
-    CLK       : in  std_logic;
-    input     : in  std_logic_vector(w-1 downto 0);
-    LD        : in  std_logic;
+    CLK        : in  std_logic;
+    input      : in  std_logic_vector(w-1 downto 0);
+    LD         : in  std_logic;
     ser_output : out std_logic := '0'
     );
 end LoadShiftRegister;
@@ -54,16 +54,20 @@ begin
   begin
     wait until rising_edge(CLK);
     if LD = '0' then
-      buf        <= buf(buf'high -1 downto buf'low) & '0';
-    --  ser_output <= buf(buf'high);
+      buf <= buf(buf'high -1 downto buf'low) & '0';
     else
-      buf <= input;
-    --  ser_output <= input(input'high);
+      buf <= input(input'high -1 downto input'low) & '0';
     end if;
-    ser_output <= buf(buf'high);
+  end process;
+
+  process(LD, buf, input)
+  begin
+    if LD = '1' then
+      ser_output <= input(input'high);
+    else
+      ser_output <= buf(buf'high);
+    end if;
   end process;
 
 
 end Behavioral;
-
-

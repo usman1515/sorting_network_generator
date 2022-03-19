@@ -45,7 +45,7 @@ architecture Behavioral of BitCSwithShiftReg_Sim is
             b     : in  std_logic;
             c     : out std_logic;
             d     : out std_logic;
-            start : in  std_logic);
+            S : in  std_logic);
     end component BitCS;
     component LoadShiftRegister is
         generic (
@@ -74,7 +74,7 @@ architecture Behavioral of BitCSwithShiftReg_Sim is
     signal b     : std_logic := '0';
     signal c     : std_logic := '0';
     signal d     : std_logic := '0';
-    signal start : std_logic := '0';
+    signal S : std_logic := '0';
 
     signal LD : std_logic := '0';
     signal ST : std_logic := '0';
@@ -97,7 +97,7 @@ begin
     end process;
 
     uut_0 : BitCS
-        port map( a, b, c, d, start);
+        port map( a, b, c, d, S);
 
     LoadShiftRegister_1 : LoadShiftRegister
         generic map (
@@ -147,7 +147,7 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            start <= '1' when i = 1 else '0';
+            S <= '1' when i = 1 else '0';
             ST <= '1' when i = 2 else '0';
         end loop;
 
@@ -157,7 +157,7 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            start <= '1' when i = 1 else '0';
+            S <= '1' when i = 1 else '0';
             ST <= '1' when i = 2 else '0';
             if i = 3 then
                 assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &
@@ -173,7 +173,7 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            start <= '1' when i = 1 else '0';
+            S <= '1' when i = 1 else '0';
             ST <= '1' when i = 2 else '0';
             if i = 3 then
                 assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &

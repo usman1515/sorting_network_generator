@@ -44,7 +44,7 @@ architecture Behavioral of BitCS_Sim is
   signal b     : std_logic := '0';
   signal c     : std_logic := '0';
   signal d     : std_logic := '0';
-  signal start : std_logic := '0';
+  signal S : std_logic := '0';
 
   signal Av : std_logic_vector(7 downto 0):= (others => '0');
   signal Bv : std_logic_vector(7 downto 0):= (others => '0');
@@ -57,7 +57,7 @@ architecture Behavioral of BitCS_Sim is
       b     : in  std_logic;
       c     : out std_logic;
       d     : out std_logic;
-      start : in  std_logic);
+      S : in  std_logic);
   end component BitCS;
 
 begin
@@ -72,15 +72,15 @@ begin
 
 
   uut_0 : BitCS
-    port map( a, b, c, d, start);
+    port map( a, b, c, d, S);
 
 
   test_process : process
 
   begin
     wait for 5*ckTime;
-    -- State transitions with start enabled.
-    start <= '1';
+    -- State transitions with S enabled.
+    S <= '1';
     for i in std_logic range '0' to '1' loop
       for j in std_logic range '0' to '1' loop
         a <= i;
@@ -98,7 +98,7 @@ begin
 
 -- Functional check:
 -- Av is first equal then larger, then equal and then smaller than Bv.
-    start <= '1';
+    S <= '1';
     Av    <= "10110110";
     Bv    <= "10100111";
     wait for ckTime;
@@ -109,7 +109,7 @@ begin
       wait for ckTime/2;
       Cv(Cv'high - i) <= c;
       Dv(DV'high - i) <= d;
-      start           <= '0';
+      S           <= '0';
       wait for ckTime/2;
       
     end loop;
@@ -121,7 +121,7 @@ begin
       " Expectation Av=Cv and Bv=Cv";
 
 -- Av is first equal then larger, then equal and then smaller than Bv.
-    start <= '1';
+    S <= '1';
     Av    <= "10100111";
     Bv    <= "10110110";
     wait for ckTime;
@@ -132,7 +132,7 @@ begin
       wait for ckTime/2;
       Cv(Cv'high - i) <= c;
       Dv(DV'high - i) <= d;
-      start           <= '0';
+      S           <= '0';
       wait for ckTime/2;
 
     end loop;

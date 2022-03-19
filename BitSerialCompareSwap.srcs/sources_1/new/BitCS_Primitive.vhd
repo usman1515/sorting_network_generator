@@ -37,7 +37,7 @@ entity BITCS_PRIMITIVE is
     b     : in  std_logic;
     c     : out std_logic;
     d     : out std_logic;
-    start : in  std_logic);
+    S : in  std_logic);
 end BITCS_PRIMITIVE;
 
 
@@ -59,7 +59,7 @@ begin
 -- Truthtable of State Machine for BITCS_PRIMITIVE
 -- For more details see ug953
 -- | I5 |    I4 | I3 | I2 | I1 | I0 |     O6 |     O5 | INIT | INIT |
--- |    | start | Q1 | Q0 |  b |  a | Q1_n+1 | Q0_n+1 |   O6 |   O5 |
+-- |    | S | Q1 | Q0 |  b |  a | Q1_n+1 | Q0_n+1 |   O6 |   O5 |
 -- |----+-------+----+----+----+----+--------+--------+------+------|
 -- |  1 |     0 |  0 |  0 |  0 |  0 |      0 |      0 |   32 |    0 |
 -- |  1 |     0 |  0 |  0 |  0 |  1 |      0 |      1 |   33 |    1 |
@@ -116,7 +116,7 @@ begin
       I1 => b,
       I2 => state(0),
       I3 => state(1),
-      I4 => start,
+      I4 => S,
       I5 => '1'
       );
 

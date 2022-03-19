@@ -32,72 +32,70 @@ use IEEE.NUMERIC_STD.all;
 -- use UNISIM.VComponents.all;
 
 entity BitCS is
-    port (
-        a     : in  std_logic;
-        b     : in  std_logic;
-        c     : out std_logic;
-        d     : out std_logic;
-        start : in  std_logic);
+  port (
+    a : in  std_logic;
+    b : in  std_logic;
+    c : out std_logic;
+    d : out std_logic;
+    S : in  std_logic);
 end BitCS;
 
 
 architecture Behavioral of BitCS is
 
-    component MUX is
-        port (            
-            a   : in  std_logic;
-            b   : in  std_logic;
-            sel : in  std_logic;
-            c   : out std_logic;
-            d   : out std_logic);
-    end component MUX;
+  component MUX is
+    port (
+      a   : in  std_logic;
+      b   : in  std_logic;
+      sel : in  std_logic;
+      c   : out std_logic;
+      d   : out std_logic);
+  end component MUX;
 
-    signal state : std_logic_vector(1 downto 0) := "00";
+  signal state : std_logic_vector(1 downto 0) := "00";
 
 begin
 
-    process(a, b, start, state)
-    begin
-        case state is
-            when "00" =>
-                if a = '1' and b = '0' then
-                    state <= "01";
-                elsif a = '0' and b = '1' then
-                    state <= "10";
-                else
-                    state <= "00";
-                end if;
-            when "01" =>
-                if start = '1' then
-                    if a = '1' and b = '0' then
-                        state <= "01";
-                    elsif a = '0' and b = '1' then
-                        state <= "10";
-                    else
-                        state <= "00";
-                    end if;
-                else
-                    state <= "01";
-                end if;
-            when "10" =>
-                if start = '1' then
-                    if a = '1' and b = '0' then
-                        state <= "01";
-                    elsif a = '0' and b = '1' then
-                        state <= "10";
-                    else
-                        state <= "00";
-                    end if;
-                else
-                    state <= "10";
-                end if;
-            when others =>
-                state <= "00";
-        end case;
-    end process;
+  process(a, b, S, state)
+  begin
+    case state is
+      when "00" =>
+        if a = '1' and b = '0' then
+          state <= "01";
+        elsif a = '0' and b = '1' then
+          state <= "10";
+        end if;
+      when "01" =>
+        if S = '1' then
+          if a = '1' and b = '0' then
+            state <= "01";
+          elsif a = '0' and b = '1' then
+            state <= "10";
+          else
+            state <= "00";
+          end if;
+        else
+          state <= "01";
+        end if;
+      when "10" =>
+        if S = '1' then
+          if a = '1' and b = '0' then
+            state <= "01";
+          elsif a = '0' and b = '1' then
+            state <= "10";
+          else
+            state <= "00";
+          end if;
+        else
+          state <= "10";
+        end if;
+      when others =>
+        state <= "00";
+    end case;
+  end process;
 
-    outMUX : MUX
-        port map( a, b, state(1), c, d);
+  outMUX : MUX
+    port map(a, b, state(1), c, d);
 
 
 end Behavioral;

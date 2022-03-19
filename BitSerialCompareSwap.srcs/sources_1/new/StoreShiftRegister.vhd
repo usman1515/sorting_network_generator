@@ -55,8 +55,8 @@ begin
     buf <= buf(buf'high-1 downto buf'low) & ser_input;
     if ST = '1' then
       output <= buf;
-    else
-      output <= (others => '0');
+--    else
+--      output <= (others => '0');
     end if;
   end process;
 

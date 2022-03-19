@@ -32,36 +32,41 @@ use IEEE.NUMERIC_STD.all;
 -- use UNISIM.VComponents.all;
 
 entity CycleTimer is
-    generic (
-        w : integer := 8                    -- Width of input bits
+  generic (
+    w : integer := 8                    -- Width of input bits
     );
-    port (
-        CLK : in  std_logic;
-        R   : in  std_logic;                -- Synchronous reset
-        E   : in  std_logic;  -- Enable signal, halts operation if unset
-        LD  : out std_logic;                -- Operand load signal
-        S   : out std_logic;                -- Sorting start signal
-        ST  : out std_logic                 -- Result store signal
+  port (
+    CLK : in  std_logic;
+    R   : in  std_logic;                -- Synchronous reset
+    E   : in  std_logic;  -- Enable signal, halts operation if unset
+    LD  : out std_logic;                -- Operand load signal
+    S   : out std_logic;                -- Sorting start signal
+    ST  : out std_logic                 -- Result store signal
     );
 end CycleTimer;
 
 
 architecture Behavioral of CycleTimer is
+  signal count : integer range 0 to w-1;
 begin
-    process
-        variable count : integer range 0 to w-1;
-    begin
-        wait until rising_edge(CLK);
-        if R = '1' then
-            count := 0;
-        else
-            if E = '1' then
-                count := count + 1;
-            end if;
-        end if;
-        LD    <= '1' when count = 0 else '0';
-        S     <= '1' when count = 1 else '0';
-        ST    <= '1' when count = 2 else '0';
-    end process;
+
+  process
+  begin
+    wait until rising_edge(CLK);
+    if R = '1' or count = w-1 then
+      count <= 0;
+    else
+      if E = '1' then
+        count <= count + 1;
+      end if;
+    end if;
+  end process;
+
+  process(R, count)
+  begin
+    LD <= '1' when count = 1 and R = '0' else '0';
+    S  <= '1' when count = 1 and R = '0' else '0';
+    ST <= '1' when count = 1 and R = '0' else '0';
+  end process;
 
 end Behavioral;
