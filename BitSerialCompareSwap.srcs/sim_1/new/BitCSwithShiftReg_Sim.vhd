@@ -139,7 +139,7 @@ begin
 
         larger_value    <= "10110110";
         smaller_value    <= "10100111";
-        wait for ckTime/2;
+        wait for ckTime/2 + 1 ps;
 
         Av <= larger_value;
         Bv <= smaller_value;
@@ -147,8 +147,8 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            S <= '1' when i = 1 else '0';
-            ST <= '1' when i = 2 else '0';
+            S <= '1' when i = 0 else '0';
+            ST <= '1' when i = 0 else '0';
         end loop;
 
         Av    <= smaller_value;
@@ -157,9 +157,9 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            S <= '1' when i = 1 else '0';
-            ST <= '1' when i = 2 else '0';
-            if i = 3 then
+            S <= '1' when i = 0 else '0';
+            ST <= '1' when i = 0 else '0';
+            if i = 1 then
                 assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &
               " Av= " & integer'image(to_integer(unsigned(larger_value))) &
               " Bv= " & integer'image(to_integer(unsigned(smaller_value))) &
@@ -173,9 +173,9 @@ begin
         for i in 0 to w-1 loop
             wait for ckTime;
             LD <= '1' when i = 0 else '0';
-            S <= '1' when i = 1 else '0';
-            ST <= '1' when i = 2 else '0';
-            if i = 3 then
+            S <= '1' when i = 0 else '0';
+            ST <= '1' when i = 0 else '0';
+            if i = 1 then
                 assert ((larger_value = Cv) and (smaller_value = Dv)) report "Mismatch:: " &
               " Av= " & integer'image(to_integer(unsigned(smaller_value))) &
               " Bv= " & integer'image(to_integer(unsigned(larger_value))) &
