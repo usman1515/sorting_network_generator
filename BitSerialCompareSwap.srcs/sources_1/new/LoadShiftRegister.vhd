@@ -38,8 +38,9 @@ entity LoadShiftRegister is
   port (
 
     CLK        : in  std_logic;
-    input      : in  std_logic_vector(w-1 downto 0);
     LD         : in  std_logic;
+    E          : in  std_logic;
+    input      : in  std_logic_vector(w-1 downto 0);
     ser_output : out std_logic := '0'
     );
 end LoadShiftRegister;
@@ -48,15 +49,17 @@ end LoadShiftRegister;
 architecture Behavioral of LoadShiftRegister is
 -- We can make do with one bit less as the first input bit 
 -- is immediatly output with ser_output.
-  signal buf : std_logic_vector(w-1 downto 0) := (others => '0');
+  signal buf : std_logic_vector(w-2 downto 0) := (others => '0');
 begin
   process
   begin
     wait until rising_edge(CLK);
     if LD = '0' then
-      buf <= buf(buf'high -1 downto buf'low) & '0';
+      if E = '1' then
+        buf <= buf(buf'high -1 downto buf'low) & '0';
+      end if;
     else
-      buf <= input(input'high -1 downto input'low) & '0';
+      buf <= input(input'high -1 downto input'low);
     end if;
   end process;
 

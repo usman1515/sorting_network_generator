@@ -52,8 +52,9 @@ architecture Behavioral of BitCS_ControlLogic_Sim is
       w : integer);
     port (
       CLK        : in  std_logic;
-      input      : in  std_logic_vector(w-1 downto 0);
+      E          : in  std_logic;
       LD         : in  std_logic;
+      input      : in  std_logic_vector(w-1 downto 0);
       ser_output : out std_logic);
   end component LoadShiftRegister;
   component StoreShiftRegister is
@@ -61,8 +62,9 @@ architecture Behavioral of BitCS_ControlLogic_Sim is
       w : integer);
     port (
       CLK       : in  std_logic;
-      ser_input : in  std_logic;
+      E         : in  std_logic;
       ST        : in  std_logic;
+      ser_input : in  std_logic;
       output    : out std_logic_vector(w-1 downto 0));
   end component StoreShiftRegister;
   component CycleTimer is
@@ -129,16 +131,18 @@ begin
       w => w)
     port map (
       CLK        => CLK,
-      input      => A,
+      E          => E,
       LD         => LD,
+      input      => A,
       ser_output => in0);
   LoadShiftRegister_2 : LoadShiftRegister
     generic map (
       w => w)
     port map (
       CLK        => CLK,
-      input      => B,
+      E          => E,
       LD         => LD,
+      input      => B,
       ser_output => in1);
 
   StoreShiftRegister_1 : StoreShiftRegister
@@ -146,16 +150,18 @@ begin
       w => w)
     port map (
       CLK       => CLK,
-      ser_input => out0,
+      E          => E,
       ST        => ST,
+      ser_input => out0,
       output    => C);
   StoreShiftRegister_2 : StoreShiftRegister
     generic map (
       w => w)
     port map (
+      E          => E,
       CLK       => CLK,
-      ser_input => out1,
       ST        => ST,
+      ser_input => out1,
       output    => D);
 
   test_process : process
@@ -164,14 +170,14 @@ begin
 
     larger_value  <= "10110110";
     smaller_value <= "10100111";
-    E <= '0';
+    E             <= '0';
     wait for ckTime/2;
-    R <= '1';
-    A <= larger_value;
-    B <= smaller_value;
+    R             <= '1';
+    A             <= larger_value;
+    B             <= smaller_value;
     wait for ckTime;
-    R <= '0';
-    E <= '1';
+    R             <= '0';
+    E             <= '1';
     wait for (w-1)*ckTime;
     assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
       " A= " & integer'image(to_integer(unsigned(larger_value))) &

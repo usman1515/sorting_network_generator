@@ -38,6 +38,7 @@ entity StoreShiftRegister is
   port (
 
     CLK       : in  std_logic;
+    E         : in  std_logic;
     ser_input : in  std_logic;
     ST        : in  std_logic;
     output    : out std_logic_vector(w-1 downto 0) := (others => '0')
@@ -52,11 +53,11 @@ begin
   process
   begin
     wait until rising_edge(CLK);
-    buf <= buf(buf'high-1 downto buf'low) & ser_input;
+    if E = '1' then
+      buf <= buf(buf'high-1 downto buf'low) & ser_input;
+    end if;
     if ST = '1' then
       output <= buf;
---    else
---      output <= (others => '0');
     end if;
   end process;
 

@@ -44,9 +44,10 @@ architecture Behavioral of ShiftRegisters_Sim is
     generic (
       w : integer);
     port (
-      CLK       : in  std_logic;
-      input     : in  std_logic_vector(w-1 downto 0);
-      LD        : in  std_logic;
+      CLK        : in  std_logic;
+      input      : in  std_logic_vector(w-1 downto 0);
+      E          : in  std_logic;
+      LD         : in  std_logic;
       ser_output : out std_logic);
   end component LoadShiftRegister;
 
@@ -55,6 +56,7 @@ architecture Behavioral of ShiftRegisters_Sim is
       w : integer);
     port (
       CLK       : in  std_logic;
+      E         : in  std_logic;
       ser_input : in  std_logic;
       ST        : in  std_logic;
       output    : out std_logic_vector(w-1 downto 0));
@@ -67,6 +69,7 @@ architecture Behavioral of ShiftRegisters_Sim is
   signal B      : std_logic_vector(w-1 downto 0) := (others => '0');
   signal LD     : std_logic_vector(0 downto 0)   := "0";
   signal ST     : std_logic_vector(0 downto 0)   := "0";
+  signal E      : std_logic                      := '0';
   signal serial : std_logic                      := '0';
 
 begin
@@ -83,9 +86,10 @@ begin
     generic map (
       w => w)
     port map (
-      CLK       => clock,
-      input     => A,
-      LD        => LD(0),
+      CLK        => clock,
+      LD         => LD(0),
+      E          => E,
+      input      => A,
       ser_output => serial);
 
   StoreShiftRegister_1 : StoreShiftRegister
@@ -93,8 +97,9 @@ begin
       w => w)
     port map (
       CLK       => clock,
-      ser_input => serial,
       ST        => ST(0),
+      E         => E,
+      ser_input => serial,
       output    => B);
 
   test_process : process
@@ -104,10 +109,15 @@ begin
     wait for ckTime;
     A  <= "11001011";
     LD <= "1";
-    for i in 0 to w-1 loop
+    E  <= '1';
+    for i in 0 to w-3 loop
       wait for ckTime;
       LD <= "0";
-     end loop;
+    end loop;
+    E  <= '0';
+    wait for ckTime*2;
+    E  <= '1';
+    wait for ckTime*2;
     ST <= "1";
     wait for ckTime;
     ST <= "0";
