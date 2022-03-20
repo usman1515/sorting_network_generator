@@ -179,6 +179,10 @@ begin
     R             <= '0';
     E             <= '1';
     wait for (w-1)*ckTime;
+
+    A <= X"a6";
+    B <= X"b7";
+    wait for 3 * ckTime;
     assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
       " A= " & integer'image(to_integer(unsigned(larger_value))) &
       " B= " & integer'image(to_integer(unsigned(smaller_value))) &
@@ -186,11 +190,7 @@ begin
       " D= " & integer'image(to_integer(unsigned(D))) &
       " Expectation A=C and B=D";
 
-
-    A <= X"a6";
-    B <= X"b7";
-
-    wait for (w-1)*ckTime;
+    wait for (w-4)*ckTime;
     assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
       " A= " & integer'image(to_integer(unsigned(smaller_value))) &
       " B= " & integer'image(to_integer(unsigned(larger_value))) &
