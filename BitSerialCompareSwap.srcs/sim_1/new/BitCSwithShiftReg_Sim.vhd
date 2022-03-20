@@ -71,7 +71,7 @@ architecture Behavioral of BitCSwithShiftReg_Sim is
 
   constant ckTime : time := 10 ns;
 
-  signal CLK : std_logic;
+  signal CLK   : std_logic;
   signal sin0  : std_logic := '0';
   signal sin1  : std_logic := '0';
   signal sout0 : std_logic := '0';
@@ -155,9 +155,15 @@ begin
 
     for i in 0 to w-1 loop
       wait for ckTime;
-      LD <= '1' when i = 0 else '0';
-      S  <= '1' when i = 0 else '0';
-      ST <= '1' when i = 0 else '0';
+      if i = 0 then
+        LD <= '1';
+        S  <= '1';
+        ST <= '1';
+      else
+        LD <= '0';
+        S  <= '0';
+        ST <= '0';
+      end if;
     end loop;
 
     A <= smaller_value;
@@ -165,9 +171,15 @@ begin
 
     for i in 0 to w-1 loop
       wait for ckTime;
-      LD <= '1' when i = 0 else '0';
-      S  <= '1' when i = 0 else '0';
-      ST <= '1' when i = 0 else '0';
+      if i = 0 then
+        LD <= '1';
+        S  <= '1';
+        ST <= '1';
+      else
+        LD <= '0';
+        S  <= '0';
+        ST <= '0';
+      end if;
       if i = 1 then
         assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
           " A= " & integer'image(to_integer(unsigned(larger_value))) &
@@ -181,9 +193,15 @@ begin
 
     for i in 0 to w-1 loop
       wait for ckTime;
-      LD <= '1' when i = 0 else '0';
-      S  <= '1' when i = 0 else '0';
-      ST <= '1' when i = 0 else '0';
+      if i = 0 then
+        LD <= '1';
+        S  <= '1';
+        ST <= '1';
+      else
+        LD <= '0';
+        S  <= '0';
+        ST <= '0';
+      end if;
       if i = 1 then
         assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
           " A= " & integer'image(to_integer(unsigned(smaller_value))) &

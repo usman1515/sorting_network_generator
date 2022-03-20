@@ -187,8 +187,8 @@ begin
       " Expectation A=C and B=D";
 
 
-    A <= smaller_value;
-    B <= larger_value;
+    A <= X"a6";
+    B <= X"b7";
 
     wait for (w-1)*ckTime;
     assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &

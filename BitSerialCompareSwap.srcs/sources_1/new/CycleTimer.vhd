@@ -64,9 +64,11 @@ begin
 
   process(R, count)
   begin
-    LD <= '1' when count = 1 and R = '0' else '0';
-    S  <= '1' when count = 1 and R = '0' else '0';
-    ST <= '1' when count = 1 and R = '0' else '0';
+    if count =1 and R ='0' then
+      LD <= '1';
+      S <= '1';
+      ST <= '1';
+      end if;
   end process;
 
 end Behavioral;
