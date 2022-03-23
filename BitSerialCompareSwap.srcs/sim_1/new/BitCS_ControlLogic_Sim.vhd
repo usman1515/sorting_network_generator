@@ -115,7 +115,7 @@ begin
   uut_0 : BitCS
     port map(in0, in1, out0, out1, S);
 
-  CycleTimer_1 : entity work.CycleTimer
+  CycleTimer_1 : CycleTimer
     generic map (
       w => w)
     port map (
