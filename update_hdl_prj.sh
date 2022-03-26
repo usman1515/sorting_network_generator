@@ -33,4 +33,4 @@ done
 
 
 filesstring="${filesstring} \n ]"
-echo -e "{ \n ${options} \n ${filesstring} \n }" > "hdl-prj_n.json"
+echo -e "{ \n ${options} \n ${filesstring} \n }" > "hdl-prj.json"
