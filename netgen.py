@@ -31,31 +31,19 @@ def parse_entity_vhdl(path=Path()):
     )
     if entity_def:
         entity_def = entity_def[0]
-
-        port_def = regex.findall(
-            r"port.*?\((?:[^)(]+|(?R))*+\)", entity_def, regex.S | regex.M
-        )
         ports = dict()
-        if port_def:
-            port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+.*)")
-            print(port_def)
-            port_def = port_def[0].split("(", 1)[1]
-            print(port_def)
-            # port_def = port_def[:-1]
-            # print(port_def)
-            for pair in regex.findall(port_matcher, port_def):
-                ports[pair[0]] = pair[1]
-
-        generic_def = regex.findall(
-            r"generic.*?\((?:[^)(]+|(?R))*+\)", entity_def, regex.S | regex.M
-        )
         generics = dict()
-        if generic_def:
-            generic_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*)")
-            generic_def = generic_def[0].split("(", 1)[1]
-            generic_def = generic_def[:-1]
-            for pair in regex.findall(generic_matcher, generic_def):
-                generics[pair[0]] = pair[1]
+        for name, content in regex.findall(
+            r"(\w*)(\([^)(]*+(?:(?R)[^)(]*)*+\))", entity_def, regex.M | regex.S
+        ):
+            if name == "port":
+                port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+\w+[^;\n]*)")
+                for pair in regex.findall(port_matcher, content):
+                    ports[pair[0]] = pair[1]
+            if name == "generic":
+                generic_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*)")
+                for pair in regex.findall(generic_matcher, content):
+                    generics[pair[0]] = pair[1]
 
         return Entity(name, ports, generics)
     else:
