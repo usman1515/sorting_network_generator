@@ -2,8 +2,8 @@
 -- Company:
 -- Engineer:
 --
--- Create Date: {.date}
--- Design Name:
+-- Create Date:
+-- -- Design Name:
 -- Module Name: {.top_name} - Behavioral
 -- Project Name:
 -- Target Devices:
@@ -35,11 +35,11 @@ library work;
 use work.CustomTypes.all;
 
 
-entity {.top_name} is
+entity {top_name} is
     generic(
-      W : integer := {.bitwidth};
-      Depth : integer := {.netdepth};
-      N : integer := {.numinputs};
+      W : integer := {bit_width};
+      Depth : integer := {net_depth};
+      N : integer := {num_inputs};
     );
     port(
         CLK : in std_logic;
@@ -48,16 +48,16 @@ entity {.top_name} is
         input : in InOutArray(N downto 0)(W-1 downto 0);
         output : out InOutArray(N downto 0)(W-1 downto 0)
     );
-end {.top_name};
+end {top_name};
 
-architecture Behavioral of {.top_name} is
+architecture Behavioral of {top_name} is
 
     type WireType is array (Depth downto 0) of std_logic_vector(N-1 downto 0);
 
     signal wire : WireType := (others => (others => '0'));
 
     signal LD : std_logic := '0';
-    signal S : std_logic := '0';
+    signal S : std_logic : = '0';
     signal ST : std_logic := '0';
 
     component CycleTimer is
@@ -72,7 +72,7 @@ architecture Behavioral of {.top_name} is
             ST : out std_logic);
     end component CycleTimer;
 
-    {.components}
+    {components}
 
 begin
 
@@ -87,6 +87,6 @@ begin
             S => S,
             ST => ST);
 
-  {.instances}
+  {instances}
 
 end Behavioral;

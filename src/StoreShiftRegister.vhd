@@ -33,7 +33,7 @@ use IEEE.NUMERIC_STD.all;
 
 entity StoreShiftRegister is
   generic(
-    w : integer := 8
+    W : integer := 8
     );
   port (
 
@@ -41,14 +41,14 @@ entity StoreShiftRegister is
     E         : in  std_logic;
     ser_input : in  std_logic;
     ST        : in  std_logic;
-    output    : out std_logic_vector(w-1 downto 0) := (others => '0')
+    output    : out std_logic_vector(W-1 downto 0) := (others => '0')
     );
 end StoreShiftRegister;
 
 
 architecture Behavioral of StoreShiftRegister is
 
-  signal buf : std_logic_vector(w-1 downto 0) := (others => '0');
+  signal buf : std_logic_vector(W-1 downto 0) := (others => '0');
 begin
   process
   begin

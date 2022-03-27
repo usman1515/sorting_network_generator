@@ -4,6 +4,7 @@ from pathlib import Path
 import math
 import regex
 import fire
+from datetime import datetime
 
 
 def parse_entity_vhdl(path=Path()):
@@ -20,12 +21,11 @@ def parse_entity_vhdl(path=Path()):
     if name:
         name = name[0]
     else:
-        name = regex.findall(r"entity\s*(\{\..*?\})\s*is", content, regex.S | regex.M)
+        name = regex.findall(r"entity\s*(\{.*?\})\s*is", content, regex.S | regex.M)
         if not name:
             return None
         else:
             name = name[0]
-
     entity_def = regex.findall(
         r"entity\s*{0}.+end\s+{0};".format(name), content, regex.S | regex.M
     )
@@ -33,17 +33,17 @@ def parse_entity_vhdl(path=Path()):
         entity_def = entity_def[0]
         ports = dict()
         generics = dict()
-        for name, content in regex.findall(
+        for decl, content in regex.findall(
             r"(\w*)(\([^)(]*+(?:(?R)[^)(]*)*+\))", entity_def, regex.M | regex.S
         ):
-            if name == "port":
-                port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+\w+[^;\n]*)")
-                for pair in regex.findall(port_matcher, content):
-                    ports[pair[0]] = pair[1]
-            if name == "generic":
+            if "generic" in decl:
                 generic_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*)")
                 for pair in regex.findall(generic_matcher, content):
                     generics[pair[0]] = pair[1]
+            else:
+                port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+\w+[^;\n]*)")
+                for pair in regex.findall(port_matcher, content):
+                    ports[pair[0]] = pair[1]
 
         return Entity(name, ports, generics)
     else:
@@ -60,14 +60,14 @@ def parse_template_vhdl(path=Path()):
         for line in fd:
             content += line
     tokens_set = set()
-    for token in regex.findall(r"\{\.(.*?)\}", content, regex.S | regex.M):
+    for token in regex.findall(r"\{0\.(.*?)\}", content, regex.S | regex.M):
         tokens_set.add(token)
     tokens = dict()
     for item in tokens_set:
         tokens[item] = ""
     entity = parse_entity_vhdl(path)
     if entity:
-        return Template(entity.name, entity.ports, entity.generics, tokens)
+        return Template(entity.name, content, entity.ports, entity.generics, tokens)
     else:
         return None
 
@@ -111,6 +111,8 @@ class Entity:
         return a
 
     def as_instance(self, instance_name="", genassign=dict(), portassign=dict()):
+        print(genassign)
+        print(portassign)
         a = "{} : {}\n".format(instance_name, self.name)
         if self.generics and genassign:
             a += "generic map(\n"
@@ -139,9 +141,17 @@ class Entity:
 
 
 class Template(Entity):
-    def __init__(self, name, generics=dict(), ports=dict(), tokens=dict()):
+    def __init__(
+        self, name, template_file, generics=dict(), ports=dict(), tokens=dict()
+    ):
         super().__init__(name, generics, ports)
+        self.template_file = template_file
         self.tokens = tokens
+
+    def as_template(self):
+        print(self.tokens.keys())
+        print(self.template_file)
+        return self.template_file.format(**self.tokens)
 
 
 def get_sources(path=Path()):
@@ -184,21 +194,27 @@ class Generator:
 class EvenOdd(Generator):
     def __init__(self):
         super().__init__()
-        keywords = {
+        self.keywords = {
             "input": "Name of input component",
             "output": "Name of output component",
             "CS": "Name of compare swap element",
             "template": "Name of template",
             "N": "Number of inputs. Must be power of 2",
         }
-        optional = {
+        self.optional = {
             "W": "Width of operands",
         }
+
+    def __str__(self):
+        for k, v in self.keywords:
+            print(k, v)
+        for k, v in self.optional:
+            print(k, v)
 
     def connection_matrix(self, N):
         logp = int(math.log2(N))
         depth = logp * (logp + 1) // 2
-        A = [[-1 for j in range(depth)] for i in range(N)]
+        A = [[-1 for j in range(N)] for i in range(depth)]
         d = -1  # Current network depth index
         for p_e in range(0, logp):
             p = 2**p_e
@@ -210,43 +226,95 @@ class EvenOdd(Generator):
                         if math.floor((i + j) / (p * 2)) == math.floor(
                             (i + j + k) / (p * 2)
                         ):
-                            print(d, i + j, i + j + k)
-                            A[i + j][d] = i + j + k
-                            A[i + j + k][d] = i + j
-        for row in A:
-            print(row)
+                            # print(d, i + j, i + j + k)
+                            A[d][i + j] = i + j + k
+                            A[d][i + j + k] = i + j
+        return A
 
     def generate(self, **kwargs):
-        if not any(kw in kwargs.keys() for kw in keywords):
+        if not any(kw in kwargs.keys() for kw in self.keywords):
             print("Error: The following parameters are required:")
             print(self)
             return
 
         N = int(kwargs["N"])
-        p = math.log2(N)
-        depth = p * (p + 1) / 2
+        p = int(math.log2(N))
+        depth = p * (p + 1) // 2
         top_name = "EvenOdd{}".format(N)
         bit_width = 8
         if "W" in kwargs.keys():
             bit_width = kwargs["W"]
 
-        components = self.entities[kwargs["input"]].as_entity() + "\n"
-        components += self.entities[kwargs["output"]].as_entity() + "\n"
-        components += self.entities[kwargs["cs"]].as_entity() + "\n"
-        for i in range(N):
-            generics = {"w": bit_width}
-            ports = {"CLK": "CLK", "LD": "LD", "E": "E", "input": "input{}".format(i)}
-            instances += ""
+        components = kwargs["input"].as_entity() + "\n"
+        components += kwargs["output"].as_entity() + "\n"
+        components += kwargs["cs"].as_entity() + "\n"
 
-        A = self.connection_matrix()
+        instances = ""
+        generics = {"W": bit_width}
+        ports = {
+            "CLK": "CLK",
+            "LD": "LD",
+            "E": "E",
+            "ST": "ST",
+            "S": "S",
+        }
+        for i in range(N):
+            ports["input"] = "input({})".format(i)
+            ports["ser_output"] = "wire(0)({})".format(i)
+            instances += kwargs["input"].as_instance(
+                "input_{}".format(i), generics, ports
+            )
+
+        for i in range(N):
+            ports["output"] = "output({})".format(i)
+            ports["ser_input"] = "wire({})({})".format(depth, i)
+            instances += kwargs["output"].as_instance(
+                "output_{}".format(i), generics, ports
+            )
+
+        A = self.connection_matrix(N)
+        for i in range(depth):
+            for j in range(N):
+                if A[i][j] > j:
+                    a = j
+                    b = A[i][j]
+                    ports["a"] = "wire({})({})".format(i, a)
+                    ports["b"] = "wire({})({})".format(i, b)
+                    ports["c"] = "wire({})({})".format(i + 1, a)
+                    ports["d"] = "wire({})({})".format(i + 1, b)
+                    components += kwargs["cs"].as_instance(
+                        "CS_{}d_{}x{}".format(i, a, b), generics, ports
+                    )
+        for i in range(depth):
+            for j in range(N):
+                if A[i][j] < 0:
+                    bypass_beg = i
+                    bypass_end = i
+                    while bypass_end < depth and A[bypass_end][j] < 0:
+                        A[bypass_end][j] = 0
+                        bypass_end += 1
+                        components += "wire({})({}) <= wire({})({});\n".format(
+                            bypass_beg, j, bypass_end, j
+                        )
+        tokens = {
+            "top_name": top_name,
+            "net_depth": depth,
+            "num_inputs": N,
+            "bit_width": bit_width,
+            "components": components,
+            "instances": instances,
+            "date": datetime.now(),
+        }
+        kwargs["template"].tokens = tokens
+        return kwargs["template"]
 
 
 class NetworkGenerator:
     def __init__(self):
         self.entities = dict()
-        # self.entities = get_sources(Path("src/"))
+        self.entities = get_sources(Path("src/"))
         self.templates = dict()
-        # self.templates = get_templates(Path("templates/"))
+        self.templates = get_templates(Path("templates/"))
 
     def list(self, listtype=""):
         """List available components and templates.
@@ -302,16 +370,20 @@ class NetworkGenerator:
 
     def generate(self, generator_name="", **kwargs):
         if "evenodd" == generator_name.lower():
-            self.__generate_even_odd(**kwargs)
+            names = ["input", "output", "cs"]
+            for name in names:
+                kwargs[name] = self.entities[kwargs[name]]
+            kwargs["template"] = self.templates[kwargs["template"]]
+            generator = EvenOdd()
+            return generator.generate(**kwargs).as_template()
         else:
             print("Options: evenodd")
 
     def test(self):
-        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))
+        #        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))
 
-
-#        gen = EvenOdd()
-#        gen.connection_matrix(8)
+        gen = EvenOdd()
+        gen.connection_matrix(8)
 
 
 if __name__ == "__main__":

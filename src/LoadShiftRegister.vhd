@@ -33,7 +33,7 @@ use IEEE.NUMERIC_STD.all;
 
 entity LoadShiftRegister is
   generic(
-    w : integer := 8
+    W : integer := 8
     );
   port (
 
@@ -49,7 +49,7 @@ end LoadShiftRegister;
 architecture Behavioral of LoadShiftRegister is
 -- We can make do with one bit less as the first input bit 
 -- is immediatly output with ser_output.
-  signal buf : std_logic_vector(w-2 downto 0) := (others => '0');
+  signal buf : std_logic_vector(W-2 downto 0) := (others => '0');
 begin
   process
   begin

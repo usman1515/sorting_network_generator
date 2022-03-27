@@ -33,7 +33,7 @@ use IEEE.NUMERIC_STD.all;
 
 entity CycleTimer is
   generic (
-    w : integer := 8                    -- Width of input bits
+    W : integer := 8                    -- Width of input bits
     );
   port (
     CLK : in  std_logic;
