@@ -4,7 +4,7 @@
 --
 -- Create Date:
 -- -- Design Name:
--- Module Name: {.top_name} - Behavioral
+-- Module Name: {top_name} - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -39,7 +39,7 @@ entity {top_name} is
     generic(
       W : integer := {bit_width};
       Depth : integer := {net_depth};
-      N : integer := {num_inputs};
+      N : integer := {num_inputs}
     );
     port(
         CLK : in std_logic;
@@ -57,12 +57,12 @@ architecture Behavioral of {top_name} is
     signal wire : WireType := (others => (others => '0'));
 
     signal LD : std_logic := '0';
-    signal S : std_logic : = '0';
+    signal S  : std_logic := '0';
     signal ST : std_logic := '0';
 
     component CycleTimer is
         generic (
-            w : integer);
+            W : integer);
         port (
             CLK : in std_logic;
             R : in std_logic;

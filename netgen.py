@@ -95,24 +95,22 @@ class Entity:
     def __def(self):
         a = ""
         a += self.__deflist("generic", self.generics)
-        a += self.__deflist("ports", self.ports)
+        a += self.__deflist("port", self.ports)
         return a
 
     def as_entity(self):
         a = "entity {} is\n".format(self.name)
         a += self.__def()
-        a += "end {};".format(self.name)
+        a += "end entity {};".format(self.name)
         return a
 
     def as_component(self):
         a = "component {} is\n".format(self.name)
         a += self.__def()
-        a += "end {};".format(self.name)
+        a += "end component {};".format(self.name)
         return a
 
     def as_instance(self, instance_name="", genassign=dict(), portassign=dict()):
-        print(genassign)
-        print(portassign)
         a = "{} : {}\n".format(instance_name, self.name)
         if self.generics and genassign:
             a += "generic map(\n"
@@ -123,7 +121,7 @@ class Entity:
                 if i + 1 < len(self.generics):
                     a += ","
                 a += "\n"
-            a += ");\n"
+            a += ")\n"
         if self.ports:
             a += "port map(\n"
             keys = list(self.ports.keys())
@@ -245,9 +243,9 @@ class EvenOdd(Generator):
         if "W" in kwargs.keys():
             bit_width = kwargs["W"]
 
-        components = kwargs["input"].as_entity() + "\n"
-        components += kwargs["output"].as_entity() + "\n"
-        components += kwargs["cs"].as_entity() + "\n"
+        components = kwargs["input"].as_component() + "\n"
+        components += kwargs["output"].as_component() + "\n"
+        components += kwargs["cs"].as_component() + "\n"
 
         instances = ""
         generics = {"W": bit_width}
@@ -282,7 +280,7 @@ class EvenOdd(Generator):
                     ports["b"] = "wire({})({})".format(i, b)
                     ports["c"] = "wire({})({})".format(i + 1, a)
                     ports["d"] = "wire({})({})".format(i + 1, b)
-                    components += kwargs["cs"].as_instance(
+                    instances += kwargs["cs"].as_instance(
                         "CS_{}d_{}x{}".format(i, a, b), generics, ports
                     )
         for i in range(depth):
@@ -293,7 +291,7 @@ class EvenOdd(Generator):
                     while bypass_end < depth and A[bypass_end][j] < 0:
                         A[bypass_end][j] = 0
                         bypass_end += 1
-                        components += "wire({})({}) <= wire({})({});\n".format(
+                        instances += "wire({})({}) <= wire({})({});\n".format(
                             bypass_beg, j, bypass_end, j
                         )
         tokens = {
@@ -306,6 +304,8 @@ class EvenOdd(Generator):
             "date": datetime.now(),
         }
         kwargs["template"].tokens = tokens
+        kwargs["template"].name = top_name
+
         return kwargs["template"]
 
 
@@ -375,7 +375,10 @@ class NetworkGenerator:
                 kwargs[name] = self.entities[kwargs[name]]
             kwargs["template"] = self.templates[kwargs["template"]]
             generator = EvenOdd()
-            return generator.generate(**kwargs).as_template()
+            template = generator.generate(**kwargs)
+            path = Path("build/{}.vhd".format(template.name))
+            with open(str(path), "w") as fd:
+                fd.write(template.as_template())
         else:
             print("Options: evenodd")
 

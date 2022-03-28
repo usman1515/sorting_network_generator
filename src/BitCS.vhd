@@ -37,7 +37,8 @@ entity BitCS is
     b : in  std_logic;
     c : out std_logic;
     d : out std_logic;
-    S : in  std_logic);
+    S : in  std_logic
+    );
 end BitCS;
 
 
