@@ -147,8 +147,6 @@ class Template(Entity):
         self.tokens = tokens
 
     def as_template(self):
-        print(self.tokens.keys())
-        print(self.template_file)
         return self.template_file.format(**self.tokens)
 
 
