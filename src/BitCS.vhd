@@ -65,6 +65,8 @@ begin
           state <= "01";
         elsif a = '0' and b = '1' then
           state <= "10";
+        else
+          state <= "00";
         end if;
       when "01" =>
         if S = '1' then
