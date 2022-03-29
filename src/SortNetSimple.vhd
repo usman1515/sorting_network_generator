@@ -50,14 +50,16 @@ end SortNetSimple;
 
 architecture Behavioral of SortNetSimple is
 
-  component BitCS is
+  component BitCS_Sync is
     port (
-      a : in  std_logic;
-      b : in  std_logic;
-      c : out std_logic;
-      d : out std_logic;
-      S : in  std_logic);
-  end component BitCS;
+      CLK : in  std_logic;
+      a   : in  std_logic;
+      b   : in  std_logic;
+      c   : out std_logic;
+      d   : out std_logic;
+      S   : in  std_logic);
+  end component BitCS_Sync;
+
   component LoadShiftRegister is
     generic (
       w : integer);
@@ -85,9 +87,7 @@ architecture Behavioral of SortNetSimple is
       CLK : in  std_logic;
       R   : in  std_logic;
       E   : in  std_logic;
-      LD  : out std_logic;
-      S   : out std_logic;
-      ST  : out std_logic);
+      S   : out std_logic);
   end component CycleTimer;
 
   type GRID2D is array (3 downto 0) of std_logic_vector(3 downto 0);
@@ -95,9 +95,7 @@ architecture Behavioral of SortNetSimple is
   signal wire : GRID2D := (others => (others => '0'));
 
 
-  signal LD : std_logic := '0';
-  signal S  : std_logic := '0';
-  signal ST : std_logic := '0';
+  signal S  : std_logic_vector(2 downto 0) := (others=> '0');
 
 begin
 
@@ -109,7 +107,7 @@ begin
       port map (
         CLK        => CLK,
         E          => E,
-        LD         => LD,
+        LD         => S(S'low),
         input      => input(i),
         ser_output => wire(0)(i));
   end generate InputShift;
@@ -122,50 +120,55 @@ begin
       port map (
         CLK       => CLK,
         E         => E,
-        ST        => ST,
+        ST        => S(S'high),
         output    => output(i),
         ser_input => wire(3)(i));
   end generate OutputShift;
 
-  BitCS_0: BitCS
+  BitCS_Sync_0 : BitCS_Sync
     port map(
+      CLK => CLK,
       a => wire(0)(1),
       b => wire(0)(0),
       c => wire(1)(1),
       d => wire(1)(0),
-      S => S
+      S => S(0)
       );
-  BitCS_1 : BitCS
+  BitCS_Sync_1 : BitCS_Sync
     port map(
+      CLK => CLK,
       a => wire(0)(3),
       b => wire(0)(2),
       c => wire(1)(3),
       d => wire(1)(2),
-      S => S
+      S => S(0)
       );
-  BitCS_2 : BitCS
+  BitCS_Sync_2 : BitCS_Sync
     port map(
+      CLK => CLK,
       a => wire(1)(2),
       b => wire(1)(0),
       c => wire(2)(2),
       d => wire(2)(0),
-      S => S
+      S => S(1)
       );
-  BitCS_3 : BitCS
+  BitCS_Sync_3 : BitCS_Sync
     port map(
+      CLK => CLK,
       a => wire(1)(3),
       b => wire(1)(1),
       c => wire(2)(3),
       d => wire(2)(1),
-      S => S
+      S => S(1)
       );
-  BitCS_4 : BitCS
+  BitCS_Sync_4 : BitCS_Sync
     port map(
+      CLK => CLK,
       a => wire(2)(2),
       b => wire(2)(1),
       c => wire(3)(2),
       d => wire(3)(1),
-      S => S
+      S => S(2)
       );
 
   wire(3)(3) <= wire(2)(3);
@@ -178,8 +181,15 @@ begin
       CLK => CLK,
       R   => R,
       E   => E,
-      LD  => LD,
-      S   => S,
-      ST  => ST);
+      S   => S(0));
+      
+   process
+   begin
+   wait until rising_edge(CLK);
+   for i in S'low to S'high-1 loop
+        S(i+1) <= S(i);
+   end loop;
+   end process;
+
 
 end Behavioral;

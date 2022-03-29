@@ -39,9 +39,7 @@ entity CycleTimer is
     CLK : in  std_logic;
     R   : in  std_logic;                -- Synchronous reset
     E   : in  std_logic;  -- Enable signal, halts operation if unset
-    LD  : out std_logic;                -- Operand load signal
-    S   : out std_logic;                -- Sorting start signal
-    ST  : out std_logic                 -- Result store signal
+    S   : out std_logic                -- Sorting start signal
     );
 end CycleTimer;
 
@@ -64,9 +62,7 @@ begin
 
   process(R, count)
   begin
-    LD  <= '1' when count =1 and R ='0' else '0';
     S   <= '1' when count =1 and R ='0' else '0';
-    ST  <= '1' when count =1 and R ='0' else '0';
   end process;
 
 end Behavioral;
