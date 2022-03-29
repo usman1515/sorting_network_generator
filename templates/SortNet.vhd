@@ -45,8 +45,8 @@ entity {top_name} is
         CLK : in std_logic;
         E : in std_logic;
         R : in std_logic;
-        input : in InOutArray(N downto 0)(W-1 downto 0);
-        output : out InOutArray(N downto 0)(W-1 downto 0)
+        input : in InOutArray(N-1 downto 0)(W-1 downto 0);
+        output : out InOutArray(N-1 downto 0)(W-1 downto 0)
     );
 end {top_name};
 

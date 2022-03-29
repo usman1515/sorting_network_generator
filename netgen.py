@@ -274,10 +274,10 @@ class EvenOdd(Generator):
                 if A[i][j] > j:
                     a = j
                     b = A[i][j]
-                    ports["a"] = "wire({})({})".format(i, a)
-                    ports["b"] = "wire({})({})".format(i, b)
-                    ports["c"] = "wire({})({})".format(i + 1, a)
-                    ports["d"] = "wire({})({})".format(i + 1, b)
+                    ports["a"] = "wire({})({})".format(i, b)
+                    ports["b"] = "wire({})({})".format(i, a)
+                    ports["c"] = "wire({})({})".format(i + 1, b)
+                    ports["d"] = "wire({})({})".format(i + 1, a)
                     instances += kwargs["cs"].as_instance(
                         "CS_{}d_{}x{}".format(i, a, b), generics, ports
                     )
@@ -290,7 +290,7 @@ class EvenOdd(Generator):
                         A[bypass_end][j] = 0
                         bypass_end += 1
                         instances += "wire({})({}) <= wire({})({});\n".format(
-                            bypass_beg, j, bypass_end, j
+                            bypass_end, j, bypass_beg, j
                         )
         tokens = {
             "top_name": top_name,
