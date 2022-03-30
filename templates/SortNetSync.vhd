@@ -55,7 +55,7 @@ architecture Behavioral of {top_name} is
     type WireType is array (Depth downto 0) of std_logic_vector(N-1 downto 0);
     signal wire : WireType := (others => (others => '0'));
 
-    signal S  : std_logic_vector(Depth-1 downto 0) := (others=> '0');
+    signal S  : std_logic_vector(Depth downto 0) := (others=> '0');
 
     component CycleTimer is
       generic (
@@ -81,13 +81,11 @@ begin
             S => S(0)
             );
 
-   StartDelay : process
+   StartDelay: process
    begin
-     wait until rising_edge(CLK);
-     for i in S'low to S'high-1 loop
-       S(i+1) <= S(i);
-     end loop;
-   end process StartDelay;
+   wait until rising_edge(CLK);
+   S(S'high downto S'Low+1) <= S(S'high-1 downto S'low);
+   end process;
 
   {instances}
 

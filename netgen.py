@@ -254,8 +254,8 @@ class EvenOdd(Generator):
         for i in range(N):
             specific = dict()
             specific["input"] = "input({})".format(i)
-            specific["ser_output"] = "wire(0)({})".format(i)
-            specific["LD"] = "S({})".format(0)
+            specific["ser_output"] = "wire({})(0)".format(i)
+            specific["LD"] = "S(S'low)"
 
             instances += kwargs["input"].as_instance(
                 "input_{}".format(i), generics, ports | specific
@@ -264,8 +264,8 @@ class EvenOdd(Generator):
         for i in range(N):
             specific = dict()
             specific["output"] = "output({})".format(i)
-            specific["ser_input"] = "wire({})({})".format(depth, i)
-            specific["ST"] = "S({})".format(depth - 1)
+            specific["ser_input"] = "wire({})({})".format(i, depth)
+            specific["ST"] = "S(S'high)"
             instances += kwargs["output"].as_instance(
                 "output_{}".format(i), generics, ports | specific
             )
@@ -277,14 +277,15 @@ class EvenOdd(Generator):
                     a = j
                     b = A[i][j]
                     specific = dict()
-                    specific["a"] = "wire({})({})".format(i, b)
-                    specific["b"] = "wire({})({})".format(i, a)
-                    specific["c"] = "wire({})({})".format(i + 1, b)
-                    specific["d"] = "wire({})({})".format(i + 1, a)
+                    specific["a"] = "wire({})({})".format(b, i)
+                    specific["b"] = "wire({})({})".format(a, i)
+                    specific["c"] = "wire({})({})".format(b, i + 1)
+                    specific["d"] = "wire({})({})".format(a, i + 1)
                     specific["S"] = "S({})".format(i)
                     instances += kwargs["cs"].as_instance(
                         "CS_{}d_{}x{}".format(i, a, b), generics, ports | specific
                     )
+        bypasses = ""
         for i in range(depth):
             for j in range(N):
                 if A[i][j] < 0:
@@ -293,9 +294,16 @@ class EvenOdd(Generator):
                     while bypass_end < depth and A[bypass_end][j] < 0:
                         A[bypass_end][j] = 0
                         bypass_end += 1
-                        instances += "wire({})({}) <= wire({})({});\n".format(
-                            bypass_end, j, bypass_beg, j
-                        )
+                    bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
+                        row=j, end=bypass_end, beg=bypass_beg
+                    )
+        if bypasses:
+            instances += (
+                "process\nbegin\nwait until rising_edge(CLK);\n{}end process;\n".format(
+                    bypasses
+                )
+            )
+
         tokens = {
             "top_name": top_name,
             "net_depth": depth,

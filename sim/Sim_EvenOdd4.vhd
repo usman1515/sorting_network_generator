@@ -64,6 +64,7 @@ architecture Behavioral of Sim_EvenOdd8 is
     signal E : std_logic := '0';
 
     signal A : InOutArray(3 downto 0)(W-1 downto 0) := (X"5C", X"2B", X"A8", X"F2");
+    signal A_Sorted : InOutArray(3 downto 0)(W-1 downto 0) := (X"F2", X"A8", X"5C", X"2B");
     signal B : InOutArray(3 downto 0)(W-1 downto 0) := (others => (others => '0'));
 
 begin
@@ -92,31 +93,37 @@ begin
 
     begin
 
+
         E <= '0';
         wait for ckTime/2;
         R <= '1';
         wait for ckTime;
         R <= '0';
         E <= '1';
-        wait for (W-1)*ckTime;
-        -- assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
-        --   " A= " & integer'image(to_integer(unsigned(larger_value))) &
-        --   " B= " & integer'image(to_integer(unsigned(smaller_value))) &
-        --   " C= " & integer'image(to_integer(unsigned(C))) &
-        --   " D= " & integer'image(to_integer(unsigned(D))) &
-        --   " Expectation A=C and B=D";
+        wait for (W)*ckTime;
+        A <= (X"42", X"F1", X"A1", X"F2");
 
+        wait for 2*ckTime;
+        for i in 0 to 3 loop
+          assert B(i) = A_Sorted(i) report "Mismatch:: " &
+            " i=      " & integer'image(i) &
+            " B(i)=   " & integer'image(to_integer(unsigned(B(i)))) &
+            " A_Sorted(i)= " & integer'image(to_integer(unsigned(A_Sorted(i)))) &
+            " Expectation  B(i) = A_Sorted(i)";
+        end loop;
+        wait for ckTime;
+        A_Sorted <= (X"F2", X"F1", X"A1", X"42");
 
-        -- A <= X"a6";
-        -- B <= X"b7";
+        wait for W*ckTime;
 
-        -- wait for (w-1)*ckTime;
-        -- assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
-        --   " A= " & integer'image(to_integer(unsigned(smaller_value))) &
-        --   " B= " & integer'image(to_integer(unsigned(larger_value))) &
-        --   " C= " & integer'image(to_integer(unsigned(C))) &
-        --   " D= " & integer'image(to_integer(unsigned(D))) &
-        --   " Expectation A=D and B=C";
+        for i in 0 to 3 loop
+          assert B(i) = A_Sorted(i) report "Mismatch:: " &
+            " i=      " & integer'image(i) &
+            " B(i)=   " & integer'image(to_integer(unsigned(B(i)))) &
+            " A_Sorted(i)= " & integer'image(to_integer(unsigned(A_Sorted(i)))) &
+            " Expectation  B(i) = A_Sorted(i)";
+        end loop;
+
         wait;
 
     end process;

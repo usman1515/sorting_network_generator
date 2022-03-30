@@ -95,7 +95,7 @@ architecture Behavioral of SortNetSimple is
   signal wire : GRID2D := (others => (others => '0'));
 
 
-  signal S  : std_logic_vector(2 downto 0) := (others=> '0');
+  signal S  : std_logic_vector(3 downto 0) := (others=> '0');
 
 begin
 
@@ -109,7 +109,7 @@ begin
         E          => E,
         LD         => S(S'low),
         input      => input(i),
-        ser_output => wire(0)(i));
+        ser_output => wire(i)(0));
   end generate InputShift;
 
   OutputShift :
@@ -122,57 +122,61 @@ begin
         E         => E,
         ST        => S(S'high),
         output    => output(i),
-        ser_input => wire(3)(i));
+        ser_input => wire(i)(3));
   end generate OutputShift;
 
   BitCS_Sync_0 : BitCS_Sync
     port map(
       CLK => CLK,
-      a => wire(0)(1),
+      a => wire(1)(0),
       b => wire(0)(0),
       c => wire(1)(1),
-      d => wire(1)(0),
+      d => wire(0)(1),
       S => S(0)
       );
   BitCS_Sync_1 : BitCS_Sync
     port map(
       CLK => CLK,
-      a => wire(0)(3),
-      b => wire(0)(2),
-      c => wire(1)(3),
-      d => wire(1)(2),
+      a => wire(3)(0),
+      b => wire(2)(0),
+      c => wire(3)(1),
+      d => wire(2)(1),
       S => S(0)
       );
   BitCS_Sync_2 : BitCS_Sync
     port map(
       CLK => CLK,
-      a => wire(1)(2),
-      b => wire(1)(0),
+      a => wire(2)(1),
+      b => wire(0)(1),
       c => wire(2)(2),
-      d => wire(2)(0),
+      d => wire(0)(2),
       S => S(1)
       );
   BitCS_Sync_3 : BitCS_Sync
     port map(
       CLK => CLK,
-      a => wire(1)(3),
+      a => wire(3)(1),
       b => wire(1)(1),
-      c => wire(2)(3),
-      d => wire(2)(1),
+      c => wire(3)(2),
+      d => wire(1)(2),
       S => S(1)
       );
   BitCS_Sync_4 : BitCS_Sync
     port map(
       CLK => CLK,
       a => wire(2)(2),
-      b => wire(2)(1),
-      c => wire(3)(2),
-      d => wire(3)(1),
+      b => wire(1)(2),
+      c => wire(2)(3),
+      d => wire(1)(3),
       S => S(2)
       );
 
-  wire(3)(3) <= wire(2)(3);
-  wire(3)(0) <= wire(2)(0);
+  process
+  begin
+    wait until rising_edge(CLK);
+    wire(3)(3 downto 2 + 1) <= wire(3)(3 - 1 downto 2);
+    wire(0)(3 downto 2 + 1) <= wire(0)(3 - 1 downto 2);
+  end process;
 
   CycleTimer_1 : CycleTimer
     generic map (
@@ -186,9 +190,7 @@ begin
    process
    begin
    wait until rising_edge(CLK);
-   for i in S'low to S'high-1 loop
-        S(i+1) <= S(i);
-   end loop;
+   S(S'high downto S'Low+1) <= S(S'high-1 downto S'low);
    end process;
 
 

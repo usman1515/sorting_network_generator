@@ -97,7 +97,7 @@ begin
         E <= '1';
         wait for (W)*ckTime;
         A <= (X"42", X"F1", X"A1", X"F2");
-
+        --A <= (others => (others => '0'));
         wait for 2*ckTime;
         for i in 0 to 3 loop
           assert B(i) = A_Sorted(i) report "Mismatch:: " &
