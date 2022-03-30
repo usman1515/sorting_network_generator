@@ -249,23 +249,25 @@ class EvenOdd(Generator):
         generics = {"W": bit_width}
         ports = {
             "CLK": "CLK",
-            "LD": "LD",
             "E": "E",
-            "ST": "ST",
-            "S": "S",
         }
         for i in range(N):
-            ports["input"] = "input({})".format(i)
-            ports["ser_output"] = "wire(0)({})".format(i)
+            specific = dict()
+            specific["input"] = "input({})".format(i)
+            specific["ser_output"] = "wire(0)({})".format(i)
+            specific["LD"] = "S({})".format(0)
+
             instances += kwargs["input"].as_instance(
-                "input_{}".format(i), generics, ports
+                "input_{}".format(i), generics, ports | specific
             )
 
         for i in range(N):
-            ports["output"] = "output({})".format(i)
-            ports["ser_input"] = "wire({})({})".format(depth, i)
+            specific = dict()
+            specific["output"] = "output({})".format(i)
+            specific["ser_input"] = "wire({})({})".format(depth, i)
+            specific["ST"] = "S({})".format(depth - 1)
             instances += kwargs["output"].as_instance(
-                "output_{}".format(i), generics, ports
+                "output_{}".format(i), generics, ports | specific
             )
 
         A = self.connection_matrix(N)
@@ -274,12 +276,14 @@ class EvenOdd(Generator):
                 if A[i][j] > j:
                     a = j
                     b = A[i][j]
-                    ports["a"] = "wire({})({})".format(i, b)
-                    ports["b"] = "wire({})({})".format(i, a)
-                    ports["c"] = "wire({})({})".format(i + 1, b)
-                    ports["d"] = "wire({})({})".format(i + 1, a)
+                    specific = dict()
+                    specific["a"] = "wire({})({})".format(i, b)
+                    specific["b"] = "wire({})({})".format(i, a)
+                    specific["c"] = "wire({})({})".format(i + 1, b)
+                    specific["d"] = "wire({})({})".format(i + 1, a)
+                    specific["S"] = "S({})".format(i)
                     instances += kwargs["cs"].as_instance(
-                        "CS_{}d_{}x{}".format(i, a, b), generics, ports
+                        "CS_{}d_{}x{}".format(i, a, b), generics, ports | specific
                     )
         for i in range(depth):
             for j in range(N):

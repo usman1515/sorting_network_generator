@@ -6,8 +6,8 @@ for i in {2..10}; do
     python netgen.py generate evenodd \
         -input LoadShiftRegister \
         -output StoreShiftRegister \
-        -cs BitCS \
-        -template SortNet.vhd \
+        -cs BitCS_Sync \
+        -template SortNetSync.vhd \
         -N $pow
 
 done
