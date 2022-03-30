@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCSwithShiftReg_Sim - Behavioral
+-- Module Name: Sim_BitCS_ShiftReg - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -31,13 +31,13 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity BitCSwithShiftReg_Sim is
+entity Sim_BitCS_ShiftReg is
   generic(
     w : integer := 8
     );
-end BitCSwithShiftReg_Sim;
+end Sim_BitCS_ShiftReg;
 
-architecture Behavioral of BitCSwithShiftReg_Sim is
+architecture Behavioral of Sim_BitCS_ShiftReg is
 
   component BitCS is
     port (

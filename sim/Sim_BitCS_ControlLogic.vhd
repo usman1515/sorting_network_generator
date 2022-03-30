@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_ControlLogic_Sim - Behavioral
+-- Module Name: Sim_BitCS_ControlLogic - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -31,13 +31,13 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity BitCS_ControlLogic_Sim is
+entity Sim_BitCS_ControlLogic is
   generic(
     w : integer := 8
     );
-end BitCS_ControlLogic_Sim;
+end Sim_BitCS_ControlLogic;
 
-architecture Behavioral of BitCS_ControlLogic_Sim is
+architecture Behavioral of Sim_BitCS_ControlLogic is
 
   component BitCS is
     port (
@@ -74,9 +74,7 @@ architecture Behavioral of BitCS_ControlLogic_Sim is
       CLK : in  std_logic;
       R   : in  std_logic;
       E   : in  std_logic;
-      LD  : out std_logic;
-      S   : out std_logic;
-      ST  : out std_logic);
+      S   : out std_logic);
   end component CycleTimer;
 
   constant ckTime : time := 10 ns;
@@ -88,9 +86,9 @@ architecture Behavioral of BitCS_ControlLogic_Sim is
   signal out0 : std_logic := '0';
   signal out1 : std_logic := '0';
 
-  signal LD : std_logic := '0';
+  
   signal S  : std_logic := '0';
-  signal ST : std_logic := '0';
+  
   signal E  : std_logic := '0';
   signal R  : std_logic := '0';
 
@@ -122,9 +120,7 @@ begin
       CLK => CLK,
       R   => R,
       E   => E,
-      LD  => LD,
-      S   => S,
-      ST  => ST);
+      S   => S);
 
   LoadShiftRegister_1 : LoadShiftRegister
     generic map (
@@ -132,7 +128,7 @@ begin
     port map (
       CLK        => CLK,
       E          => E,
-      LD         => LD,
+      LD         => S,
       input      => A,
       ser_output => in0);
   LoadShiftRegister_2 : LoadShiftRegister
@@ -141,7 +137,7 @@ begin
     port map (
       CLK        => CLK,
       E          => E,
-      LD         => LD,
+      LD         => S,
       input      => B,
       ser_output => in1);
 
@@ -151,7 +147,7 @@ begin
     port map (
       CLK       => CLK,
       E          => E,
-      ST        => ST,
+      ST        => S,
       ser_input => out0,
       output    => C);
   StoreShiftRegister_2 : StoreShiftRegister
@@ -160,7 +156,7 @@ begin
     port map (
       E          => E,
       CLK       => CLK,
-      ST        => ST,
+      ST        => S,
       ser_input => out1,
       output    => D);
 

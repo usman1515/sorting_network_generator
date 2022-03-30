@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_EvenOdd8_Sim - Behavioral
+-- Module Name: Sim_EvenOdd8 - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -34,10 +34,10 @@ use IEEE.NUMERIC_STD.all;
 library work;
 use work.CustomTypes.all;
 
-entity BitCS_EvenOdd8_Sim is
-end BitCS_EvenOdd8_Sim;
+entity Sim_EvenOdd8 is
+end Sim_EvenOdd8;
 
-architecture Behavioral of BitCS_EvenOdd8_Sim is
+architecture Behavioral of Sim_EvenOdd8 is
     constant W : integer := 8;
     constant Depth : integer := 3;
     constant N : integer := 4;

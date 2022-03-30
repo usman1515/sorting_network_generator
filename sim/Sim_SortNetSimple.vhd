@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_SortNetSimple_Sim - Behavioral
+-- Module Name: Sim_BitCS_SortNetSimple - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -34,10 +34,10 @@ use IEEE.NUMERIC_STD.all;
 library work;
 use work.CustomTypes.all;
 
-entity BitCS_SortNetSimple_Sim is
-end BitCS_SortNetSimple_Sim;
+entity Sim_SortNetSimple is
+end Sim_SortNetSimple;
 
-architecture Behavioral of BitCS_SortNetSimple_Sim is
+architecture Behavioral of Sim_SortNetSimple is
     constant W : integer := 8;
     constant Depth : integer := 3;
     constant N : integer := 4;

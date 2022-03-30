@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_Sync_Sim - Behavioral
+-- Module Name: Sim_BitCS_Sync - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -31,20 +31,20 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity BitCS_Sync_Sim is
+entity Sim_BitCS_Sync is
 --  Port ( );
-end BitCS_Sync_Sim;
+end Sim_BitCS_Sync;
 
-architecture Behavioral of BitCS_Sync_Sim is
+architecture Behavioral of Sim_BitCS_Sync is
 
   constant ckTime : time := 10 ns;
 
-  signal CLK : std_logic;
+  signal CLK   : std_logic;
   signal a     : std_logic := '0';
   signal b     : std_logic := '0';
   signal c     : std_logic := '0';
   signal d     : std_logic := '0';
-  signal S : std_logic := '0';
+  signal S     : std_logic := '0';
 
   signal Av : std_logic_vector(7 downto 0):= (others => '0');
   signal Bv : std_logic_vector(7 downto 0):= (others => '0');
@@ -58,7 +58,7 @@ architecture Behavioral of BitCS_Sync_Sim is
       b     : in  std_logic;
       c     : out std_logic;
       d     : out std_logic;
-      S : in  std_logic);
+      S     : in  std_logic);
   end component BitCS_Sync;
 
 begin
@@ -84,7 +84,7 @@ begin
   test_process : process
 
   begin
-    wait for ckTime;
+    wait for ckTime/2;
     -- State transitions with S enabled.
     -- S <= '1';
     -- for i in std_logic range '0' to '1' loop
@@ -108,16 +108,28 @@ begin
     Av    <= "01010101";
     Bv    <= "10101010";
     wait for ckTime;
+    
     S <= '1';
-    for i in Av'low to Av'high loop
-      a <= Av(Av'high - i);
-      b <= Bv(Bv'high - i);
-
+    a <= Av(Av'high);
+    b <= Bv(Bv'high);
+    wait for ckTime;
+    
+    S           <= '0';
+    
+    for i in Av'low to Av'high-1 loop 
+      a <= Av(Av'high-i -1);
+      b <= Bv(Bv'high-i -1);
       wait for ckTime;
+      
       Cv(Cv'high - i) <= c;
-      Dv(DV'high - i) <= d;
-      S           <= '0';
+      Dv(DV'high - i) <= d;  
     end loop;
+    
+    wait for ckTime;
+    Cv(0) <= c;
+    Dv(0) <= d;
+    
+    
     assert ((Av = Dv) and (Bv = Cv)) report "Mismatch:: " &
       " Av= " & integer'image(to_integer(unsigned(Av))) &
       " Bv= " & integer'image(to_integer(unsigned(Bv))) &

@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_Sim - Behavioral
+-- Module Name: Sim_BitCS - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -31,11 +31,11 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity BitCS_Sim is
+entity Sim_BitCS is
 --  Port ( );
-end BitCS_Sim;
+end Sim_BitCS;
 
-architecture Behavioral of BitCS_Sim is
+architecture Behavioral of Sim_BitCS is
 
   constant ckTime : time := 10 ns;
 

@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: BitCS_SmallNet_Sim - Behavioral
+-- Module Name: Sim_BitCS_SmallNet - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -31,13 +31,13 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity BitCS_SmallNet_Sim is
+entity Sim_BitCS_SmallNet is
   generic(
     w : integer := 8
     );
-end BitCS_SmallNet_Sim;
+end Sim_BitCS_SmallNet;
 
-architecture Behavioral of BitCS_SmallNet_Sim is
+architecture Behavioral of Sim_BitCS_SmallNet is
 
   component BitCS is
     port (

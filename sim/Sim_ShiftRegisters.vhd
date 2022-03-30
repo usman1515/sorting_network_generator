@@ -31,14 +31,14 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity ShiftRegisters_Sim is
+entity Sim_ShiftRegisters is
 --  Port ( );
   generic(
     w : integer := 8
     );
-end ShiftRegisters_Sim;
+end Sim_ShiftRegisters;
 
-architecture Behavioral of ShiftRegisters_Sim is
+architecture Behavioral of Sim_ShiftRegisters is
 
   component LoadShiftRegister is
     generic (

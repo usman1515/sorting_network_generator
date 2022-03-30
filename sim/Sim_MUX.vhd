@@ -4,7 +4,7 @@
 -- 
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name: 
--- Module Name: MUX_Sim - Behavioral
+-- Module Name: Sim_MUX - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
@@ -31,11 +31,11 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity MUX_Sim is
+entity Sim_MUX is
 --  Port ( );
-end MUX_Sim;
+end Sim_MUX;
 
-architecture Behavioral of MUX_Sim is
+architecture Behavioral of Sim_MUX is
 
   constant ckTime : time := 10 ns;
 
