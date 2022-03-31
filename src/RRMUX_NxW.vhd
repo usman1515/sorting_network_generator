@@ -1,10 +1,9 @@
-------------------
 -- Company:
 -- Engineer:
 --
 -- Create Date:
 -- -- Design Name:
--- Module Name: DeMUX_NxWGalois - Behavioral
+-- Module Name: MUX_NxW - Behavioral
 -- Project Name::
 -- Target Devices:
 -- Tool Versions:
@@ -35,7 +34,7 @@ use IEEE.NUMERIC_STD.all;
 library work;
 use work.CustomTypes.all;
 
-entity DeMUX_NxW is
+entity RRMUX_NxW is
 generic(
   W : integer := 8;
   N : integer := 8
@@ -44,12 +43,12 @@ port(
     CLK : in std_logic;
     E : in std_logic;
     R : in std_logic;
-    input : in std_logic_vector(W-1 downto 0);
-    output : out InOutArray(N-1 downto 0)(W-1 downto 0)
+    input : in InOutArray(N-1 downto 0)(W-1 downto 0);
+    output : out std_logic_vector(W-1 downto 0)
 );
-end DeMUX_NxW;
+end RRMUX_NxW;
 
-architecture Behavioral of DeMUX_NxW is
+architecture Behavioral of RRMUX_NxW is
   signal count : integer range 0 to N-1 := 0;
 begin
 
@@ -65,14 +64,10 @@ begin
         end if;
     end process;
 
-    DEMUX : process
+    MUX : process
     begin
       wait until rising_edge(CLK);
-      if R = '1' then
-        output <= (others => (others => '0'));
-      else
-        output(count) <= input;
-      end if;
+      output <= input(count);
     end process;
 
 end Behavioral;

@@ -4,7 +4,7 @@
 --
 -- Create Date: 03/10/2022 04:55:22 PM
 -- Design Name:
--- Module Name: Sim_DeMUX_NxW - Behavioral
+-- Module Name: Sim_RRDMUX_NxW - Behavioral
 -- Project Name:
 -- Target Devices:
 -- Tool Versions:
@@ -35,23 +35,12 @@ library work;
 use work.CustomTypes.all;
 
 
-entity Sim_DeMUX_NxW is
+entity Sim_LFSR_RRDMUX_RRMUX is
 --  Port ( );
-end Sim_DeMUX_NxW;
+end Sim_LFSR_RRDMUX_RRMUX;
 
-architecture Behavioral of Sim_DeMUX_NxW is
+architecture Behavioral of Sim_LFSR_RRDMUX_RRMUX is
 
-  constant ckTime : time := 10 ns;
-  constant W : integer := 8;
-  constant N : integer := 8;
-  constant P : std_logic_vector(W-1 downto 0) := "10111000";
-  constant seed : std_logic_vector(W-1 downto 0) := X"5A";
-  
-  signal CLK   : std_logic;
-  signal R : std_logic;
-  signal E :std_logic;
-  signal input: std_logic_vector(W-1 downto 0) := (others => '0');
-  signal output : InOutArray(N-1 downto 0)(W-1 downto 0) := (others => (others => '0'));
 
   component LFSR is
     generic (
@@ -65,7 +54,7 @@ architecture Behavioral of Sim_DeMUX_NxW is
       output : out std_logic_vector(W-1 downto 0));
   end component LFSR;
 
-  component DeMUX_NxW is
+  component RRDMUX_NxW is
     generic (
       W : integer;
       N : integer);
@@ -75,7 +64,33 @@ architecture Behavioral of Sim_DeMUX_NxW is
       R      : in  std_logic;
       input  : in  std_logic_vector(W-1 downto 0);
       output : out InOutArray(N-1 downto 0)(W-1 downto 0));
-  end component DeMUX_NxW;
+  end component RRDMUX_NxW;
+
+  component RRMUX_NxW is
+    generic (
+      W : integer;
+      N : integer);
+    port (
+      CLK    : in  std_logic;
+      E      : in  std_logic;
+      R      : in  std_logic;
+      input  : in  InOutArray(N-1 downto 0)(W-1 downto 0);
+      output : out std_logic_vector(W-1 downto 0));
+  end component RRMUX_NxW;
+
+  constant ckTime : time := 10 ns;
+  constant W : integer := 8;
+  constant N : integer := 8;
+  constant P : std_logic_vector(W-1 downto 0) := "10111000";
+  constant seed : std_logic_vector(W-1 downto 0) := X"5A";
+
+  signal CLK   : std_logic;
+  signal R : std_logic;
+  signal E :std_logic;
+  signal input: std_logic_vector(W-1 downto 0) := (others => '0');
+  signal inter : InOutArray(N-1 downto 0)(W-1 downto 0) := (others => (others => '0'));
+  signal output: std_logic_vector(W-1 downto 0) := (others => '0');
+
 begin
 
   CLK_process : process
@@ -97,7 +112,7 @@ begin
       seed   => seed,
       output => input);
 
-  DeMUX_NxW_1: entity work.DeMUX_NxW
+  RRDMUX_NxW_1: entity work.RRDMUX_NxW
     generic map (
       W => W,
       N => N)
@@ -106,10 +121,20 @@ begin
       E      => E,
       R      => R,
       input  => input,
+      output => inter);
+
+  RRMUX_NxW_1: entity work.RRMUX_NxW
+    generic map (
+      W => W,
+      N => N)
+    port map (
+      CLK    => CLK,
+      E      => E,
+      R      => R,
+      input  => inter,
       output => output);
 
   test_process : process
-
   begin
     wait for ckTime/2;
     R <= '1';
