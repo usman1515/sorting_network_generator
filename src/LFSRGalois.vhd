@@ -4,7 +4,7 @@
 --
 -- Create Date:
 -- -- Design Name:
--- Module Name: LSFRGalois - Behavioral
+-- Module Name: LFSRGalois - Behavioral
 -- Project Name::
 -- Target Devices:
 -- Tool Versions:
@@ -32,10 +32,10 @@ use IEEE.NUMERIC_STD.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity LSFR is
+entity LFSR is
     generic(
       W : integer := 8;
-      P : std_logic_vector(W-1 downto 0) := "10001101"
+      P : std_logic_vector := "10001101"
     );
     port(
       CLK : in std_logic;
@@ -44,9 +44,9 @@ entity LSFR is
       seed: in std_logic_vector(W-1 downto 0);
       output : out std_logic_vector(W-1 downto 0)
     );
-end LSFR;
+end LFSR;
 
-architecture Behavioral of LSFR is
+architecture Behavioral of LFSR is
   signal reg : std_logic_vector(W-1 downto 0):= (others=>'0');
   signal mask : std_logic_vector(W-1 downto 0):= (others=>'0');
 begin

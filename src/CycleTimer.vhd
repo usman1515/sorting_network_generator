@@ -62,7 +62,7 @@ begin
 
   process(R, count)
   begin
-    S   <= '1' when count =1 and R ='0' else '0';
+    S   <= '1' when count = 1 and R ='0' else '0';
   end process;
 
 end Behavioral;
