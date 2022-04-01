@@ -55,7 +55,7 @@ begin
     Counter : process
     begin
     wait until rising_edge(CLK);
-        if R = '1' or count = w-1 then
+        if R = '1' or count = N-1 then
             count <= 0;
         else
           if E = '1' then
