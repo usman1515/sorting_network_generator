@@ -1,0 +1,39 @@
+#+TITLE: ReadMe MSort
+
+* BitCS MSort
+*Warning:* Most files use VHDL2008 features!
+In order to change all files in the Vivado Project to VHDL2008, search and replace all occurrences of
+#+begin_src
+<FileInfo>
+#+end_src
+with
+#+begin_src
+<FileInfo SFType="VHDL2008">
+#+end_src
+in the .xpr Vivado project file.
+** Folder Structure
+- src :: vhdl sources.
+- sim :: vhdl simulation sources.
+- lib :: vhdl library files.
+- templates :: Templates for network generating script.
+** Network Generator Script
+*** Installation
+For "netgen.py" to run, install required packages with
+
+#+begin_src bash
+pip3 install -r requirements.txt
+#+end_src
+
+*** Usage
+For list of available components and templates run
+#+begin_src bash
+python netgen.py list
+#+end_src
+By appending a specific component name, all generics and ports will be listed.
+
+For generating a network, run netgen with generate.
+Example:
+#+begin_src bash
+python netgen.py generate evenodd -input LoadShiftRegister -output StoreShiftRegister -cs BitCS_Sync -template SortNetSync.vhd - N 2
+#+end_src
+This will generate a 2-input Odd-Even network with Load- and StoreShiftRegisters as IO, Synchronous BitCS as CS and SortNetSync.vhd as template.
