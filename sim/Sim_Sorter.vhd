@@ -166,7 +166,7 @@ begin
 
     EnableDelay_1: entity work.ShiftRegister
       generic map (
-        W => N-1) --min(N,W))
+        W => N-1) --min(N,W) -1 )
       port map (
         CLK   => CLK,
         E     => not R,
