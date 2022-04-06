@@ -63,7 +63,7 @@ architecture Behavioral of Sim_LFSR_RRDMUX_RRMUX is
       E      : in  std_logic;
       R      : in  std_logic;
       input  : in  std_logic_vector(W-1 downto 0);
-      output : out InOutArray(N-1 downto 0)(W-1 downto 0));
+      output : out SLVArray(N-1 downto 0)(W-1 downto 0));
   end component RRDMUX_NxW;
 
   component RRMUX_NxW is
@@ -74,7 +74,7 @@ architecture Behavioral of Sim_LFSR_RRDMUX_RRMUX is
       CLK    : in  std_logic;
       E      : in  std_logic;
       R      : in  std_logic;
-      input  : in  InOutArray(N-1 downto 0)(W-1 downto 0);
+      input  : in  SLVArray(N-1 downto 0)(W-1 downto 0);
       output : out std_logic_vector(W-1 downto 0));
   end component RRMUX_NxW;
 
@@ -88,7 +88,7 @@ architecture Behavioral of Sim_LFSR_RRDMUX_RRMUX is
   signal R : std_logic;
   signal E :std_logic;
   signal input: std_logic_vector(W-1 downto 0) := (others => '0');
-  signal inter : InOutArray(N-1 downto 0)(W-1 downto 0) := (others => (others => '0'));
+  signal inter : SLVArray(N-1 downto 0)(W-1 downto 0) := (others => (others => '0'));
   signal output: std_logic_vector(W-1 downto 0) := (others => '0');
 
 begin

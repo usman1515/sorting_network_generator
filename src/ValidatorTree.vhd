@@ -41,8 +41,8 @@ port(
     CLK : in std_logic;
     E : in std_logic;
     R : in std_logic;
-    input_max : in InOutArray(N/W-1 downto 0)(W-1 downto 0);
-    input_min : in InOutArray(N/W-1 downto 0)(W-1 downto 0);
+    input_max : in SLVArray(N/W-1 downto 0)(W-1 downto 0);
+    input_min : in SLVArray(N/W-1 downto 0)(W-1 downto 0);
     valid_in  : in std_logic_vector(N/W-1 downto 0);
     valid_out : out std_logic
 );

@@ -52,8 +52,8 @@ architecture Behavioral of Sim_EvenOdd8 is
             CLK    : in  std_logic;
             E      : in  std_logic;
             R      : in  std_logic;
-            input  : in  InOutArray(N-1 downto 0)(W-1 downto 0);
-            output : out InOutArray(N-1 downto 0)(W-1 downto 0)
+            input  : in  SLVArray(N-1 downto 0)(W-1 downto 0);
+            output : out SLVArray(N-1 downto 0)(W-1 downto 0)
         );
     end component EvenOdd4;
 
@@ -63,9 +63,9 @@ architecture Behavioral of Sim_EvenOdd8 is
     signal R : std_logic := '0';
     signal E : std_logic := '0';
 
-    signal A : InOutArray(3 downto 0)(W-1 downto 0) := (X"5C", X"2B", X"A8", X"F2");
-    signal A_Sorted : InOutArray(3 downto 0)(W-1 downto 0) := (X"F2", X"A8", X"5C", X"2B");
-    signal B : InOutArray(3 downto 0)(W-1 downto 0) := (others => (others => '0'));
+    signal A : SLVArray(3 downto 0)(W-1 downto 0) := (X"5C", X"2B", X"A8", X"F2");
+    signal A_Sorted : SLVArray(3 downto 0)(W-1 downto 0) := (X"F2", X"A8", X"5C", X"2B");
+    signal B : SLVArray(3 downto 0)(W-1 downto 0) := (others => (others => '0'));
 
 begin
 

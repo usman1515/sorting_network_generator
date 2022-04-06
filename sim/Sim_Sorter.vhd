@@ -42,6 +42,45 @@ architecture Behavioral of Sim_Sorter is
     constant Depth : integer := 3;
     constant N : integer := 4;
 
+    component ValidatorTree is
+      generic (
+        W : integer;
+        N : integer);
+      port (
+        CLK       : in  std_logic;
+        E         : in  std_logic;
+        R         : in  std_logic;
+        input_max : in  SLVArray(N/W-1 downto 0)(W-1 downto 0);
+        input_min : in  SLVArray(N/W-1 downto 0)(W-1 downto 0);
+        valid_in  : in  std_logic_vector(N/W-1 downto 0);
+        valid_out : out std_logic);
+    end component ValidatorTree;
+
+    component Validator is
+      generic (
+        W : integer);
+      port (
+        CLK   : in  std_logic;
+        E     : in  std_logic;
+        R     : in  std_logic;
+        input : in  std_logic_vector(W-1 downto 0);
+        maxV  : out std_logic_vector(W-1 downto 0);
+        minV  : out std_logic_vector(W-1 downto 0);
+        valid : out std_logic);
+    end component Validator;
+
+    component RRMUX_NxW is
+      generic (
+        W : integer;
+        N : integer);
+      port (
+        CLK    : in  std_logic;
+        E      : in  std_logic;
+        R      : in  std_logic;
+        input  : in  SLVArray(N-1 downto 0)(W-1 downto 0);
+        output : out std_logic_vector(W-1 downto 0));
+    end component RRMUX_NxW;
+
     component SortNetSimple is
         generic (
             W : integer
@@ -50,8 +89,8 @@ architecture Behavioral of Sim_Sorter is
             CLK    : in  std_logic;
             E      : in  std_logic;
             R      : in  std_logic;
-            input  : in  InOutArray(N-1 downto 0)(W-1 downto 0);
-            output : out InOutArray(N-1 downto 0)(W-1 downto 0)
+            input  : in  SLVArray(N-1 downto 0)(W-1 downto 0);
+            output : out SLVArray(N-1 downto 0)(W-1 downto 0)
         );
     end component SortNetSimple;
 
@@ -75,20 +114,8 @@ architecture Behavioral of Sim_Sorter is
         E      : in  std_logic;
         R      : in  std_logic;
         input  : in  std_logic_vector(W-1 downto 0);
-        output : out InOutArray(N-1 downto 0)(W-1 downto 0));
+        output : out SLVArray(N-1 downto 0)(W-1 downto 0));
     end component RRDMUX_NxW;
-
-    component RRMUX_NxW is
-      generic (
-        W : integer;
-        N : integer);
-      port (
-        CLK    : in  std_logic;
-        E      : in  std_logic;
-        R      : in  std_logic;
-        input  : in  InOutArray(N-1 downto 0)(W-1 downto 0);
-        output : out std_logic_vector(W-1 downto 0));
-    end component RRMUX_NxW;
 
     component LFSR is
       generic (
@@ -110,11 +137,20 @@ architecture Behavioral of Sim_Sorter is
 
     signal R : std_logic := '0';
     signal E : std_logic_vector(3 downto 0) := (others => '0');
-
+    -- Output of LFSR
     signal LFSR_out : std_logic_vector(W-1 downto 0)            := (others => '0');
-    signal DMUX_out : InOutArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
-    signal SN_out   : InOutArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
+    -- Output of Round-Robin DMUX
+    signal DMUX_out : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
+    -- Output of Sorting Network
+    signal SN_out   : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
+    -- Output of Round-Robin Multiplexer
     signal MUX_out  : std_logic_vector(W-1 downto 0)            := (others => '0');
+    -- Outputs of Validators
+    signal ValMax_out : SLVArray(0 downto 0)(W-1 downto 0):= (others => (others => '0'));
+    signal ValMin_out : SLVArray(0 downto 0)(W-1 downto 0):= (others => (others => '0'));
+    signal ValLocal_out : std_logic_vector(0 downto 0) := (others => '0');
+    -- Output of Validator Tree.
+    signal ValT_out : std_logic := '0';
 
 begin
 
@@ -214,4 +250,30 @@ begin
         R     => R,
         s_in  => E(2),
         s_out => E(3));
+
+    Validator_1: entity work.Validator
+      generic map (
+        W => W)
+      port map (
+        CLK   => CLK,
+        E     => E(3),
+        R     => R,
+        input => MUX_out,
+        maxV  => ValMax_out(0),
+        minV  => ValMin_out(0),
+        valid => ValLocal_out(0));
+
+    ValidatorTree_1: entity work.ValidatorTree
+      generic map (
+        W => W,
+        N => N)
+      port map (
+        CLK       => CLK,
+        E         => not R,
+        R         => R,
+        input_max => ValMax_out,
+        input_min => ValMin_out,
+        valid_in  => ValLocal_out,
+        valid_out => ValT_out);
+
 end Behavioral;

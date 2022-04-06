@@ -69,14 +69,14 @@ architecture Behavioral of Sim_Validator is
       CLK       : in  std_logic;
       E         : in  std_logic;
       R         : in  std_logic;
-      input_max : in  InOutArray(N/W-1 downto 0)(W-1 downto 0);
-      input_min : in  InOutArray(N/W-1 downto 0)(W-1 downto 0);
+      input_max : in  SLVArray(N/W-1 downto 0)(W-1 downto 0);
+      input_min : in  SLVArray(N/W-1 downto 0)(W-1 downto 0);
       valid_in  : in std_logic_vector(N/W-1 downto 0);
       valid_out : out std_logic);
   end component ValidatorTree;
 
-  signal local_max : InOutArray(N/W -1 downto 0 )(W-1 downto 0) := (others => (others => '0'));
-  signal local_min : InOutArray(N/W -1 downto 0 )(W-1 downto 0):= (others => (others => '0'));
+  signal local_max : SLVArray(N/W -1 downto 0 )(W-1 downto 0) := (others => (others => '0'));
+  signal local_min : SLVArray(N/W -1 downto 0 )(W-1 downto 0):= (others => (others => '0'));
   signal local_valid : std_logic_vector(N/W -1 downto 0) := (others => '0');
   signal valid : std_logic := '1';
   signal A : std_logic_vector(W-1 downto 0) := (others => '0');

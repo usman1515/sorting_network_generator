@@ -43,8 +43,8 @@ entity SortNetSimple is
     CLK    : in  std_logic;
     E      : in  std_logic;
     R      : in  std_logic;
-    input  : in  InOutArray(3 downto 0)(w-1 downto 0);
-    output : out InOutArray(3 downto 0)(w-1 downto 0)
+    input  : in  SLVArray(3 downto 0)(w-1 downto 0);
+    output : out SLVArray(3 downto 0)(w-1 downto 0)
     );
 end SortNetSimple;
 

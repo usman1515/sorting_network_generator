@@ -45,7 +45,7 @@ port(
     E : in std_logic;
     R : in std_logic;
     input : in std_logic_vector(W-1 downto 0);
-    output : out InOutArray(N-1 downto 0)(W-1 downto 0)
+    output : out SLVArray(N-1 downto 0)(W-1 downto 0)
 );
 end RRDMUX_NxW;
 
