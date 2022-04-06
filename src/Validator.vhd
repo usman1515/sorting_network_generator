@@ -23,23 +23,34 @@ port(
 end Validator;
 
 architecture Behavioral of Validator is
-
+  signal valid_i : std_logic := '0';
 begin
 
   Validate: process
   begin
     wait until rising_edge(CLK);
     if R = '1' then
-      valid <= '1'; -- Input is assumed to be valid at the beginning.
+      valid_i <= '1'; -- Input is assumed to be valid at the beginning.
     else
       if E = '1' then
-        for i in 0 to N-1 loop
+        for i in 0 to N-2 loop
           -- If any input value is not in order, set valid to 0
-          if unsigned(input(i)) < unsigned(input(i+1)) then
-            valid <= '0';
+          if unsigned(input(i)) > unsigned(input(i+1)) then
+            valid_i <= '0';
           end if;
         end loop;
       end if;
+    end if;
+  end process;
+
+  OutputValid: process
+  begin
+    wait until rising_edge(CLK);
+    if R='0' and E='1' then
+      -- Only output valid_i if enabled and not reset.
+      valid <= valid_i;
+    else
+      valid <= '0';
     end if;
   end process;
 
