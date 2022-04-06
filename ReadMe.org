@@ -10,7 +10,7 @@ with
 #+begin_src
 <FileInfo SFType="VHDL2008">
 #+end_src
-in the .xpr Vivado project file.
+in the .xpr Vivado project file then close and open the project to update config.
 ** Folder Structure
 - src :: vhdl sources.
 - sim :: vhdl simulation sources.
@@ -37,3 +37,9 @@ Example:
 python netgen.py generate evenodd -input LoadShiftRegister -output StoreShiftRegister -cs BitCS_Sync -template SortNetSync.vhd - N 2
 #+end_src
 This will generate a 2-input Odd-Even network with Load- and StoreShiftRegisters as IO, Synchronous BitCS as CS and SortNetSync.vhd as template.
+
+Alternatively run
+#+begin_src bash
+./build.sh
+#+end_src
+to build a set of networks from N=4 to 1024.
