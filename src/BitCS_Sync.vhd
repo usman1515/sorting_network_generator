@@ -1,126 +1,109 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
+-- Author: Stephan Proß
+--
 -- Create Date: 03/08/2022 02:46:11 PM
--- Design Name: 
+-- Design Name:
 -- Module Name: BitCS_Sync - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Bitserial Compare Swap in the traditional synchronous variant.
+--
+--
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
+entity BITCS_SYNC is
+  port (
+    -- System Clock.
+    CLK   : in    std_logic;
+    -- Enable signal.
+    E     : in    std_logic;
+    -- Serial input of operand A
+    A0    : in    std_logic;
+    -- Serial input of operand B
+    B0    : in    std_logic;
+    -- Serial output of operand A
+    A1    : out   std_logic;
+    -- Serial output of operand B
+    B1    : out   std_logic;
+    -- Start signal marking start of new word. Acts essentially as a reset.
+    START : in    std_logic
+  );
+end entity BITCS_SYNC;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
--- library UNISIM;
--- use UNISIM.VComponents.all;
+architecture BEHAVIORAL of BITCS_SYNC is
 
-entity BitCS_Sync is
-    port (
-        CLK : in std_logic;
-        a : in  std_logic;
-        b : in  std_logic;
-        c : out std_logic;
-        d : out std_logic;
-        S : in  std_logic
-    );
-end BitCS_Sync;
+  -- The only known way to ensure encoding while allowing access to encoding bits.
+  constant EQUAL    : std_logic_vector(1 downto 0)  := "00";
+  constant GREATER  : std_logic_vector(1 downto 0)  := "01";
+  constant LESSER   : std_logic_vector(1 downto 0)  := "10";
 
-
-architecture Behavioral of BitCS_Sync is
-
-    component MUX is
-        port (
-            a   : in  std_logic;
-            b   : in  std_logic;
-            sel : in  std_logic;
-            c   : out std_logic;
-            d   : out std_logic);
-    end component MUX;
-
-    signal state : std_logic_vector(1 downto 0) := "00";
-    signal nstate : std_logic_vector(1 downto 0) := "00";
-    signal c_s : std_logic := '0';
-    signal d_s : std_logic := '0';
+  signal state      : std_logic_vector(1 downto 0);
+  signal a1_i       : std_logic;
+  signal b1_i       : std_logic;
 
 begin
 
-    process(a, b, S, state)
-    begin
+  MUX_2X2_SYNC_1 : entity work.MUX_2X2_SYNC
+    port map (
+      A0  => A0,
+      B0  => B0,
+      SEL => state(1),
+      A1  => A1,
+      B1  => B1
+    );
+
+  -- MOORE_FSM -----------------------------------------------------------------------
+  -- Implements an asynchonous Moore FSM with the modificationthe of current state
+  -- being only dependent on the previous state if START is not set. Otherwise,
+  -- acts as a normal FSM.
+  ------------------------------------------------------------------------------------
+  MOORE_FSM : process (CLK) is
+  begin
+
+    if (rising_edge(CLK)) then
+      -- With START set, state is only dependent on input and assumes
+      -- corresponding state.
+      if (START = '1') then
+        if (A0 = '1' and B0 = '0') then
+          state <= GREATER;
+        elsif (A0 = '0' and B0 = '1') then
+          state <= LESSER;
+        else
+          state <= EQUAL;
+        end if;
+      else
+        -- With START unset, only the EQUAL state allows transition into other
+        -- states. Once the operand A is asserted as greater or lesser than B,
+        -- the state remains "locked".
         case state is
-            when "00" =>
-                if a = '1' and b = '0' then
-                    nstate <= "01";
-                elsif a = '0' and b = '1' then
-                    nstate <= "10";
-                else
-                    nstate <= "00";
-                end if;
-            when "01" =>
-                if S = '1' then
-                    if a = '1' and b = '0' then
-                        nstate <= "01";
-                    elsif a = '0' and b = '1' then
-                        nstate <= "10";
-                    else
-                        nstate <= "00";
-                    end if;
-                else
-                    nstate <= "01";
-                end if;
-            when "10" =>
-                if S = '1' then
-                    if a = '1' and b = '0' then
-                        nstate <= "01";
-                    elsif a = '0' and b = '1' then
-                        nstate <= "10";
-                    else
-                        nstate <= "00";
-                    end if;
-                else
-                    nstate <= "10";
-                end if;
-            when others =>
-                nstate <= "00";
+
+          when EQUAL =>
+            if (A0 = '1' and B0 = '0') then
+              state <= GREATER;
+            elsif (A0 = '0' and B0 = '1') then
+              state <= LESSER;
+            else
+              state <= EQUAL;
+            end if;
+
+          when GREATER =>
+            state <= GREATER;
+
+          when LESSER =>
+            state <= LESSER;
+
+          when others =>
+            state <= EQUAL;
+
         end case;
-    end process;
 
-    process
-    begin
-        wait until rising_edge(CLK);
-        state <= nstate;
-    end process;
+      end if;
+    end if;
 
-    MUX_1: MUX
-        port map (
-            a   => a,
-            b   => b,
-            sel => nstate(1),
-            c   => c_s,
-            d   => d_s);
+  end process MOORE_FSM;
 
-    process
-    begin
-        wait until rising_edge(CLK);
-        c <= c_s;
-        d <= d_s;
-
-    end process;
-
-end Behavioral;
+end architecture BEHAVIORAL;
