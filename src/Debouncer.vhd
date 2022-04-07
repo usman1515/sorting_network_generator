@@ -1,43 +1,64 @@
+----------------------------------------------------------------------------------
+-- Author: Stephan Proß
+--
+-- Create Date: 03/08/2022 02:46:11 PM
+-- Design Name:
+-- Module Name: Debouncer - BEHAVIORAL
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Debounces input signal.
+--
+----------------------------------------------------------------------------------
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
-use IEEE.NUMERIC_STD.all;
-
-entity Debouncer is
-  generic(
-    timeout_cycles : integer := 50 -- Number of cycles until a change in output
-                                   -- signal is allowed.
-);
-port(
-  CLK       : in std_logic;  -- System Clock signal
-  R         : in std_logic; -- Synchronous Reset
-  input     : in std_logic; -- Bouncing input
-  output    : out std_logic -- Debounced ouput signal
+entity DEBOUNCER is
+  generic (
+    -- Number of cycles until a change in output signal is allowed.
+    TIMEOUT_CYCLES : integer := 50
   );
-end Debouncer;
+  port (
+    -- System Clock signal
+    CLK         : in    std_logic;
+    -- Synchronous Reset
+    RST         : in    std_logic;
+    -- Bouncing input
+    INPUT       : in    std_logic;
+    -- Debounced ouput signal
+    OUTPUT      : out   std_logic
+  );
+end entity DEBOUNCER;
 
-architecture Behavioral of Debouncer is
-  signal count : integer range 0 to timeout_cycles-1;
+architecture BEHAVIORAL of DEBOUNCER is
+
+  signal count    : integer range 0 to TIMEOUT_CYCLES - 1;
   signal output_i : std_logic;
+
 begin
 
-  output <= output_i;
+  OUTPUT <= output_i;
 
-  Debounce: process(CLK)
+  -- DEBOUNCE------------------------------------------------------------------
+  -- Debounces a input signal by enforcing a time out after a signal change.
+  -----------------------------------------------------------------------------
+  DEBOUNCE : process (CLK) is
   begin
+
     if rising_edge(CLK) then
-      if R = '1' then
-        count <= 0;
-        output_i <= input;
+      if (RST = '1') then
+        count    <= 0;
+        output_i <= INPUT;
       else
-        if count < timeout_cycles-1 then
-          count <= count +1;
-        elsif input /= output_i then
-          count <= 0;
-          output_i <= input;
+        if (count < TIMEOUT_CYCLES - 1) then
+          count <= count + 1;
+        elsif (INPUT /= output_i) then
+          count    <= 0;
+          output_i <= INPUT;
         end if;
       end if;
     end if;
-  end process;
 
-end Behavioral;
+  end process DEBOUNCE;
+
+end architecture BEHAVIORAL;

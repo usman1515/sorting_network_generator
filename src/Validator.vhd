@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: RR_MUX_NxW - Behavioral
+-- Module Name: Validator - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Validates order of input sequence. Treats values at input as unsigned.
