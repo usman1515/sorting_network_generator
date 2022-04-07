@@ -1,3 +1,15 @@
+----------------------------------------------------------------------------------
+-- Author: Stephan Proß
+--
+-- Create Date: 03/08/2022 02:46:11 PM
+-- Design Name:
+-- Module Name: RR_MUX_NxW - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Validates order of input sequence. Treats values at input as unsigned.
+--
+----------------------------------------------------------------------------------
+
 library ieee;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
@@ -5,64 +17,59 @@ library ieee;
 library work;
   use work.CustomTypes.all;
 
-entity validator is
+entity VALIDATOR is
   generic (
-    w : integer := 8; -- Bit-Width of input values.
-    n : integer := 4  -- Number of w-Bit inputs.
+    -- Bit-Width of input values.
+    W : integer := 8;
+    -- Number of w-Bit inputs.
+    N : integer := 4
   );
   port (
-    clk   : in    std_logic;                                -- Clock signal
-    r     : in    std_logic;                                -- Synchronous Reset
-    e     : in    std_logic;                                -- Enable signal
-    input : in    SLVArray(n - 1 downto 0)(w - 1 downto 0); -- N x W-Bit input treated as unsigned
-    valid : out   std_logic                                 -- Bit indicating validity of received input
-    -- sequence. '1' indicates total ordering of input sequence,
-    -- '0' an order violation.
+    -- Clock signal
+    CLK   : in    std_logic;
+    -- Synchronous Reset
+    R     : in    std_logic;
+    -- Enable signal
+    E     : in    std_logic;
+    -- N x W-Bit input treated as unsigned
+    INPUT : in    SLVArray(N - 1 downto 0)(W - 1 downto 0);
+    -- Bit indicating validity of received input sequence. '1' indicates total ordering of input
+    -- sequence, '0' an order violation.
+    VALID : out   std_logic
   );
-end entity validator;
+end entity VALIDATOR;
 
-architecture behavioral of validator is
-
-  signal valid_i : std_logic;
+architecture BEHAVIORAL of VALIDATOR is
 
 begin
 
-  validate : process is
+-- VALIDATE--------------------------------------------------------------------
+-- On reset, inputs are assumed to be valid. Afterwards, all inputs are
+-- pairwise compared in parallel in an interleaved fashion to deduce correct ordering.
+-- Once an order violation is detected, valid will only be set on reset.
+-------------------------------------------------------------------------------
+  VALIDATE : process is
   begin
 
-    wait until rising_edge(clk);
+    if (rising_edge(CLK)) then
+      if (R = '1') then
+        VALID <= '1'; -- Input is assumed to be valid at the beginning.
+      else
+        if (E = '1') then
 
-    if (r = '1') then
-      valid_i <= '1'; -- Input is assumed to be valid at the beginning.
-    else
-      if (e = '1') then
+          for i in 0 to N - 2 loop
 
-        for i in 0 to n - 2 loop
+            -- If any input value is not in order, set valid to 0
+            if (unsigned(INPUT(i)) > unsigned(INPUT(i + 1))) then
+              VALID <= '0';
+            end if;
 
-          -- If any input value is not in order, set valid_i to 0
-          if (unsigned(input(i)) > unsigned(input(i + 1))) then
-            valid_i <= '0';
-          end if;
+          end loop;
 
-        end loop;
-
+        end if;
       end if;
     end if;
 
-  end process validate;
+  end process VALIDATE;
 
-  outputvalid : process is
-  begin
-
-    wait until rising_edge(clk);
-
-    if (r='0' and e='1') then
-      -- Only output valid_i if enabled and not reset.
-      valid <= valid_i;
-    else
-      valid <= '0';
-    end if;
-
-  end process outputvalid;
-
-end architecture behavioral;
+end architecture BEHAVIORAL;

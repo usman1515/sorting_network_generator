@@ -1,69 +1,80 @@
----------------------------------
--- Company:
--- Engineer:
+----------------------------------------------------------------------------------
+-- Author: Stephan Proß
 --
--- Create Date:
--- -- Design Name:
--- Module Name: LFSRGalois - Behavioral
--- Project Name::
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+-- Create Date: 03/08/2022 02:46:11 PM
+-- Design Name:
+-- Module Name: LFSR - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Linear Feedback Shift register for generation of pseudo random
+-- numbers.
 --
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
 entity LFSR is
-    generic(
-      W : integer := 8;
-      P : std_logic_vector := "10001101"
-    );
-    port(
-      CLK : in std_logic;
-      E : in std_logic;
-      R : in std_logic;
-      seed: in std_logic_vector(W-1 downto 0);
-      output : out std_logic_vector(W-1 downto 0)
-    );
-end LFSR;
+  generic (
+    -- Bit-width of LFSR
+    W    : integer          := 8;
+    -- Generator Polynomial
+    POLY : std_logic_vector := "10001101"
+  );
+  port (
+    -- System Clock
+    CLK    : in    std_logic;
+    -- Enable
+    E      : in    std_logic;
+    -- Reset
+    R      : in    std_logic;
+    -- Seed for pseudo-random number generation
+    SEED   : in    std_logic_vector(W - 1 downto 0);
+    -- W-Bit output.
+    OUTPUT : out   std_logic_vector(W - 1 downto 0)
+  );
+end entity LFSR;
 
-architecture Behavioral of LFSR is
-  signal reg : std_logic_vector(W-1 downto 0):= (others=>'0');
-  signal mask : std_logic_vector(W-1 downto 0):= (others=>'0');
+architecture BEHAVIORAL of LFSR is
+
+  signal reg  : std_logic_vector(W - 1 downto 0);
+  signal mask : std_logic_vector(W - 1 downto 0);
+
 begin
 
-  mask(W-1 downto 0) <= P(W-1 downto 0) and reg(0);
-  output <= reg;
-
-  Main : process
+  OUTPUT <= reg;
+  -- GENMASK----------------------------------------------------------------------
+  -- Generates mask value from generator polynomial and LSB of reg.
+  --------------------------------------------------------------------------------
+  GENMASK : process (reg(reg'low)) is
   begin
-    wait until rising_edge(CLK);
-    if R = '1' then
-      reg <= seed;
-    else
-      if E = '1' then
-        reg <= '0'& reg(W-1 downto 1) xor mask;
+
+    for i in mask'low to mask'high loop
+
+      mask(i) <= POLY(i) and reg(reg'low);
+
+    end loop;
+
+  end process GENMASK;
+
+  -- MAIN-------------------------------------------------------------------------
+  -- On reset, fills reg with value of seed otherwise applies XOR of reg and high
+  -- to reg.
+  --------------------------------------------------------------------------------
+  MAIN : process is
+  begin
+
+    if (rising_edge(CLK)) then
+      if (R = '1') then
+        reg <= SEED;
+      else
+        if (E = '1') then
+          reg <= '0' & reg(reg'high downto reg'low + 1) xor mask;
+        end if;
       end if;
     end if;
-  end process Main;
 
-end Behavioral;
+  end process MAIN;
+
+end architecture BEHAVIORAL;
