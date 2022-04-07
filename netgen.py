@@ -15,7 +15,7 @@ def parse_entity_vhdl(path=Path()):
     content = ""
     with open(str(path), "r") as fd:
         for line in fd:
-            content += line
+            content += line.split("--")[0]
 
     name = regex.findall(r"entity\s*(\w+)\s*is", content, regex.S | regex.M)
     if name:
@@ -27,24 +27,33 @@ def parse_entity_vhdl(path=Path()):
         else:
             name = name[0]
     entity_def = regex.findall(
-        r"entity\s*{0}.+end\s+{0};".format(name), content, regex.S | regex.M
+        r"entity\s*{0}\sis.*end\sentity\s{0};".format(name), content, regex.S | regex.M
     )
     if entity_def:
         entity_def = entity_def[0]
         ports = dict()
         generics = dict()
-        for decl, content in regex.findall(
-            r"(\w*)(\([^)(]*+(?:(?R)[^)(]*)*+\))", entity_def, regex.M | regex.S
-        ):
-            if "generic" in decl:
-                generic_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*)")
-                for pair in regex.findall(generic_matcher, content):
-                    generics[pair[0]] = pair[1]
-            else:
-                port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+\w+[^;\n]*)")
-                for pair in regex.findall(port_matcher, content):
-                    ports[pair[0]] = pair[1]
 
+        generic_clause = regex.findall(
+            r"generic\s\((.*)\);\s*port", entity_def, regex.M | regex.S
+        )
+        if generic_clause:
+            generic_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*)")
+            for pair in regex.findall(generic_matcher, generic_clause[0]):
+                generics[pair[0]] = pair[1]
+
+        port_clause = regex.findall(r"port\s\((.*)\);", entity_def, regex.M | regex.S)
+        # if name == "LOAD_SHIFT_REGISTER":
+        #     print("Entity def:")
+        #     print(entity_def)
+        #     print("Port clause")
+        #     print(port_clause)
+        if port_clause:
+            port_matcher = regex.compile(r"\s*?(\w+)\s*?:\s*(\w*?\s+\w+[^;\n]*)")
+            for pair in regex.findall(port_matcher, port_clause[0]):
+                ports[pair[0]] = pair[1]
+        else:
+            return None
         return Entity(name, ports, generics)
     else:
         return None
@@ -60,7 +69,7 @@ def parse_template_vhdl(path=Path()):
         for line in fd:
             content += line
     tokens_set = set()
-    for token in regex.findall(r"\{0\.(.*?)\}", content, regex.S | regex.M):
+    for token in regex.findall(r"\{(.*?)\}", content, regex.S | regex.M):
         tokens_set.add(token)
     tokens = dict()
     for item in tokens_set:
@@ -111,7 +120,7 @@ class Entity:
         return a
 
     def as_instance(self, instance_name="", genassign=dict(), portassign=dict()):
-        a = "{} : {}\n".format(instance_name, self.name)
+        a = "{} : entity work.{}\n".format(instance_name, self.name)
         if self.generics and genassign:
             a += "generic map(\n"
             keys = list(self.generics.keys())
@@ -147,7 +156,7 @@ class Template(Entity):
         self.tokens = tokens
 
     def as_template(self):
-        return self.template_file.format(**self.tokens)
+        return self.template_file.format_map(self.tokens)
 
 
 def get_sources(path=Path()):
@@ -187,7 +196,7 @@ class Generator:
         return dict()
 
 
-class EvenOdd(Generator):
+class OddEven(Generator):
     def __init__(self):
         super().__init__()
         self.keywords = {
@@ -236,14 +245,14 @@ class EvenOdd(Generator):
         N = int(kwargs["N"])
         p = int(math.log2(N))
         depth = p * (p + 1) // 2
-        top_name = "EvenOdd{}".format(N)
+        top_name = "ODDEVEN_{}".format(N)
         bit_width = 8
         if "W" in kwargs.keys():
             bit_width = kwargs["W"]
 
-        components = kwargs["input"].as_component() + "\n"
-        components += kwargs["output"].as_component() + "\n"
-        components += kwargs["cs"].as_component() + "\n"
+        # components = kwargs["input"].as_component() + "\n"
+        # components += kwargs["output"].as_component() + "\n"
+        # components += kwargs["cs"].as_component() + "\n"
 
         instances = ""
         generics = {"W": bit_width}
@@ -253,9 +262,9 @@ class EvenOdd(Generator):
         }
         for i in range(N):
             specific = dict()
-            specific["input"] = "input({})".format(i)
-            specific["ser_output"] = "wire({})(0)".format(i)
-            specific["LD"] = "S(S'low)"
+            specific["PAR_INPUT"] = "input({})".format(i)
+            specific["SER_OUTPUT"] = "wire({})(0)".format(i)
+            specific["LOAD"] = "START(S'low)"
 
             instances += kwargs["input"].as_instance(
                 "input_{}".format(i), generics, ports | specific
@@ -263,9 +272,9 @@ class EvenOdd(Generator):
 
         for i in range(N):
             specific = dict()
-            specific["output"] = "output({})".format(i)
-            specific["ser_input"] = "wire({})({})".format(i, depth)
-            specific["ST"] = "S(S'high)"
+            specific["PAR_OUTPUT"] = "output({})".format(i)
+            specific["SER_INPUT"] = "wire({})({})".format(i, depth)
+            specific["STORE"] = "START(S'high)"
             instances += kwargs["output"].as_instance(
                 "output_{}".format(i), generics, ports | specific
             )
@@ -277,11 +286,11 @@ class EvenOdd(Generator):
                     a = j
                     b = A[i][j]
                     specific = dict()
-                    specific["a"] = "wire({})({})".format(b, i)
-                    specific["b"] = "wire({})({})".format(a, i)
-                    specific["c"] = "wire({})({})".format(b, i + 1)
-                    specific["d"] = "wire({})({})".format(a, i + 1)
-                    specific["S"] = "S({})".format(i)
+                    specific["A0"] = "wire({})({})".format(b, i)
+                    specific["B0"] = "wire({})({})".format(a, i)
+                    specific["A1"] = "wire({})({})".format(b, i + 1)
+                    specific["B1"] = "wire({})({})".format(a, i + 1)
+                    specific["START"] = "START({})".format(i)
                     instances += kwargs["cs"].as_instance(
                         "CS_{}d_{}x{}".format(i, a, b), generics, ports | specific
                     )
@@ -309,7 +318,7 @@ class EvenOdd(Generator):
             "net_depth": depth,
             "num_inputs": N,
             "bit_width": bit_width,
-            "components": components,
+            # "components": components,
             "instances": instances,
             "date": datetime.now(),
         }
@@ -379,23 +388,23 @@ class NetworkGenerator:
                 print("\t" + template.name)
 
     def generate(self, generator_name="", **kwargs):
-        if "evenodd" == generator_name.lower():
+        if "oddeven" == generator_name.lower():
             names = ["input", "output", "cs"]
             for name in names:
                 kwargs[name] = self.entities[kwargs[name]]
             kwargs["template"] = self.templates[kwargs["template"]]
-            generator = EvenOdd()
+            generator = OddEven()
             template = generator.generate(**kwargs)
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
         else:
-            print("Options: evenodd")
+            print("Options: oddeven")
 
     def test(self):
         #        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))
 
-        gen = EvenOdd()
+        gen = OddEven()
         gen.connection_matrix(8)
 
 
