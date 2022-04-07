@@ -52,7 +52,7 @@ end {top_name};
 
 architecture Behavioral of {top_name} is
 
-    type WireType is array (Depth downto 0) of std_logic_vector(N-1 downto 0);
+    type WireType is array (N-1 downto 0) of std_logic_vector(Depth downto 0);
     signal wire : WireType := (others => (others => '0'));
 
     signal S  : std_logic_vector(Depth downto 0) := (others=> '0');

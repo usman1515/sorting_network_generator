@@ -40,7 +40,7 @@ end Sim_Sorter;
 architecture Behavioral of Sim_Sorter is
     constant W : integer := 8;
     constant Depth : integer := 3;
-    constant N : integer := 4;
+    constant N : integer := 16;
 
     component Validator is
         generic (
@@ -66,7 +66,7 @@ architecture Behavioral of Sim_Sorter is
         output : out std_logic_vector(W-1 downto 0));
     end component RRMUX_NxW;
 
-    component SortNetSimple is
+    component EvenOdd16 is
         generic (
             W : integer
         );
@@ -77,7 +77,7 @@ architecture Behavioral of Sim_Sorter is
             input  : in  SLVArray(N-1 downto 0)(W-1 downto 0);
             output : out SLVArray(N-1 downto 0)(W-1 downto 0)
         );
-    end component SortNetSimple;
+    end component EvenOdd16;
 
     component ShiftRegister is
       generic (
@@ -117,19 +117,22 @@ architecture Behavioral of Sim_Sorter is
     constant ckTime : time := 10 ns;
     signal CLK : std_logic;
 
-    constant seed : std_logic_vector(W-1 downto 0) := "10110001";
-    constant P : std_logic_vector(W-1 downto 0) := "01101010";
+    constant seed_i : std_logic_vector(W-1 downto 0) := "10110001";
+    constant P_i : std_logic_vector(W-1 downto 0) := "01101010";
 
     signal R : std_logic := '0';
-    signal E : std_logic_vector(3 downto 0) := (others => '0');
-    -- Output of LFSR
-    signal LFSR_i : std_logic_vector(W-1 downto 0)            := (others => '0');
-    -- Output of Round-Robin DMUX
-    signal DMUX_i : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
+    signal E : std_logic := '0';
+
+    signal E_delayed_i : std_logic_vector(2 downto 0) := (others => '0');
+    -- Output of LFSRs
+    signal rand_data_i : SLVArray(N/W-1 downto 0)(W-1 downto 0)      := (others => (others => '0'));
+    -- Output of Round-Robin DMUXs
+    signal unsorted_data_i : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
     -- Output of Sorting Network
-    signal SN_i   : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
-    -- Output of Validator Tree.
-    signal valid_i : std_logic := '0';
+    signal sorted_data_i   : SLVArray(N-1 downto 0)(W-1 downto 0)    := (others => (others => '0'));
+    
+    signal valid : std_logic := '0';
+
 
 begin
 
@@ -145,59 +148,60 @@ begin
 
     begin
 
-        E(0) <= '0';
+        E <= '0';
         wait for ckTime/2;
         R <= '1';
         wait for ckTime;
         R <= '0';
-        E(0) <= '1';
+        E <= '1';
         wait for (W)*ckTime;
 
         wait;
 
     end process;
 
-    LFSR_1: entity work.LFSR
+   INPUT :for i in 0 to N/W -1 generate
+    LFSR_1: LFSR
       generic map (
         W => W,
-        P => P)
+        P => P_i)
       port map (
         CLK    => CLK,
-        E      => E(0),
+        E      => E,
         R      => R,
-        seed   => seed,
-        output => LFSR_i);
-
-    RRDMUX_NxW_1: entity work.RRDMUX_NxW
+        seed   => seed_i,
+        output => rand_data_i(i));
+    RRDMUX_NxW_1: RRDMUX_NxW
       generic map (
         W => W,
-        N => N)
+        N => W)
       port map (
         CLK    => CLK,
-        E      => E(0),
+        E      => E,
         R      => R,
-        input  => LFSR_i,
-        output => DMUX_i);
+        input  => rand_data_i(i),
+        output => unsorted_data_i((i+1)*W -1 downto i*W));
+  end generate;
 
     EnableDelay_1: entity work.ShiftRegister
       generic map (
-        W => N-1) --min(N,W) -1 )
+        W => W-1) --min(N,W) -1 )
       port map (
         CLK   => CLK,
         E     => not R,
         R     => R,
-        s_in  => E(0),
-        s_out => E(1));
+        s_in  => E,
+        s_out => E_delayed_i(0));
 
-    SortNetSimple_1: SortNetSimple
+    SortNet: EvenOdd16
         generic map (
             W => W)
         port map (
             CLK    => CLK,
-            E      => E(1),
+            E      => E_delayed_i(0),
             R      => R,
-            input  => DMUX_i,
-            output => SN_i);
+            input  => unsorted_data_i,
+            output => sorted_data_i);
 
     EnableDelay_2: entity work.ShiftRegister
       generic map (
@@ -206,19 +210,18 @@ begin
         CLK   => CLK,
         E     => not R,
         R     => R,
-        s_in  => E(1),
-        s_out => E(2));
-
+        s_in  => E_delayed_i(0),
+        s_out => E_delayed_i(1));
 
     Validator_1: entity work.Validator
       generic map (
-        W => W)
+        W => W,
+        N => N)
       port map (
         CLK   => CLK,
-        E     => E(2),
+        E     => E_delayed_i(1),
         R     => R,
-        input => SN_i,
-        valid => valid_i);
-
+        input => sorted_data_i,
+        valid => valid);
 
 end Behavioral;
