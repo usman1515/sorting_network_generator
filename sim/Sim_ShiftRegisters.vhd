@@ -1,133 +1,103 @@
 ----------------------------------------------------------------------------------
--- Company:
--- Engineer:
+-- Author: Stephan Proß
 --
--- Create Date: 03/10/2022 04:55:22 PM
+-- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: MUX_Sim - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
+-- Module Name: SIM_ShiftRegisters - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Simulation for I/O shift registers.
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or integer values
-use IEEE.NUMERIC_STD.all;
+entity SIM_SHIFTREGISTERS is
+  --  Port ( );
+  generic (
+    W : integer := 8
+  );
+end entity SIM_SHIFTREGISTERS;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture BEHAVIORAL of SIM_SHIFTREGISTERS is
 
-entity Sim_ShiftRegisters is
---  Port ( );
-  generic(
-    w : integer := 8
-    );
-end Sim_ShiftRegisters;
+  constant CKTIME        : time := 10 ns;
 
-architecture Behavioral of Sim_ShiftRegisters is
-
-  component LoadShiftRegister is
-    generic (
-      w : integer);
-    port (
-      CLK        : in  std_logic;
-      input      : in  std_logic_vector(w-1 downto 0);
-      E          : in  std_logic;
-      LD         : in  std_logic;
-      ser_output : out std_logic);
-  end component LoadShiftRegister;
-
-  component StoreShiftRegister is
-    generic (
-      w : integer);
-    port (
-      CLK       : in  std_logic;
-      E         : in  std_logic;
-      ser_input : in  std_logic;
-      ST        : in  std_logic;
-      output    : out std_logic_vector(w-1 downto 0));
-  end component StoreShiftRegister;
-
-  constant ckTime : time := 10 ns;
-
-  signal clock  : std_logic;
-  signal A      : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal B      : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal LD     : std_logic_vector(0 downto 0)   := "0";
-  signal ST     : std_logic_vector(0 downto 0)   := "0";
-  signal E      : std_logic                      := '0';
-  signal serial : std_logic                      := '0';
+  signal clock           : std_logic;
+  signal e_i             : std_logic;
+  signal load_i          : std_logic_vector(0 downto 0);
+  signal store_i         : std_logic_vector(0 downto 0);
+  signal input_i         : std_logic_vector(W - 1 downto 0);
+  signal serial_i        : std_logic;
+  signal output_i        : std_logic_vector(W - 1 downto 0);
 
 begin
 
-  clock_process : process
+  CLOCK_PROCESS : process is
   begin
-    clock <= '0';
-    wait for ckTime/2;
-    clock <= '1';
-    wait for ckTime/2;
-  end process;
 
-  LoadShiftRegister_1 : LoadShiftRegister
+    clock <= '0';
+    wait for CKTIME / 2;
+    clock <= '1';
+    wait for CKTIME / 2;
+
+  end process CLOCK_PROCESS;
+
+  LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register
     generic map (
-      w => w)
+      W => W
+    )
     port map (
       CLK        => clock,
-      LD         => LD(0),
-      E          => E,
-      input      => A,
-      ser_output => serial);
+      LOAD       => load_i(0),
+      E          => e_i,
+      PAR_INPUT  => input_i,
+      SER_OUTPUT => serial_i
+    );
 
-  StoreShiftRegister_1 : StoreShiftRegister
+  STORE_SHIFT_REGISTER_1 : entity work.store_shift_register
     generic map (
-      w => w)
+      W => W
+    )
     port map (
-      CLK       => clock,
-      ST        => ST(0),
-      E         => E,
-      ser_input => serial,
-      output    => B);
+      CLK        => clock,
+      STORE      => store_i(0),
+      E          => e_i,
+      SER_INPUT  => serial_i,
+      PAR_OUTPUT => output_i
+    );
 
-  test_process : process
+  TEST_PROCESS : process is
   begin
 
+    wait for CKTIME;
+    input_i <= "11001011";
+    load_i  <= "1";
+    e_i     <= '1';
 
-    wait for ckTime;
-    A  <= "11001011";
-    LD <= "1";
-    E  <= '1';
-    for i in 0 to w-3 loop
-      wait for ckTime;
-      LD <= "0";
+    for i in 0 to W - 3 loop
+
+      wait for CKTIME;
+      load_i <= "0";
+
     end loop;
-    E  <= '0';
-    wait for ckTime*2;
-    E  <= '1';
-    wait for ckTime*2;
-    ST <= "1";
-    wait for ckTime;
-    ST <= "0";
-    assert (A = B) report "Mismatch:: " &
-      " A= " & integer'image(to_integer(unsigned(A))) &
-      " B= " & integer'image(to_integer(unsigned(B))) &
-      " Expectation= A=B";
+
+    e_i     <= '0';
+    wait for CKTIME * 2;
+    e_i     <= '1';
+    wait for CKTIME * 2;
+    store_i <= "1";
+    wait for CKTIME;
+    store_i <= "0";
+    assert (input_i = output_i)
+      report "Mismatch:: " &
+             " input_i= " & integer'image(to_integer(unsigned(input_i))) &
+             " output_i= " & integer'image(to_integer(unsigned(output_i))) &
+             " Expectation= input_i=output_i";
 
     wait;
 
-  end process;
+  end process TEST_PROCESS;
 
-end Behavioral;
+end architecture BEHAVIORAL;

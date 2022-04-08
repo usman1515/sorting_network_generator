@@ -24,11 +24,11 @@ library UNISIM;
 
 entity MUX_2X2_PRIMITIVE is
   port (
-    A   : in    std_logic;
-    B   : in    std_logic;
-    SEL : in    std_logic;
-    C   : out   std_logic;
-    D   : out   std_logic
+    A0   : in    std_logic;
+    B0   : in    std_logic;
+    SEL  : in    std_logic;
+    A1   : out   std_logic;
+    B1   : out   std_logic
   );
 end entity MUX_2X2_PRIMITIVE;
 
@@ -52,16 +52,16 @@ begin
   -- => O6 = "10101100" = X"AC"
   -- => INIT = X"000000AC000000CA"
 
-  LUT6_2_INST : LUT6_2
+  LUT6_2_INST : entity UNISIM.lut6_2
     generic map (
       INIT => X"000000AC000000CA"
     )
     port map (
-      O6 => D,
-      O5 => C,
-      I0 => A,
+      O6 => B1,
+      O5 => A1,
+      I0 => A0,
       -- LUT input (1-bit)
-      I1 => B,
+      I1 => B0,
       -- LUT input (1-bit)
       I2 => SEL,
       -- LUT input (1-bit)

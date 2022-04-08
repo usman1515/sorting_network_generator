@@ -1,219 +1,240 @@
 ----------------------------------------------------------------------------------
--- Company:
--- Engineer:
+-- Author: Stephan Proß
 --
--- Create Date: 03/10/2022 04:55:22 PM
+-- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Sim_BitCS_ShiftReg - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+-- Module Name: SIM_BITCS_ShiftReg - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Simulation for asynchronous Bitserial Compare Swap component
+-- with I/O shift registers.
 --
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
+entity SIM_BITCS_SHIFTREG is
+  generic (
+    W : integer := 8
+  );
+end entity SIM_BITCS_SHIFTREG;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture BEHAVIORAL of SIM_BITCS_SHIFTREG is
 
-entity Sim_BitCS_ShiftReg is
-  generic(
-    w : integer := 8
+  component BITCS is
+    port (
+      A0    : in    std_logic;
+      B0    : in    std_logic;
+      A1    : out   std_logic;
+      B1    : out   std_logic;
+      START : in    std_logic
     );
-end Sim_BitCS_ShiftReg;
+  end component bitcs;
 
-architecture Behavioral of Sim_BitCS_ShiftReg is
-
-  component BitCS is
-    port (
-      a : in  std_logic;
-      b : in  std_logic;
-      c : out std_logic;
-      d : out std_logic;
-      S : in  std_logic);
-  end component BitCS;
-  component LoadShiftRegister is
+  component LOAD_SHIFT_REGISTER is
     generic (
-      w : integer);
+      W : integer
+    );
     port (
-      CLK        : in  std_logic;
-      E          : in  std_logic;
-      LD         : in  std_logic;
-      input      : in  std_logic_vector(w-1 downto 0);
-      ser_output : out std_logic);
-  end component LoadShiftRegister;
-  component StoreShiftRegister is
+      CLK            : in    std_logic;
+      E              : in    std_logic;
+      LOAD           : in    std_logic;
+      PAR_INPUT      : in    std_logic_vector(W - 1 downto 0);
+      SER_OUTPUT     : out   std_logic
+    );
+  end component load_shift_register;
+
+  component STORE_SHIFT_REGISTER is
     generic (
-      w : integer);
+      W : integer
+    );
     port (
-      CLK       : in  std_logic;
-      E         : in  std_logic;
-      ST        : in  std_logic;
-      ser_input : in  std_logic;
-      output    : out std_logic_vector(w-1 downto 0));
-  end component StoreShiftRegister;
+      CLK           : in    std_logic;
+      E             : in    std_logic;
+      STORE         : in    std_logic;
+      SER_INPUT     : in    std_logic;
+      PAR_OUTPUT    : out   std_logic_vector(W - 1 downto 0)
+    );
+  end component store_shift_register;
 
+  constant CKTIME                        : time := 10 ns;
 
-  constant ckTime : time := 10 ns;
+  signal clk                             : std_logic;
+  signal a0_i                            : std_logic;
+  signal b0_i                            : std_logic;
+  signal a1_i                            : std_logic;
+  signal b1_i                            : std_logic;
+  signal start_i                         : std_logic;
 
-  signal CLK   : std_logic;
-  signal sin0  : std_logic := '0';
-  signal sin1  : std_logic := '0';
-  signal sout0 : std_logic := '0';
-  signal sout1 : std_logic := '0';
-  signal S     : std_logic := '0';
+  signal e_i                             : std_logic;
+  signal load_i                          : std_logic;
+  signal store_i                         : std_logic;
 
-  signal E  : std_logic := '0';
-  signal LD : std_logic := '0';
-  signal ST : std_logic := '0';
+  signal a_vec_i                         : std_logic_vector(W - 1 downto 0);
+  signal b_vec_i                         : std_logic_vector(W - 1 downto 0);
+  signal a_vec_res_i                     : std_logic_vector(W - 1 downto 0);
+  signal b_vec_res_i                     : std_logic_vector(W - 1 downto 0);
 
-  signal A : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal B : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal C : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal D : std_logic_vector(w-1 downto 0) := (others => '0');
+  signal larger_value_i                  : std_logic_vector(W - 1 downto 0);
+  signal smaller_value_i                 : std_logic_vector(W - 1 downto 0);
 
-  signal larger_value  : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal smaller_value : std_logic_vector(w-1 downto 0) := (others => '0');
 begin
 
-  CLK_process : process
-  begin
-    CLK <= '0';
-    wait for ckTime/2;
-    CLK <= '1';
-    wait for ckTime/2;
-  end process;
-
-  uut_0 : BitCS
-    port map(sin0, sin1, sout0, sout1, S);
-
-  LoadShiftRegister_1 : LoadShiftRegister
-    generic map (
-      w => w)
-    port map (
-      CLK        => CLK,
-      E          => E,
-      LD         => LD,
-      input      => A,
-      ser_output => sin0);
-  LoadShiftRegister_2 : LoadShiftRegister
-    generic map (
-      w => w)
-    port map (
-      CLK        => CLK,
-      E          => E,
-      LD         => LD,
-      input      => B,
-      ser_output => sin1);
-
-  StoreShiftRegister_1 : StoreShiftRegister
-    generic map (
-      w => w)
-    port map (
-      CLK       => CLK,
-      E         => E,
-      ST        => ST,
-      ser_input => sout0,
-      output    => C);
-  StoreShiftRegister_2 : StoreShiftRegister
-    generic map (
-      w => w)
-    port map (
-      CLK       => CLK,
-      E         => E,
-      ST        => ST,
-      ser_input => sout1,
-      output    => D);
-
-  test_process : process
-
+  CLK_PROCESS : process is
   begin
 
-    larger_value  <= "10110110";
-    smaller_value <= "10100111";
-    wait for ckTime/2 + 1 ps;
+    clk <= '0';
+    wait for CKTIME / 2;
+    clk <= '1';
+    wait for CKTIME / 2;
 
-    E <= '1';
+  end process CLK_PROCESS;
 
-    A <= larger_value;
-    B <= smaller_value;
+  UUT_0 : entity work.bitcs
+    port map (
+      A0    => a0_i,
+      B0    => b0_i,
+      A1    => a1_i,
+      B1    => b1_i,
+      START => start_i
+    );
 
-    for i in 0 to w-1 loop
-      wait for ckTime;
-      if i = 0 then
-        LD <= '1';
-        S  <= '1';
-        ST <= '1';
+  LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register
+    generic map (
+      W => W
+    )
+    port map (
+      CLK        => clk,
+      E_I        => e_i,
+      LOAD       => load_i,
+      PAR_INPUT  => a_vec_i,
+      SER_OUTPUT => a0_i
+    );
+
+  LOAD_SHIFT_REGISTER_2 : entity work.load_shift_register
+    generic map (
+      W => W
+    )
+    port map (
+      CLK        => clk,
+      E_I        => e_i,
+      LOAD       => load_i,
+      PAR_INPUT  => b_vec_i,
+      SER_OUTPUT => b0_i
+    );
+
+  STORE_SHIFT_REGISTER_1 : entity work.store_shift_register
+    generic map (
+      W => W
+    )
+    port map (
+      CLK        => clk,
+      E_I        => e_i,
+      STORE      => store_i,
+      SER_INPUT  => a1_i,
+      PAR_OUTPUT => a_vec_res_i
+    );
+
+  STORE_SHIFT_REGISTER_2 : entity work.store_shift_register
+    generic map (
+      W => W
+    )
+    port map (
+      CLK        => clk,
+      E_I        => e_i,
+      STORE      => store_i,
+      SER_INPUT  => b1_i,
+      PAR_OUTPUT => b_vec_res_i
+    );
+
+  TEST_PROCESS : process is
+
+  begin
+
+    larger_value_i  <= "10110110";
+    smaller_value_i <= "10100111";
+    wait for CKTIME / 2 + 1 ps;
+
+    e_i <= '1';
+
+    a_vec_i <= larger_value_i;
+    b_vec_i <= smaller_value_i;
+
+    for i in 0 to W - 1 loop
+
+      wait for CKTIME;
+
+      if (i = 0) then
+        load_i  <= '1';
+        start_i <= '1';
+        store_i <= '1';
       else
-        LD <= '0';
-        S  <= '0';
-        ST <= '0';
+        load_i  <= '0';
+        start_i <= '0';
+        store_i <= '0';
       end if;
+
     end loop;
 
-    A <= smaller_value;
-    B <= larger_value;
+    a_vec_i <= smaller_value_i;
+    b_vec_i <= larger_value_i;
 
-    for i in 0 to w-1 loop
-      wait for ckTime;
-      if i = 0 then
-        LD <= '1';
-        S  <= '1';
-        ST <= '1';
+    for i in 0 to W - 1 loop
+
+      wait for CKTIME;
+
+      if (i = 0) then
+        load_i  <= '1';
+        start_i <= '1';
+        store_i <= '1';
       else
-        LD <= '0';
-        S  <= '0';
-        ST <= '0';
+        load_i  <= '0';
+        start_i <= '0';
+        store_i <= '0';
       end if;
-      if i = 1 then
-        assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
-          " A= " & integer'image(to_integer(unsigned(larger_value))) &
-          " B= " & integer'image(to_integer(unsigned(smaller_value))) &
-          " C= " & integer'image(to_integer(unsigned(C))) &
-          " D= " & integer'image(to_integer(unsigned(D))) &
-          " Expectation A=C and B=D";
+
+      if (i = 1) then
+        assert ((larger_value_i = a_vec_res_i) and (smaller_value_i = b_vec_res_i))
+          report "Mismatch:: " &
+                 " A_vec_i= " & integer'image(to_integer(unsigned(larger_value_i))) &
+                 " B_vec_i= " & integer'image(to_integer(unsigned(smaller_value_i))) &
+                 " A_vec_res_i= " & integer'image(to_integer(unsigned(a_vec_res_i))) &
+                 " b_vec_res_i= " & integer'image(to_integer(unsigned(b_vec_res_i))) &
+                 " Expectation A_vec_i=A_vec_res_i and B_vec_i=b_vec_res_i";
       end if;
+
     end loop;
 
+    for i in 0 to W - 1 loop
 
-    for i in 0 to w-1 loop
-      wait for ckTime;
-      if i = 0 then
-        LD <= '1';
-        S  <= '1';
-        ST <= '1';
+      wait for CKTIME;
+
+      if (i = 0) then
+        load_i  <= '1';
+        start_i <= '1';
+        store_i <= '1';
       else
-        LD <= '0';
-        S  <= '0';
-        ST <= '0';
+        load_i  <= '0';
+        start_i <= '0';
+        store_i <= '0';
       end if;
-      if i = 1 then
-        assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
-          " A= " & integer'image(to_integer(unsigned(smaller_value))) &
-          " B= " & integer'image(to_integer(unsigned(larger_value))) &
-          " C= " & integer'image(to_integer(unsigned(C))) &
-          " D= " & integer'image(to_integer(unsigned(D))) &
-          " Expectation A=D and B=C";
+
+      if (i = 1) then
+        assert ((larger_value_i = a_vec_res_i) and (smaller_value_i = b_vec_res_i))
+          report "Mismatch:: " &
+                 " A_vec_i= " & integer'image(to_integer(unsigned(smaller_value_i))) &
+                 " B_vec_i= " & integer'image(to_integer(unsigned(larger_value_i))) &
+                 " A_vec_res_i= " & integer'image(to_integer(unsigned(a_vec_res_i))) &
+                 " b_vec_res_i= " & integer'image(to_integer(unsigned(b_vec_res_i))) &
+                 " Expectation A_vec_i=b_vec_res_i and B_vec_i=A_vec_res_i";
       end if;
+
     end loop;
 
     wait;
 
-  end process;
+  end process TEST_PROCESS;
 
-end Behavioral;
+end architecture BEHAVIORAL;

@@ -1,104 +1,87 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 03/10/2022 04:55:22 PM
--- Design Name: 
--- Module Name: Sim_MUX - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
+-- Author: Stephan Proß
+--
+-- Create Date: 03/08/2022 02:46:11 PM
+-- Design Name:
+-- Module Name: SIM_MUX_2X2 - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Simulation for the different MUX_2X2 implementations.
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
+entity SIM_MUX_2X2 is
+  --  Port ( );
+end entity SIM_MUX_2X2;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture BEHAVIORAL of SIM_MUX_2X2 is
 
-entity Sim_MUX is
---  Port ( );
-end Sim_MUX;
+  constant CKTIME   : time := 10 ns;
 
-architecture Behavioral of Sim_MUX is
+  signal clk        : std_logic;
+  signal input_i    : std_logic_vector(1 downto 0);
+  signal sel_i      : std_logic_vector(0 downto 0);
+  signal output0_i  : std_logic_vector(1 downto 0);
+  signal output1_i  : std_logic_vector(1 downto 0);
 
-  constant ckTime : time := 10 ns;
-
-  signal clock   : std_logic;
-  signal input   : std_logic_vector(1 downto 0) := "00";
-  signal sel_s   : std_logic_vector(0 downto 0) := "0";
-  signal output0 : std_logic_vector(1 downto 0);
-  signal output1 : std_logic_vector(1 downto 0);
-  component MUX
-    port (
-      a   : in  std_logic;
-      b   : in  std_logic;
-      sel : in  std_logic;
-      c   : out std_logic;
-      d   : out std_logic
-      );
-  end component;
-
-  component MUX_PRIMITIVE
-    port (
-      a   : in  std_logic;
-      b   : in  std_logic;
-      sel : in  std_logic;
-      c   : out std_logic;
-      d   : out std_logic
-      );
-  end component;
 begin
 
-  clock_process : process
+  CLOCK_PROCESS : process is
   begin
-    clock <= '0';
-    wait for ckTime/2;
-    clock <= '1';
-    wait for ckTime/2;
-  end process;
 
-  uut_0 : MUX
-    port map(input(0), input(1), sel_s(0), output0(0), output0(1));
+    clk <= '0';
+    wait for CKTIME / 2;
+    clk <= '1';
+    wait for CKTIME / 2;
 
-  uut_1 : MUX_PRIMITIVE
-    port map(input(0), input(1), sel_s(0), output1(0), output1(1));
+  end process CLOCK_PROCESS;
 
+  MUX_2X2_1 : entity work.mux_2x2
+    port map (
+      A0  => input_i(0),
+      B0  => input_i(1),
+      SEL => SEL,
+      A1  => output0_i(0),
+      B1  => output0_i(1)
+    );
 
-  test_process : process
+  MUX_2X2_PRIMITIVE_1 : entity work.mux_2x2_primitive
+    port map (
+      A0  => input_i(0),
+      B0  => input_i(1),
+      SEL => SEL,
+      A1  => output1_i(0),
+      B1  => output1_i(1)
+    );
+
+  TEST_PROCESS : process is
   begin
-    wait for 10 * ckTime;
+
+    wait for 10 * CKTIME;
+
     for i in 0 to 1 loop
+
       for j in 0 to 3 loop
-        input <= std_logic_vector(to_unsigned(j, 2));
-        sel_s <= std_logic_vector(to_unsigned(i, 1));
-        wait for ckTime;
-        assert (output1 = output0) report "Mismatch:: " &
-          " Input= " & integer'image(to_integer(unsigned(input))) &
-          " sel= " & integer'image(j) &
-          " Output= " & integer'image(to_integer(unsigned(output1))) &
-          " Expectation= " & integer'image(to_integer(unsigned(output0)));
+
+        input_i <= std_logic_vector(to_unsigned(j, 2));
+        sel_i   <= std_logic_vector(to_unsigned(i, 1));
+        wait for CKTIME;
+        assert (output1_i = output0_i)
+          report "Mismatch:: " &
+                 " Input= " & integer'image(to_integer(unsigned(input_i))) &
+                 " sel= " & integer'image(j) &
+                 " Output= " & integer'image(to_integer(unsigned(output1_i))) &
+                 " Expectation= " & integer'image(to_integer(unsigned(output0_i)));
+
       end loop;
 
     end loop;
 
     wait;
 
-  end process;
+  end process TEST_PROCESS;
 
-end Behavioral;
+end architecture BEHAVIORAL;

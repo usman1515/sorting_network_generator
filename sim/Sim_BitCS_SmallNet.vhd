@@ -1,210 +1,78 @@
--------------------------------------------------------------------------
--- Company:
--- Engineer:
+----------------------------------------------------------------------------------
+-- Author: Stephan Proß
 --
--- Create Date: 03/10/2022 04:55:22 PM
+-- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Sim_BitCS_SmallNet - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
+-- Module Name: SIM_BITCS_SMALLNET - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Simulation for asynchronous Bitserial Compare Swap component
+-- with I/O shift registers and Cycle_Timer for control signal generation as a
+-- small sorting network for 4 inputs.
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
+entity SIM_BITCS_SMALLNET is
+  generic (
+    W : integer := 8
+  );
+end entity SIM_BITCS_SMALLNET;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture BEHAVIORAL of SIM_BITCS_SMALLNET is
 
-entity Sim_BitCS_SmallNet is
-  generic(
-    w : integer := 8
-    );
-end Sim_BitCS_SmallNet;
+  constant CKTIME           : time := 10 ns;
 
-architecture Behavioral of Sim_BitCS_SmallNet is
+  signal clk                : std_logic;
 
-  component BitCS is
-    port (
-      a : in std_logic;
-      b : in std_logic;
-      c : out std_logic;
-      d : out std_logic;
-      S : in std_logic);
-  end component BitCS;
-  component LoadShiftRegister is
-    generic (
-      w : integer);
-    port (
-      CLK : in std_logic;
-      E : in std_logic;
-      LD : in std_logic;
-      input : in std_logic_vector(w-1 downto 0);
-      ser_output : out std_logic);
-  end component LoadShiftRegister;
-  component StoreShiftRegister is
-    generic (
-      w : integer);
-    port (
-      CLK : in std_logic;
-      E : in std_logic;
-      ST : in std_logic;
-      ser_input : in std_logic;
-      output : out std_logic_vector(w-1 downto 0));
-  end component StoreShiftRegister;
-  component CycleTimer is
-    generic (
-      w : integer);
-    port (
-      CLK : in std_logic;
-      R : in std_logic;
-      E : in std_logic;
-      LD : out std_logic;
-      S : out std_logic;
-      ST : out std_logic);
-  end component CycleTimer;
+  type grid2d is array (3 downto 0) of std_logic_vector(3 downto 0);
 
-  constant ckTime : time := 10 ns;
+  signal wire               : grid2d;
 
-  signal CLK : std_logic;
+  signal load_i             : std_logic;
+  signal start_i            : std_logic;
+  signal store_i            : std_logic;
+  signal e_i                : std_logic;
+  signal rst_i              : std_logic;
 
-  type GRID2D is array (3 downto 0) of std_logic_vector(3 downto 0);
+  type memblock is array (3 downto 0) of std_logic_vector(W - 1 downto 0);
 
-  signal wire : GRID2D := (others => (others => '0'));
-
-
-  signal LD : std_logic := '0';
-  signal S : std_logic := '0';
-  signal ST : std_logic := '0';
-  signal E : std_logic := '0';
-  signal R : std_logic := '0';
-
-  type MEMBLOCK is array (3 downto 0) of std_logic_vector(w-1 downto 0);
-  signal A : MEMBLOCK := (X"5C", X"2B", X"A8", X"F2");
-  signal B : MEMBLOCK := (others => (others => '0'));
+  signal a_vec              : memblock;
+  signal b_vec              : memblock;
 
 begin
 
-  CLK_process : process
+  CLK_PROCESS : process is
   begin
-    CLK <= '0';
-    wait for ckTime/2;
-    CLK <= '1';
-    wait for ckTime/2;
-  end process;
 
-  InputShift :
-  for i in 0 to 3 generate
-    LSR : LoadShiftRegister
-          generic map (
-            w => w)
-          port map (
-            CLK => CLK,
-            E => E,
-            LD => LD,
-            input => A(i),
-            ser_output => wire(0)(i));
-  end generate InputShift;
+    clk <= '0';
+    wait for CKTIME / 2;
+    clk <= '1';
+    wait for CKTIME / 2;
 
-  OutputShift :
-  for i in 0 to 3 generate
-    SSR : StoreShiftRegister
-      generic map (
-        w => w)
-      port map (
-        CLK => CLK,
-        E => E,
-        ST => ST,
-        output => B(i),
-        ser_input => wire(3)(i));
-  end generate OutputShift;
+  end process CLK_PROCESS;
 
-  BitCS_0 : entity work.BitCS
-    port map (
-    a => wire(0)(1),
-    b => wire(0)(0),
-    c => wire(1)(1),
-    d => wire(1)(0),
-    S => S);
-
-  BitCS_1 : entity work.BitCS
-    port map (
-    a => wire(0)(3),
-    b => wire(0)(2),
-    c => wire(1)(3),
-    d => wire(1)(2),
-    S => S);
-
-  BitCS_2 : entity work.BitCS
-    port map (
-    a => wire(1)(3),
-    b => wire(1)(1),
-    c => wire(2)(3),
-    d => wire(2)(1),
-    S => S);
-
-  BitCS_3 : entity work.BitCS
-    port map (
-    a => wire(1)(2),
-    b => wire(1)(0),
-    c => wire(2)(2),
-    d => wire(2)(0),
-    S => S);
-
-  BitCS_4 : entity work.BitCS
-    port map (
-    a => wire(2)(2),
-    b => wire(2)(1),
-    c => wire(3)(2),
-    d => wire(3)(1),
-    S => S);
-
-  wire(3)(3) <= wire(2)(3) ;
-  wire(3)(0) <= wire(2)(0) ;
-
-  CycleTimer_1 : CycleTimer
-    generic map (
-      w => w)
-    port map (
-      CLK => CLK,
-      R => R,
-      E => E,
-      LD => LD,
-      S => S,
-      ST => ST);
-  test_process : process
+  TEST_PROCESS : process is
 
   begin
 
-    E <= '0';
-    wait for ckTime/2;
-    R <= '1';
-    wait for ckTime;
-    R <= '0';
-    E <= '1';
-    wait for (w-1)*ckTime;
-    -- assert ((larger_value = C) and (smaller_value = D)) report "Mismatch:: " &
-    --   " A= " & integer'image(to_integer(unsigned(larger_value))) &
-    --   " B= " & integer'image(to_integer(unsigned(smaller_value))) &
+    a_vec <= (X"5C", X"2B", X"A8", X"F2");
+    b_vec <= (others => (others => '0'));
+    e_i   <= '0';
+    wait for CKTIME / 2;
+    rst_i <= '1';
+    wait for CKTIME;
+    rst_i <= '0';
+    e_i   <= '1';
+    wait for (W - 1) * CKTIME;
+    -- assert ((larger_value = A1) and (smaller_value = D)) report "Mismatch:: " &
+    --   " A0= " & integer'image(to_integer(unsigned(larger_value))) &
+    --   " B0= " & integer'image(to_integer(unsigned(smaller_value))) &
     --   " C= " & integer'image(to_integer(unsigned(C))) &
     --   " D= " & integer'image(to_integer(unsigned(D))) &
     --   " Expectation A=C and B=D";
-
 
     -- A <= X"a6";
     -- B <= X"b7";
@@ -218,6 +86,99 @@ begin
     --   " Expectation A=D and B=C";
     wait;
 
-  end process;
+  end process TEST_PROCESS;
 
-end Behavioral;
+  INPUTSHIFT : for i in 0 to 3 generate
+
+    LSR : entity work.load_shift_register
+      generic map (
+        W => W
+      )
+      port map (
+        CLK        => clk,
+        E          => e_i,
+        LOAD       => load_i,
+        PAR_INPUT  => a(i),
+        SER_OUTPUT => wire(0)(i)
+      );
+
+  end generate INPUTSHIFT;
+
+  OUTPUTSHIFT : for i in 0 to 3 generate
+
+    SSR : entity work.store_shift_register
+      generic map (
+        W => W
+      )
+      port map (
+        CLK        => clk,
+        E          => e_i,
+        STORE      => store_i,
+        PAR_OUTPUT => b(i),
+        SER_INPUT  => wire(3)(i)
+      );
+
+  end generate OUTPUTSHIFT;
+
+  BITCS_0 : entity work.bitcs
+    port map (
+      A0    => wire(0)(1),
+      B0    => wire(0)(0),
+      A1    => wire(1)(1),
+      B1    => wire(1)(0),
+      START => start_i
+    );
+
+  BITCS_1 : entity work.bitcs
+    port map (
+      A0    => wire(0)(3),
+      B0    => wire(0)(2),
+      A1    => wire(1)(3),
+      B1    => wire(1)(2),
+      START => start_i
+    );
+
+  BITCS_2 : entity work.bitcs
+    port map (
+      A0    => wire(1)(3),
+      B0    => wire(1)(1),
+      A1    => wire(2)(3),
+      B1    => wire(2)(1),
+      START => start_i
+    );
+
+  BITCS_3 : entity work.bitcs
+    port map (
+      A0    => wire(1)(2),
+      B0    => wire(1)(0),
+      A1    => wire(2)(2),
+      B1    => wire(2)(0),
+      START => start_i
+    );
+
+  BITCS_4 : entity work.bitcs
+    port map (
+      A0    => wire(2)(2),
+      B0    => wire(2)(1),
+      A1    => wire(3)(2),
+      B1    => wire(3)(1),
+      START => start_i
+    );
+
+  wire(3)(3) <= wire(2)(3);
+  wire(3)(0) <= wire(2)(0);
+
+  CYCLE_TIMER_1 : entity work.cycle_timer
+    generic map (
+      W => W
+    )
+    port map (
+      CLK   => clk,
+      RST   => rst_i,
+      E     => e_i,
+      LOAD  => load_i,
+      START => start_i,
+      STORE => store_i
+    );
+
+end architecture BEHAVIORAL;

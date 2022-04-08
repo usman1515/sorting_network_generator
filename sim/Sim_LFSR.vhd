@@ -1,97 +1,82 @@
------------------------------------------------------------------------
--- Company:
--- Engineer:
+----------------------------------------------------------------------------------
+-- Author: Stephan Proß
 --
--- Create Date: 03/10/2022 04:55:22 PM
+-- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Sim_LFSR - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
+-- Module Name: SIM_LFSR - Behavioral
+-- Project Name: BitSerialCompareSwap
+-- Tool Versions: Vivado 2021.2
+-- Description: Simulation for the linear feedback shift register.
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
+  -- Uncomment the following library declaration if using
+  -- arithmetic functions with Signed or Unsigned values
+  use IEEE.NUMERIC_STD.all;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+-- library UNISIM;
+-- use UNISIM.VComponents.all;
 
-entity Sim_LFSR is
---  Port ( );
-end Sim_LFSR;
+entity SIM_LFSR is
+  --  Port ( );
+end entity SIM_LFSR;
 
-architecture Behavioral of Sim_LFSR is
+architecture BEHAVIORAL of SIM_LFSR is
 
-  constant ckTime : time := 10 ns;
-  constant W : integer := 8;
-  constant P : std_logic_vector(W-1 downto 0) := "10111000";
+  constant CKTIME     : time := 10 ns;
+  constant W          : integer := 8;
+  constant P          : std_logic_vector(W - 1 downto 0) := "10111000";
 
-  signal CLK   : std_logic;
-  signal R : std_logic;
-  signal E :std_logic;
-  signal seed : std_logic_vector(W-1 downto 0) := X"8A";
- signal output : std_logic_vector(W-1 downto 0) := (others => '0');
-  component LFSR is
-    generic (
-      W : integer;
-      P : std_logic_vector);
-    port (
-      CLK    : in  std_logic;
-      E      : in  std_logic;
-      R      : in  std_logic;
-      seed   : in  std_logic_vector(W-1 downto 0);
-      output : out std_logic_vector(W-1 downto 0));
-  end component LFSR;
+  signal clk          : std_logic;
+  signal rst_i        : std_logic;
+  signal e_i          : std_logic;
+  signal seed_i       : std_logic_vector(W - 1 downto 0);
+  signal output_i     : std_logic_vector(W - 1 downto 0);
 
 begin
 
-  CLK_process : process
+  CLK_PROCESS : process is
   begin
-    CLK <= '0';
-    wait for ckTime/2;
-    CLK <= '1';
-    wait for ckTime/2;
-  end process;
 
-  LSFR_1: LFSR
+    clk <= '0';
+    wait for CKTIME / 2;
+    clk <= '1';
+    wait for CKTIME / 2;
+
+  end process CLK_PROCESS;
+
+  LSFR_1 : entity work.lfsr
     generic map (
       W => W,
-      P => P)
+      P => P
+    )
     port map (
-      CLK    => CLK,
-      E      => E,
-      R      => R,
-      seed   => seed,
-      output => output);
+      CLK    => clk,
+      E      => e_i,
+      RST    => rst_i,
+      SEED   => seed_i,
+      OUTPUT => output_i
+    );
 
-  test_process : process
+  TEST_PROCESS : process is
 
   begin
-    wait for ckTime/2;
-    R <= '1';
-    E <= '0';
-    wait for ckTime/2;
-    E <= '1';
-    R <= '0';
-    wait for 16*ckTime/2;
+
+    seed_i <= X"8A";
+    wait for CKTIME / 2;
+    rst_i  <= '1';
+    e_i    <= '0';
+    wait for CKTIME / 2;
+    e_i    <= '1';
+    rst_i  <= '0';
+    wait for 16 * CKTIME / 2;
 
     wait;
 
-  end process;
+  end process TEST_PROCESS;
 
-end Behavioral;
+end architecture BEHAVIORAL;
