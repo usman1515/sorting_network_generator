@@ -47,7 +47,7 @@ architecture BEHAVIORAL of BITCS_SYNC is
 
 begin
 
-  MUX_2X2_SYNC_1 : entity work.MUX_2X2_SYNC
+  MUX_2X2_1 : entity work.MUX_2X2
     port map (
       A0  => A0,
       B0  => B0,
@@ -64,7 +64,7 @@ begin
   MOORE_FSM : process (CLK) is
   begin
 
-    if (rising_edge(CLK)) then
+    if (rising_edge(CLK) and E = '1') then
       -- With START set, state is only dependent on input and assumes
       -- corresponding state.
       if (START = '1') then
