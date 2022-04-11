@@ -15,7 +15,7 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity MUX_2X2_SYNCH is
+entity MUX_2X2_SYNC is
   port (
     CLK  : in    std_logic;
     E    : in    std_logic;
@@ -26,9 +26,9 @@ entity MUX_2X2_SYNCH is
     A1   : out   std_logic;
     B1   : out   std_logic
   );
-end entity MUX_2X2_SYNCH;
+end entity MUX_2X2_SYNC;
 
-architecture BEHAVIORAL of MUX_2X2_SYNCH is
+architecture BEHAVIORAL of MUX_2X2_SYNC is
 
 begin
 

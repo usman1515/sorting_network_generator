@@ -15,7 +15,7 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SHIFTREGISTER is
+entity SHIFT_REGISTER is
   generic (
     -- Width of parallel input/ word.
     W : integer := 8
@@ -32,9 +32,9 @@ entity SHIFTREGISTER is
     -- bit-serial output
     SER_OUTPUT : out   std_logic
   );
-end entity SHIFTREGISTER;
+end entity SHIFT_REGISTER;
 
-architecture BEHAVIORAL of SHIFTREGISTER is
+architecture BEHAVIORAL of SHIFT_REGISTER is
 
   signal reg : std_logic_vector(W - 1 downto 0);
 

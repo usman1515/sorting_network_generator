@@ -94,7 +94,7 @@ begin
     b_vec_i <= "10100111";
     wait for CKTIME;
 
-    for i in a'low to a'high loop
+    for i in a_vec_i'low to a_vec_i'high loop
 
       a0_i <= a_vec_i(a_vec_i'high - i);
       b0_i <= b_vec_i(b_vec_i'high - i);
@@ -124,7 +124,7 @@ begin
     for i in a_vec_i'low to a_vec_i'high loop
 
       a0_i <= a_vec_i(a_vec_i'high - i);
-      b0_o <= b_vec_i(b_vec_i'high - i);
+      b0_i <= b_vec_i(b_vec_i'high - i);
 
       wait for CKTIME / 2;
       a_vec_res_i(a_vec_res_i'high - i) <= a1_i;

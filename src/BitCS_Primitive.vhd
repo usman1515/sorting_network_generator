@@ -34,7 +34,7 @@ architecture BEHAVIORAL of BITCS_PRIMITIVE is
 
 begin
 
-  MUX_PRIMITIVE_1 : entity work.mux_primitive
+  MUX_PRIMITIVE_1 : entity work.mux_2x2_primitive
     port map (
       A0  => A0,
       B0  => B0,
@@ -92,7 +92,7 @@ begin
   -- => O6 = "0000 0100 0100 0100 0000 1111 0000 0100" = X"04440F04"
   -- => INIT = X"04440F04022200F2"
 
-  LUT6_2_INST : entity UNISIM.LUT6_2
+  LUT6_2_INST : entity UNISIM.lut6_2
     generic map (
       INIT => X"04440F04022200F2"
     )

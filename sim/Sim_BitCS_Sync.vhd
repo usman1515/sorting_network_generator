@@ -90,32 +90,51 @@ begin
 
     -- Functional check:
     -- A_vec_i is first equal then larger, then equal and then smaller than B_vec_i.
-    a_vec_i <= "01010101";
-    b_vec_i <= "10101010";
+    a_vec_i     <= "01010111";
+    b_vec_i     <= "11100010";
+    a_vec_res_i <= (others => '0');
+    b_vec_res_i <= (others => '0');
+    e_i         <= '1';
     wait for CKTIME;
+
+
+    -- start_i <= '1';
+    -- a0_i    <= a_vec_i(a_vec_i'high);
+    -- b0_i    <= b_vec_i(b_vec_i'high);
+    -- wait for CKTIME;
+
+    -- start_i <= '0';
+
+    -- for i in a_vec_i'low to a_vec_i'high - 1 loop
+
+    --   a0_i <= a_vec_i(a_vec_i'high - i - 1);
+    --   b0_i <= b_vec_i(b_vec_i'high - i - 1);
+    --   wait for CKTIME;
+
+    --   a_vec_res_i(a_vec_res_i'high - i) <= a1_i;
+    --   b_vec_res_i(b_vec_res_i'high - i) <= b1_i;
+
+    -- end loop;
+
+    -- wait for CKTIME;
+    -- a_vec_res_i(0) <= a1_i;
+    -- b_vec_res_i(0) <= b1_i;
 
     start_i <= '1';
-    a0_i    <= a_vec_i(a_vec_i'high);
-    b0_i    <= b_vec_i(b_vec_i'high);
-    wait for CKTIME;
 
-    start_i <= '0';
+    for i in a_vec_i'low to a_vec_i'high  loop
 
-    for i in a_vec_i'low to a_vec_i'high - 1 loop
-
-      a0_i <= a_vec_i(a_vec_i'high - i - 1);
-      b0_i <= b_vec_i(b_vec_i'high - i - 1);
+      a0_i <= a_vec_i(a_vec_i'high - i );
+      b0_i <= b_vec_i(b_vec_i'high - i );
       wait for CKTIME;
 
+      start_i <= '0';
       a_vec_res_i(a_vec_res_i'high - i) <= a1_i;
       b_vec_res_i(b_vec_res_i'high - i) <= b1_i;
 
     end loop;
 
     wait for CKTIME;
-    a_vec_res_i(0) <= a1_i;
-    b_vec_res_i(0) <= b1_i;
-
     assert ((a_vec_i = b_vec_res_i) and (b_vec_i = a_vec_res_i))
       report "Mismatch:: " &
              " A_vec_i= " & integer'image(to_integer(unsigned(a_vec_i))) &
@@ -125,9 +144,9 @@ begin
              " Expectation A_vec_i=B_vec_res_i and B_vec_i=A_vec_res_i";
 
     -- A_vec_i is first equal then larger, then equal and then smaller than B_vec_i.
-    -- START_i <= '1';
-    -- A_vec_i    <= X"A1";
-    -- B_vec_i    <= X"F2";
+    START_i <= '1';
+    A_vec_i    <= X"A1";
+    B_vec_i    <= X"F2";
     -- wait for ckTime;
     -- for i in A_vec_i'low to A_vec_i'high loop
     --   a0_i <= A_vec_i(A_vec_i'high - i);
