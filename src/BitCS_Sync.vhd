@@ -19,8 +19,6 @@ entity BITCS_SYNC is
   port (
     -- System Clock.
     CLK   : in    std_logic;
-    -- Enable signal.
-    E     : in    std_logic;
     -- Serial input of operand A
     A0    : in    std_logic;
     -- Serial input of operand B
@@ -64,7 +62,7 @@ begin
   MOORE_FSM : process (CLK) is
   begin
 
-    if (rising_edge(CLK) and E = '1') then
+    if (rising_edge(CLK)) then
       -- With START set, state is only dependent on input and assumes
       -- corresponding state.
       if (START = '1') then
