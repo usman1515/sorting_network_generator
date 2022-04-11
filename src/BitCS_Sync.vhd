@@ -45,14 +45,27 @@ architecture BEHAVIORAL of BITCS_SYNC is
 
 begin
 
-  MUX_2X2_1 : entity work.MUX_2X2
+  MUX_2X2_1 : entity work.mux_2x2
     port map (
       A0  => A0,
       B0  => B0,
       SEL => state(1),
-      A1  => A1,
-      B1  => B1
+      A1  => a1_i,
+      B1  => b1_i
     );
+
+  -- MUXBUFFER -------------------------------------------------------------------
+  -- Enforces FF at A1,B1 output.
+  --------------------------------------------------------------------------------
+  MUXBUFFER : process (CLK) is
+  begin
+
+    if (rising_edge(CLK)) then
+      A1 <= a1_i;
+      B1 <= b1_i;
+    end if;
+
+  end process MUXBUFFER;
 
   -- MOORE_FSM -----------------------------------------------------------------------
   -- Implements an asynchonous Moore FSM with the modificationthe of current state

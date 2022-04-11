@@ -30,7 +30,6 @@ architecture BEHAVIORAL of SIM_BITCS_SYNC is
   constant CKTIME    : time := 10 ns;
 
   signal clk         : std_logic;
-  signal e_i         : std_logic;
   signal a0_i        : std_logic;
   signal b0_i        : std_logic;
   signal a1_i        : std_logic;
@@ -57,7 +56,6 @@ begin
   BITCS_SYNC_1 : entity work.bitcs_sync
     port map (
       CLK   => clk,
-      E     => e_i,
       A0    => a0_i,
       B0    => b0_i,
       A1    => a1_i,
@@ -94,45 +92,31 @@ begin
     b_vec_i     <= "11100010";
     a_vec_res_i <= (others => '0');
     b_vec_res_i <= (others => '0');
-    e_i         <= '1';
     wait for CKTIME;
 
 
-    -- start_i <= '1';
-    -- a0_i    <= a_vec_i(a_vec_i'high);
-    -- b0_i    <= b_vec_i(b_vec_i'high);
-    -- wait for CKTIME;
-
-    -- start_i <= '0';
-
-    -- for i in a_vec_i'low to a_vec_i'high - 1 loop
-
-    --   a0_i <= a_vec_i(a_vec_i'high - i - 1);
-    --   b0_i <= b_vec_i(b_vec_i'high - i - 1);
-    --   wait for CKTIME;
-
-    --   a_vec_res_i(a_vec_res_i'high - i) <= a1_i;
-    --   b_vec_res_i(b_vec_res_i'high - i) <= b1_i;
-
-    -- end loop;
-
-    -- wait for CKTIME;
-    -- a_vec_res_i(0) <= a1_i;
-    -- b_vec_res_i(0) <= b1_i;
-
     start_i <= '1';
+    a0_i    <= a_vec_i(a_vec_i'high);
+    b0_i    <= b_vec_i(b_vec_i'high);
+    wait for CKTIME;
 
-    for i in a_vec_i'low to a_vec_i'high  loop
+    start_i <= '0';
 
-      a0_i <= a_vec_i(a_vec_i'high - i );
-      b0_i <= b_vec_i(b_vec_i'high - i );
+    for i in a_vec_i'low to a_vec_i'high - 1 loop
+
+      a0_i <= a_vec_i(a_vec_i'high - i - 1);
+      b0_i <= b_vec_i(b_vec_i'high - i - 1);
       wait for CKTIME;
 
-      start_i <= '0';
       a_vec_res_i(a_vec_res_i'high - i) <= a1_i;
       b_vec_res_i(b_vec_res_i'high - i) <= b1_i;
 
     end loop;
+
+    wait for CKTIME;
+    a_vec_res_i(0) <= a1_i;
+    b_vec_res_i(0) <= b1_i;
+
 
     wait for CKTIME;
     assert ((a_vec_i = b_vec_res_i) and (b_vec_i = a_vec_res_i))
