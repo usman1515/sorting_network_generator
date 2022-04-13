@@ -35,13 +35,14 @@ end entity BITCS_SYNC;
 architecture BEHAVIORAL of BITCS_SYNC is
 
   -- The only known way to ensure encoding while allowing access to encoding bits.
-  constant EQUAL    : std_logic_vector(1 downto 0)  := "00";
-  constant GREATER  : std_logic_vector(1 downto 0)  := "01";
-  constant LESSER   : std_logic_vector(1 downto 0)  := "10";
+  constant EQUAL         : std_logic_vector(1 downto 0)  := "00";
+  constant GREATER       : std_logic_vector(1 downto 0)  := "01";
+  constant LESSER        : std_logic_vector(1 downto 0)  := "10";
 
-  signal state      : std_logic_vector(1 downto 0);
-  signal a1_i       : std_logic;
-  signal b1_i       : std_logic;
+  signal state           : std_logic_vector(1 downto 0);
+  signal next_state      : std_logic_vector(1 downto 0);
+  signal a1_i            : std_logic;
+  signal b1_i            : std_logic;
 
 begin
 
@@ -49,7 +50,7 @@ begin
     port map (
       A0  => A0,
       B0  => B0,
-      SEL => state(1),
+      SEL => next_state(1),
       A1  => a1_i,
       B1  => b1_i
     );
@@ -61,8 +62,9 @@ begin
   begin
 
     if (rising_edge(CLK)) then
-      A1 <= a1_i;
-      B1 <= b1_i;
+      A1    <= a1_i;
+      B1    <= b1_i;
+      state <= next_state;
     end if;
 
   end process MUXBUFFER;
@@ -72,47 +74,45 @@ begin
   -- being only dependent on the previous state if START is not set. Otherwise,
   -- acts as a normal FSM.
   ------------------------------------------------------------------------------------
-  MOORE_FSM : process (CLK) is
+  MOORE_FSM : process (A0, B0, START, state) is
   begin
 
-    if (rising_edge(CLK)) then
-      -- With START set, state is only dependent on input and assumes
-      -- corresponding state.
-      if (START = '1') then
-        if (A0 = '1' and B0 = '0') then
-          state <= GREATER;
-        elsif (A0 = '0' and B0 = '1') then
-          state <= LESSER;
-        else
-          state <= EQUAL;
-        end if;
+    -- With START set, state is only dependent on input and assumes
+    -- corresponding state.
+    if (START = '1') then
+      if (A0 = '1' and B0 = '0') then
+        next_state <= GREATER;
+      elsif (A0 = '0' and B0 = '1') then
+        next_state <= LESSER;
       else
-        -- With START unset, only the EQUAL state allows transition into other
-        -- states. Once the operand A is asserted as greater or lesser than B,
-        -- the state remains "locked".
-        case state is
-
-          when EQUAL =>
-            if (A0 = '1' and B0 = '0') then
-              state <= GREATER;
-            elsif (A0 = '0' and B0 = '1') then
-              state <= LESSER;
-            else
-              state <= EQUAL;
-            end if;
-
-          when GREATER =>
-            state <= GREATER;
-
-          when LESSER =>
-            state <= LESSER;
-
-          when others =>
-            state <= EQUAL;
-
-        end case;
-
+        next_state <= EQUAL;
       end if;
+    else
+      -- With START unset, only the EQUAL state allows transition into other
+      -- states. Once the operand A is asserted as greater or lesser than B,
+      -- the state remains "locked".
+      case state is
+
+        when EQUAL =>
+          if (A0 = '1' and B0 = '0') then
+            next_state <= GREATER;
+          elsif (A0 = '0' and B0 = '1') then
+            next_state <= LESSER;
+          else
+            next_state <= EQUAL;
+          end if;
+
+        when GREATER =>
+          next_state <= GREATER;
+
+        when LESSER =>
+          next_state <= LESSER;
+
+        when others =>
+          next_state <= EQUAL;
+
+      end case;
+
     end if;
 
   end process MOORE_FSM;

@@ -36,21 +36,26 @@ begin
   -- COUNTER----------------------------------------------------------------------
   -- Generic counter with reset and enable. Sets START at beginning.
   --------------------------------------------------------------------------------
-  COUNTER : process is
+  COUNTER : process (CLK) is
   begin
 
     if (rising_edge(CLK)) then
-      if (RST = '1' or count = W - 1) then
+      if (RST = '1') then
         count <= 0;
-      else
-        if (E = '1') then
-          count <= count + 1;
-        end if;
-      end if;
-      if (count = 0) then
         START <= '0';
       else
-        START <= '1';
+        if (count = W - 1) then
+          count <= 0;
+        else
+          if (E = '1') then
+            count <= count + 1;
+          end if;
+        end if;
+        if (count = 0) then
+          START <= '1';
+        else
+          START <= '0';
+        end if;
       end if;
     end if;
 

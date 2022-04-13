@@ -23,7 +23,7 @@ architecture BEHAVIORAL of SIM_SORTER is
 
   constant W                 : integer := 8;
   constant DEPTH             : integer := 3;
-  constant N                 : integer := 16;
+  constant N                 : integer := 8;
 
   constant CKTIME            : time := 10 ns;
   signal   clk               : std_logic;
@@ -77,7 +77,7 @@ begin
     LFSR_1 : entity work.lfsr
       generic map (
         W => W,
-        P => P_I
+        POLY => P_I
       )
       port map (
         CLK    => clk,
@@ -87,7 +87,7 @@ begin
         OUTPUT => rand_data_i(i)
       );
 
-    RRDMUX_NXW_1 : entity work.rrdmux_nxw
+    RRDMUX_NXW_1 : entity work.rr_dmux_nxw
       generic map (
         W => W,
         N => W
@@ -102,7 +102,7 @@ begin
 
   end generate INPUT;
 
-  ENABLEDELAY_1 : entity work.shiftregister
+  ENABLEDELAY_1 : entity work.shift_register
     generic map (
       W => W - 1
     )
@@ -110,11 +110,11 @@ begin
       CLK   => clk,
       E     => not rst_i,
       RST   => rst_i,
-      S_IN  => e_i,
-      S_OUT => e_delayed_i(0)
+      SER_INPUT  => e_i,
+      SER_OUTPUT => e_delayed_i(0)
     );
 
-  SORTNET : entity work.oddeven_16
+  SORTNET : entity work.oddeven_8
     generic map (
       W => W
     )
@@ -126,7 +126,7 @@ begin
       OUTPUT => sorted_data_i
     );
 
-  ENABLEDELAY_2 : entity work.shiftregister
+  ENABLEDELAY_2 : entity work.shift_register
     generic map (
       W => W + DEPTH + 1
     )
@@ -134,8 +134,8 @@ begin
       CLK   => clk,
       E     => not rst_i,
       RST   => rst_i,
-      S_IN  => e_delayed_i(0),
-      S_OUT => e_delayed_i(1)
+      SER_INPUT  => e_delayed_i(0),
+      SER_OUTPUT => e_delayed_i(1)
     );
 
   VALIDATOR_1 : entity work.validator

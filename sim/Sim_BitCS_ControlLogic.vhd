@@ -73,8 +73,8 @@ begin
     port map (
       CLK     => clk,
       RST     => rst,
-      E_I     => e_i,
-      START_I => start_i
+      E     => e_i,
+      START => start_i
     );
 
   LOAD_SHIFT_REGISTER_1 : entity work.LOAD_SHIFT_REGISTER
@@ -83,9 +83,9 @@ begin
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
-      LD         => start_i,
-      INPUT      => value_0_i,
+      E        => e_i,
+      LOAD         => start_i,
+      PAR_INPUT      => value_0_i,
       SER_OUTPUT => a0
     );
 

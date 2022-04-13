@@ -107,7 +107,7 @@ begin
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
+      E        => e_i,
       LOAD       => load_i,
       PAR_INPUT  => a_vec_i,
       SER_OUTPUT => a0_i
@@ -119,7 +119,7 @@ begin
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
+      E        => e_i,
       LOAD       => load_i,
       PAR_INPUT  => b_vec_i,
       SER_OUTPUT => b0_i
@@ -131,7 +131,7 @@ begin
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
+      E        => e_i,
       STORE      => store_i,
       SER_INPUT  => a1_i,
       PAR_OUTPUT => a_vec_res_i
@@ -143,7 +143,7 @@ begin
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
+      E        => e_i,
       STORE      => store_i,
       SER_INPUT  => b1_i,
       PAR_OUTPUT => b_vec_res_i

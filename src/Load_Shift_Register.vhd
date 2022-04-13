@@ -23,6 +23,8 @@ entity LOAD_SHIFT_REGISTER is
   port (
     -- System Clock
     CLK                   : in    std_logic;
+    -- Synchonous Reset
+    RST                   : in    std_logic;
     -- Enable
     E                     : in    std_logic;
     -- Load signal
@@ -50,11 +52,15 @@ begin
   begin
 
     if (rising_edge(CLK)) then
-      if (E = '1') then
-        if (LOAD = '0') then
-          sreg(sreg'high downto sreg'low + 1) <= sreg(sreg'high - 1 downto sreg'low);
-        else
-          sreg <= PAR_INPUT(PAR_INPUT'high - 1 downto PAR_INPUT'low);
+      if (RST = '1') then
+        sreg <= (others => '0');
+      else
+        if (E = '1') then
+          if (LOAD = '0') then
+            sreg(sreg'high downto sreg'low + 1) <= sreg(sreg'high - 1 downto sreg'low);
+          else
+            sreg <= PAR_INPUT(PAR_INPUT'high - 1 downto PAR_INPUT'low);
+          end if;
         end if;
       end if;
     end if;

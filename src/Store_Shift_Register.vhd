@@ -22,20 +22,23 @@ entity STORE_SHIFT_REGISTER is
   );
   port (
     -- System Clock
-    CLK                    : in    std_logic;
+    CLK                     : in    std_logic;
+    -- Synchonous Reset
+    RST                     : in    std_logic;
     -- Enable
-    E                      : in    std_logic;
+    E                       : in    std_logic;
     -- Load signal
     STORE                   : in    std_logic;
     -- bit-serial input
-    SER_INPUT              : in    std_logic;
+    SER_INPUT               : in    std_logic;
     -- w-bit parallel output
-    PAR_OUTPUT             : out   std_logic_vector(W - 1 downto 0)
+    PAR_OUTPUT              : out   std_logic_vector(W - 1 downto 0)
   );
 end entity STORE_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
 
+  -- Shift Register
   signal sreg : std_logic_vector(W - 1 downto 0);
 
 begin
@@ -44,16 +47,20 @@ begin
   -- When enabled, shifts value from SER_INPUT into register and outputs
   -- content of sreg when STORE is set.
   ------------------------------------------------------------------------------
-  SHIFT_STORE : process is
+  SHIFT_STORE : process (CLK) is
   begin
 
     if (rising_edge(CLK)) then
-      if (E = '1') then
-        sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;
-      end if;
+      if (RST = '1') then
+        sreg <= (others => '0');
+      else
+        if (E = '1') then
+          sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;
+        end if;
 
-      if (STORE = '1') then
-        PAR_OUTPUT <= sreg;
+        if (STORE = '1') then
+          PAR_OUTPUT <= sreg;
+        end if;
       end if;
     end if;
 

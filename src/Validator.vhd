@@ -28,7 +28,7 @@ entity VALIDATOR is
     -- Clock signal
     CLK   : in    std_logic;
     -- Synchronous Reset
-    R     : in    std_logic;
+    RST     : in    std_logic;
     -- Enable signal
     E     : in    std_logic;
     -- N x W-Bit input treated as unsigned
@@ -48,11 +48,11 @@ begin
 -- pairwise compared in parallel in an interleaved fashion to deduce correct ordering.
 -- Once an order violation is detected, valid will only be set on reset.
 -------------------------------------------------------------------------------
-  VALIDATE : process is
+  VALIDATE : process(CLK) is
   begin
 
     if (rising_edge(CLK)) then
-      if (R = '1') then
+      if (RST = '1') then
         VALID <= '1'; -- Input is assumed to be valid at the beginning.
       else
         if (E = '1') then

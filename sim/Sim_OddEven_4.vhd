@@ -31,13 +31,13 @@ architecture BEHAVIORAL of SIM_ODDEVEN_4 is
   signal rst_i         : std_logic;
   signal e_i           : std_logic;
 
-  constant A_SORTED_I  : SLVArray(3 downto 0)(W - 1 downto 0) := (X"F2", X"A8", X"5C", X"2B");
-  signal   a0_i        : SLVArray(3 downto 0)(W - 1 downto 0);
-  signal   a1_i        : SLVArray(3 downto 0)(W - 1 downto 0);
+  signal a_sorted_i    : SLVArray(3 downto 0)(W - 1 downto 0);
+  signal a0_i          : SLVArray(3 downto 0)(W - 1 downto 0);
+  signal a1_i          : SLVArray(3 downto 0)(W - 1 downto 0);
 
 begin
 
-  ODDEVEN_4_1 : entity work.oddeven__4
+  ODDEVEN_4_1 : entity work.oddeven_4
     generic map (
       W     => W,
       DEPTH => DEPTH,
@@ -45,8 +45,8 @@ begin
     )
     port map (
       CLK    => clk,
-      E_I    => e_i,
-      RST_I  => rst_i,
+      E      => e_i,
+      RST    => rst_i,
       INPUT  => a0_i,
       OUTPUT => a1_i
     );
@@ -64,41 +64,43 @@ begin
   TEST_PROCESS : process is
 
   begin
-
-    e_i   <= '0';
+    a_sorted_i <= (others => (others => '0'));
+    e_i        <= '0';
     wait for CKTIME / 2;
-    rst_i <= '1';
+    rst_i      <= '1';
     wait for CKTIME;
-    rst_i <= '0';
-    e_i   <= '1';
+    a0_i       <= (X"2B", X"A8", X"F2", X"5C");
+    rst_i      <= '0';
+    e_i        <= '1';
     wait for (W) * CKTIME;
-    a0_i  <= (X"42", X"F1", X"A1", X"F2");
+    a_sorted_i <= (X"F2", X"A8", X"5C", X"2B");
+    a0_i       <= (X"42", X"F1", X"A1", X"F2");
 
     wait for 2 * CKTIME;
 
     for i in 0 to 3 loop
 
-      assert a1_i(i) = A_SORTED_I(i)
+      assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
                " i=      " & integer'image(i) &
                " a1_i(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
-               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(A_SORTED_I(i)))) &
+               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
                " Expectation  a1_i(i) = A_Sorted_i(i)";
 
     end loop;
 
     wait for CKTIME;
-    A_SORTED_I <= (X"F2", X"F1", X"A1", X"42");
+    a_sorted_i <= (X"F2", X"F1", X"A1", X"42");
 
     wait for W * CKTIME;
 
     for i in 0 to 3 loop
 
-      assert a1_i(i) = A_SORTED_I(i)
+      assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
                " i=      " & integer'image(i) &
-               " B(i)=   " & integer'image(to_integer(unsigned(b(i)))) &
-               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted(i)))) &
+               " B(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
+               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
                " Expectation  B(i) = A_Sorted(i)";
 
     end loop;

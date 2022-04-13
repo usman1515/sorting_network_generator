@@ -28,7 +28,7 @@ entity LFSR is
     -- Enable
     E      : in    std_logic;
     -- Reset
-    R      : in    std_logic;
+    RST      : in    std_logic;
     -- Seed for pseudo-random number generation
     SEED   : in    std_logic_vector(W - 1 downto 0);
     -- W-Bit output.
@@ -62,11 +62,11 @@ begin
   -- On reset, fills reg with value of seed otherwise applies XOR of reg and high
   -- to reg.
   --------------------------------------------------------------------------------
-  MAIN : process is
+  MAIN : process(CLK) is
   begin
 
     if (rising_edge(CLK)) then
-      if (R = '1') then
+      if (RST = '1') then
         reg <= SEED;
       else
         if (E = '1') then

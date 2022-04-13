@@ -43,7 +43,7 @@ begin
   -- SHIFT------------------------------------------------------------------------
   -- Shifts value from SER_INPUT into sreg and MSB of sreg out to SER_OUTPUT.
   --------------------------------------------------------------------------------
-  SHIFT : process is
+  SHIFT : process(CLK) is
   begin
 
     if (rising_edge(CLK)) then

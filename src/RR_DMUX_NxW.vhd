@@ -48,7 +48,7 @@ begin
   -- COUNTER---------------------------------------------------------------------
   -- Simple Counter with reset and enable.
   -------------------------------------------------------------------------------
-  COUNTER : process is
+  COUNTER : process (CLK) is
   begin
 
     if (rising_edge(CLK)) then
@@ -66,7 +66,7 @@ begin
   -- DEMUX-----------------------------------------------------------------------
   -- Synchronously demultiplexes INPUT to OUTPUT with count as selection signal.
   -------------------------------------------------------------------------------
-  DEMUX : process is
+  DEMUX : process(CLK) is
   begin
 
     if rising_edge(CLK) then

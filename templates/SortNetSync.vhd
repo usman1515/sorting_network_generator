@@ -56,7 +56,7 @@ begin
   -- Generates a shift register for delaying the starting signal for each sorter
   -- stage.
   -------------------------------------------------------------------------------
-  STARTDELAY : process is
+  STARTDELAY : process(CLK) is
   begin
 
     if (rising_edge(CLK)) then

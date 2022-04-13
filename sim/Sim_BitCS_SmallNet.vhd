@@ -31,9 +31,7 @@ architecture BEHAVIORAL of SIM_BITCS_SMALLNET is
 
   signal wire               : grid2d;
 
-  signal load_i             : std_logic;
   signal start_i            : std_logic;
-  signal store_i            : std_logic;
   signal e_i                : std_logic;
   signal rst_i              : std_logic;
 
@@ -97,8 +95,8 @@ begin
       port map (
         CLK        => clk,
         E          => e_i,
-        LOAD       => load_i,
-        PAR_INPUT  => a(i),
+        LOAD       => start_i,
+        PAR_INPUT  => a_vec(i),
         SER_OUTPUT => wire(0)(i)
       );
 
@@ -113,8 +111,8 @@ begin
       port map (
         CLK        => clk,
         E          => e_i,
-        STORE      => store_i,
-        PAR_OUTPUT => b(i),
+        STORE      => start_i,
+        PAR_OUTPUT => b_vec(i),
         SER_INPUT  => wire(3)(i)
       );
 
@@ -176,9 +174,7 @@ begin
       CLK   => clk,
       RST   => rst_i,
       E     => e_i,
-      LOAD  => load_i,
-      START => start_i,
-      STORE => store_i
+      START => start_i
     );
 
 end architecture BEHAVIORAL;
