@@ -86,13 +86,13 @@ class Interface:
                 print("\t" + template.name)
 
     def generate(self, generator_name="", **kwargs):
+        template = self.templates[kwargs.pop("template")]
         if "oddeven" == generator_name.lower():
             names = ["input", "output", "cs"]
             for name in names:
                 kwargs[name] = self.entities[kwargs[name]]
-            kwargs["template"] = self.templates[kwargs["template"]]
             generator = OddEven()
-            template = generator.generate(**kwargs)
+            template = generator.generate(template, **kwargs)
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
@@ -119,6 +119,9 @@ class Interface:
             print(layer)
         print()
 
+
+# a = Interface()
+# a.test()
 
 if __name__ == "__main__":
     fire.Fire(Interface)

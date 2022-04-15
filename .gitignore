@@ -4,3 +4,4 @@
 /BitSerialCompareSwap.cache/
 /.hdl_checker/
 /.hdl_checker.config
+*__pycache__*
