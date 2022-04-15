@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_SortNetSimple - Behavioral
+-- Module Name: TB_SortNetSimple - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for the SortNetSimple component.
@@ -16,10 +16,10 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity SIM_SORTNETSIMPLE is
-end entity SIM_SORTNETSIMPLE;
+entity TB_SORTNETSIMPLE is
+end entity TB_SORTNETSIMPLE;
 
-architecture BEHAVIORAL of SIM_SORTNETSIMPLE is
+architecture TB of TB_SORTNETSIMPLE is
 
   constant W            : integer := 8;
   constant DEPTH        : integer := 3;
@@ -106,4 +106,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;

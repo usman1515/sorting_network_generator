@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_ShiftRegisters - Behavioral
+-- Module Name: TB_ShiftRegisters - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for I/O shift registers.
@@ -13,14 +13,14 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SIM_SHIFTREGISTERS is
+entity TB_SHIFTREGISTERS is
   --  Port ( );
   generic (
     W : integer := 8
   );
-end entity SIM_SHIFTREGISTERS;
+end entity TB_SHIFTREGISTERS;
 
-architecture BEHAVIORAL of SIM_SHIFTREGISTERS is
+architecture TB of TB_SHIFTREGISTERS is
 
   constant CKTIME        : time := 10 ns;
 
@@ -100,4 +100,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;

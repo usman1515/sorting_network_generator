@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_BITCS_SMALLNET - Behavioral
+-- Module Name: TB_BITCS_SMALLNET - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for asynchronous Bitserial Compare Swap component
@@ -15,13 +15,13 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SIM_BITCS_SMALLNET is
+entity TB_BITCS_SMALLNET is
   generic (
     W : integer := 8
   );
-end entity SIM_BITCS_SMALLNET;
+end entity TB_BITCS_SMALLNET;
 
-architecture BEHAVIORAL of SIM_BITCS_SMALLNET is
+architecture TB of TB_BITCS_SMALLNET is
 
   constant CKTIME           : time := 10 ns;
 
@@ -177,4 +177,4 @@ begin
       START => start_i
     );
 
-end architecture BEHAVIORAL;
+end architecture TB;

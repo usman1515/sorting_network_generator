@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_Sorter - Behavioral
+-- Module Name: TB_Sorter - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for a test sorter with a sorting network with 16 inputs.
@@ -16,10 +16,10 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity SIM_SORTER is
-end entity SIM_SORTER;
+entity TB_SORTER is
+end entity TB_SORTER;
 
-architecture BEHAVIORAL of SIM_SORTER is
+architecture TB of TB_SORTER is
 
   constant W                 : integer := 8;
   constant DEPTH             : integer := 3;
@@ -114,7 +114,7 @@ begin
       SER_OUTPUT => e_delayed_i(0)
     );
 
-  SORTNET : entity work.oddeven_8
+  SORTNET : entity work.ODDEVEN_8_TO_8_MAX
     generic map (
       W => W
     )
@@ -151,4 +151,4 @@ begin
       VALID => valid_i
     );
 
-end architecture BEHAVIORAL;
+end architecture TB;

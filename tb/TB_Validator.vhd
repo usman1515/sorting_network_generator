@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_Validator- Behavioral
+-- Module Name: TB_Validator- Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for the Validator component.
@@ -16,11 +16,11 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity SIM_VALIDATOR is
+entity TB_VALIDATOR is
   --  Port ( );
-end entity SIM_VALIDATOR;
+end entity TB_VALIDATOR;
 
-architecture BEHAVIORAL of SIM_VALIDATOR is
+architecture TB of TB_VALIDATOR is
 
   constant CKTIME : time := 10 ns;
   constant W      : integer := 8;
@@ -93,4 +93,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;

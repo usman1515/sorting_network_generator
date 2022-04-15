@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_BITCS - Behavioral
+-- Module Name: TB_BITCS - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for asynchronous Bitserial Compare Swap component.
@@ -14,11 +14,11 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SIM_BITCS is
+entity TB_BITCS is
   --  Port ( );
-end entity SIM_BITCS;
+end entity TB_BITCS;
 
-architecture BEHAVIORAL of SIM_BITCS is
+architecture TB of TB_BITCS is
 
   constant CKTIME           : time := 10 ns;
 
@@ -146,4 +146,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;

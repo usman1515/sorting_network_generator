@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_BITCS_ShiftReg - Behavioral
+-- Module Name: TB_BITCS_ShiftReg - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for asynchronous Bitserial Compare Swap component
@@ -15,13 +15,13 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SIM_BITCS_SHIFTREG is
+entity TB_BITCS_SHIFTREG is
   generic (
     W : integer := 8
   );
-end entity SIM_BITCS_SHIFTREG;
+end entity TB_BITCS_SHIFTREG;
 
-architecture BEHAVIORAL of SIM_BITCS_SHIFTREG is
+architecture TB of TB_BITCS_SHIFTREG is
 
   component BITCS is
     port (
@@ -237,4 +237,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;

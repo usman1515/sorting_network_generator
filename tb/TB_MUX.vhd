@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SIM_MUX_2X2 - Behavioral
+-- Module Name: TB_MUX_2X2 - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Simulation for the different MUX_2X2 implementations.
@@ -13,11 +13,11 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SIM_MUX_2X2 is
+entity TB_MUX_2X2 is
   --  Port ( );
-end entity SIM_MUX_2X2;
+end entity TB_MUX_2X2;
 
-architecture BEHAVIORAL of SIM_MUX_2X2 is
+architecture TB of TB_MUX_2X2 is
 
   constant CKTIME   : time := 10 ns;
 
@@ -84,4 +84,4 @@ begin
 
   end process TEST_PROCESS;
 
-end architecture BEHAVIORAL;
+end architecture TB;
