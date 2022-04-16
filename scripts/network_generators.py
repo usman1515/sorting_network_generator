@@ -81,8 +81,12 @@ class Generator:
 
         # Default shape of network is max.
         shape = "max"
-        if "shape" in kwargs.keys() and kwargs["shape"] in ("max", "min", "median"):
-            shape = kwargs["shape"]
+        if "shape" in kwargs.keys() and kwargs["shape"].lower() in (
+            "max",
+            "min",
+            "median",
+        ):
+            shape = kwargs["shape"].lower()
 
         N = int(kwargs["N"])
 
@@ -92,18 +96,18 @@ class Generator:
 
         # Default number of outputs is N
         num_outputs = N
-        if "num_outputs" in kwargs.keys() and int(kwargs[num_outputs]) > 0:
-            num_outputs = kwargs[num_outputs]
+        if "num_outputs" in kwargs.keys() and int(kwargs["num_outputs"]) > 0:
+            num_outputs = kwargs["num_outputs"]
 
         # Using shape and number of output elements, build output_set.
-        output_set = output_set = set(range(0, num_outputs))
+        output_set = output_set = set(range(N - num_outputs, N))
         if shape == "median":
             if "num_outputs" not in kwargs.keys():
                 # If N is even, we want the two center outputs
                 num_outputs = 1 + (N + 1) % 2
             output_set = set(range((N - num_outputs) // 2, (N + num_outputs) // 2))
         elif shape == "min":
-            output_set = set(range(N - num_outputs, N))
+            output_set = set(range(0, num_outputs))
 
         # With output_set, prune unneeded CS and outputs. Might also reduce
         # depth of network.
@@ -174,6 +178,9 @@ class Generator:
         # Add deserializers for each network output.
         output_list = list(output_set)
         output_list.sort()
+        if shape == "min":
+            output_list.reverse()
+
         for i in range(num_outputs):
             specific = dict()
             specific["PAR_OUTPUT"] = "output({})".format(i)

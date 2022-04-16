@@ -3,10 +3,10 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: TB_ODDEVEN_4_TO_4_MAX - Behavioral
+-- Module Name: TB_ODDEVEN_8 - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
--- Description: Simulation for synchronous ODDEVEN_4 sorting network with 4 inputs.
+-- Description: Simulation for synchronous ODDEVEN_8 sorting network with 8 inputs.
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -16,32 +16,31 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity TB_ODDEVEN_4_TO_4_MAX is
-end entity TB_ODDEVEN_4_TO_4_MAX;
+entity TB_ODDEVEN_8 is
+end entity TB_ODDEVEN_8;
 
-architecture TB of TB_ODDEVEN_4_TO_4_MAX is
+architecture TB of TB_ODDEVEN_8 is
 
-  constant W           : integer := 8;
-  constant DEPTH       : integer := 3;
-  constant N           : integer := 4;
+  constant W            : integer := 8;
+  constant DEPTH        : integer := 6;
+  constant N            : integer := 8;
+  constant M            : integer := 8;
 
-  constant CKTIME      : time := 10 ns;
-  signal   clk         : std_logic;
+  constant CKTIME       : time := 10 ns;
+  signal   clk          : std_logic;
 
-  signal rst_i         : std_logic;
-  signal e_i           : std_logic;
+  signal rst_i          : std_logic;
+  signal e_i            : std_logic;
 
-  signal a_sorted_i    : SLVArray(3 downto 0)(W - 1 downto 0);
-  signal a0_i          : SLVArray(3 downto 0)(W - 1 downto 0);
-  signal a1_i          : SLVArray(3 downto 0)(W - 1 downto 0);
+  signal a0_i           : SLVArray(N - 1 downto 0)(W - 1 downto 0);
+  signal a_sorted_i     : SLVArray(M - 1 downto 0)(W - 1 downto 0);
+  signal a1_i           : SLVArray(M - 1 downto 0)(W - 1 downto 0);
 
 begin
 
-  ODDEVEN_4_TO_4_MAX_1 : entity work.oddeven_4_to_4_max
+  ODDEVEN_8_1 : entity work.oddeven_8_to_8_max
     generic map (
-      W     => W,
-      DEPTH => DEPTH,
-      N     => N
+      W => W
     )
     port map (
       CLK    => clk,
@@ -64,21 +63,22 @@ begin
   TEST_PROCESS : process is
 
   begin
+
     a_sorted_i <= (others => (others => '0'));
     e_i        <= '0';
     wait for CKTIME / 2;
     rst_i      <= '1';
     wait for CKTIME;
-    a0_i       <= (X"2B", X"A8", X"F2", X"5C");
+    a0_i       <= (X"2B", X"A8", X"F2", X"5C", X"2B", X"F8", X"41", X"73");
     rst_i      <= '0';
     e_i        <= '1';
     wait for (W) * CKTIME;
-    a_sorted_i <= (X"F2", X"A8", X"5C", X"2B");
-    a0_i       <= (X"42", X"F1", X"A1", X"F2");
+    a_sorted_i <= (X"F8", X"F2", X"A8", X"73", X"5C", X"41", X"2B", X"2B");
+    a0_i       <= (X"12", X"48", X"B2", X"5C", X"2B", X"A8", X"C2", X"5C");
 
     wait for 2 * CKTIME;
 
-    for i in 0 to 3 loop
+    for i in 0 to M-1 loop
 
       assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
@@ -90,11 +90,11 @@ begin
     end loop;
 
     wait for CKTIME;
-    a_sorted_i <= (X"F2", X"F1", X"A1", X"42");
+    a_sorted_i <= (X"C2", X"B2", X"A8", X"5C", X"5C", X"48", X"2B", X"12");
 
     wait for W * CKTIME;
 
-    for i in 0 to 3 loop
+    for i in 0 to M-1 loop
 
       assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &

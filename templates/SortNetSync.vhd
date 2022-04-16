@@ -20,14 +20,15 @@ entity {top_name} is
   generic (
     W     : integer := {bit_width};
     DEPTH : integer := {net_depth};
-    N     : integer := {num_inputs}
+    N     : integer := {num_inputs};
+    M     : integer := {num_outputs}
   );
   port (
     CLK      : in    std_logic;
     E        : in    std_logic;
     RST      : in    std_logic;
     INPUT    : in    SLVArray(N - 1 downto 0)(W - 1 downto 0);
-    OUTPUT   : out   SLVArray(N - 1 downto 0)(W - 1 downto 0)
+    OUTPUT   : out   SLVArray(M - 1 downto 0)(W - 1 downto 0)
   );
 end entity {top_name};
 
@@ -60,7 +61,7 @@ begin
   begin
 
     if (rising_edge(CLK)) then
-      start(start'high downto start'Low + 1) <= start(start'high - 1 downto start'low);
+      start(start'high downto start'low + 1) <= start(start'high - 1 downto start'low);
     end if;
 
   end process STARTDELAY;
