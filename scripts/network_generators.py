@@ -34,8 +34,8 @@ class Generator:
             for i in range(N):
                 # Look for CS elements whose inputs are outside of the target
                 # size. Replace them with bypass elements.
-                if A[d][i] >= N:
-                    A[d][i] = -1
+                if A[d][i][1] >= N:
+                    A[d][i] = ("+", i)
             # Resize stage to target size.
             A[d] = A[d][:N]
         return A
@@ -51,24 +51,23 @@ class Generator:
         N = len(A[0])
         d = depth
 
-        done = False
         # Beginning at the output end of the network...
-        while d >= 0 and not done:
+        while d >= 0:
             d -= 1
             for i in range(N):
                 # ... remove all CS elements not in output_set ...
-                if A[d][i] not in output_set and i not in output_set:
-                    A[d][i] = 0
+                if A[d][i][1] not in output_set and i not in output_set:
+                    A[d][i] = ("", i)
                 else:
                     # ... and add ports connected to wires into output_set.
-                    if A[d][i] > 0:
-                        output_set.add(A[d][i])
+                    if A[d][i][0] in ("F", "R"):
+                        output_set.add(A[d][i][1])
             # If the output set contains all ports we are done.
             if len(output_set) == N:
-                done = True
+                break
 
         # Remove stages which only contain delay elements.
-        A = [stage for stage in A if any([i > 0 for i in stage])]
+        A = [stage for stage in A if any([pair[0] in ("F", "R") for pair in stage])]
 
         return A
 
@@ -132,14 +131,19 @@ class Generator:
         # Create instances of CS elements forming the network.
         for i in range(depth):
             for j in range(N):
-                if A[i][j] > j:
+                if A[i][j][1] > j:
                     a = j
                     b = A[i][j]
                     specific = dict()
-                    specific["A0"] = "wire({})({})".format(b, i)
-                    specific["B0"] = "wire({})({})".format(a, i)
-                    specific["A1"] = "wire({})({})".format(b, i + 1)
-                    specific["B1"] = "wire({})({})".format(a, i + 1)
+                    specific["A0"] = "wire({})({})".format(a, i)
+                    specific["B0"] = "wire({})({})".format(b, i)
+                    if A[i][j][0] == "F":
+                        specific["A1"] = "wire({})({})".format(a, i + 1)
+                        specific["B1"] = "wire({})({})".format(b, i + 1)
+                    else:
+                        specific["A1"] = "wire({})({})".format(b, i + 1)
+                        specific["B1"] = "wire({})({})".format(a, i + 1)
+
                     specific["START"] = "START({})".format(i)
                     instances += kwargs["cs"].as_instance(
                         "CS_D{}_A{}_B{}".format(i, a, b), generics, ports | specific
@@ -149,11 +153,11 @@ class Generator:
         bypasses = ""
         for i in range(depth):
             for j in range(N):
-                if A[i][j] < 0:
+                if A[i][j][0] == "+":
                     bypass_beg = i
                     bypass_end = i
-                    while bypass_end < depth and A[bypass_end][j] < 0:
-                        A[bypass_end][j] = 0
+                    while bypass_end < depth and A[bypass_end][j][0] == "+":
+                        A[bypass_end][j][0] = ""
                         bypass_end += 1
                     bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
@@ -221,7 +225,7 @@ class OddEven(Generator):
         # https://en.wikipedia.org/wiki/Batcher_odd%E2%80%93even_mergesort
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
-        A = [[-1 for j in range(N)] for i in range(depth)]
+        A = [[("+", j) for j in range(N)] for i in range(depth)]
         d = -1  # Current network depth index
         for p_e in range(0, logp):
             p = 2**p_e
@@ -233,31 +237,73 @@ class OddEven(Generator):
                         if math.floor((i + j) / (p * 2)) == math.floor(
                             (i + j + k) / (p * 2)
                         ):
-                            A[d][i + j] = i + j + k
-                            A[d][i + j + k] = i + j
+                            A[d][i + j] = ("F", i + j + k)
+                            A[d][i + j + k] = ("F", i + j)
+        return A
+
+
+class Bitonic(Generator):
+    def __init__(self):
+        super().__init__()
+        self.keywords = {
+            "input": "Name of input component",
+            "output": "Name of output component",
+            "CS": "Name of compare swap element",
+            "template": "Name of template",
+            "N": "Number of inputs. Must be power of 2",
+        }
+
+    def create_connection_matrix(self, N):
+        # Adaption of algorithm described at
+        # https://courses.cs.duke.edu//fall08/cps196.1/Pthreads/bitonic.c
+        logp = int(math.ceil((math.log2(N))))
+        depth = logp * (logp + 1) // 2
+        A = [[("+", j) for j in range(N)] for i in range(depth)]
+        d = -1  # Current network depth index
+        #
+        for k_e in range(0, logp + 1):
+            k = 2**k_e
+            for j_e in range(k_e - 1, -1, -1):
+                j = 2**j_e
+                print(k_e, j_e)
+                d += 1
+                for i in range(N):
+                    x = i ^ j
+                    if x > i:
+                        if i & k:
+                            A[d][i] = ("R", x)
+                            A[d][x] = ("R", i)
+                        else:
+                            A[d][i] = ("F", x)
+                            A[d][x] = ("F", i)
         return A
 
 
 # Elpy shenanigans
-# cond = __name__ == "__main__"
-# if cond:
-#     gen = OddEven()
-#     A = gen.create_connection_matrix(8)
-#     for layer in A:
-#         print(layer)
-#     print()
-#     A = gen.reduce_connection_matrix(A, 8)
-#     for layer in A:
-#         print(layer)
-#     print()
-#     output_set = set()
-#     output_set.add(0)
-#     output_set.add(7)
-#     print(output_set)
-#     A = gen.prune_connection_matrix(A, output_set.copy())
-#     output_list = list(output_set)
-#     output_list.sort()
-#     print(output_list)
-#     for layer in A:
-#         print(layer)
-#     print()
+cond = __name__ == "__main__"
+if cond:
+    gen = OddEven()
+    A = gen.create_connection_matrix(8)
+    for layer in A:
+        print(layer)
+    print()
+    gen = Bitonic()
+    A = gen.create_connection_matrix(8)
+    for layer in A:
+        print(layer)
+    print()
+    A = gen.reduce_connection_matrix(A, 8)
+    for layer in A:
+        print(layer)
+    print()
+    output_set = set()
+    output_set.add(0)
+    output_set.add(7)
+    print(output_set)
+    A = gen.prune_connection_matrix(A, output_set.copy())
+    output_list = list(output_set)
+    output_list.sort()
+    print(output_list)
+    for layer in A:
+        print(layer)
+    print()
