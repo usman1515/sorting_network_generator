@@ -1,68 +1,41 @@
 #!/usr/bin/env bash
 
-for i in {1..10}; do
+param=" "
+max=10
+for (( i=1; i<=$max; i++ )); do
     pow=$((2 ** $i))
-
-    python netgen.py generate oddeven \
-        -input LOAD_SHIFT_REGISTER \
-        -output STORE_SHIFT_REGISTER \
-        -cs BITCS_SYNC \
-        -template SortNetSync.vhd \
-        -N $pow
+    param="$param""generate --nettype=oddeven"\
+" --inputs=LOAD_SHIFT_REGISTER"\
+" --outputs=STORE_SHIFT_REGISTER"\
+" --cs=BITCS_SYNC"\
+" --template=SortNetSync.vhd"\
+" --N=$pow"\
+" --W=8"\
+" --num_outputs=$pow"\
+" --shape=max"
+    if (( i != $max )); then
+        param=$param" - "
+    fi
 
 done
 
+nettype=("oddeven" "bitonic")
+shape=("max" "min" "median")
+for n in "${nettype[@]}"; do
+    for s in "${shape[@]}"; do
 
-python netgen.py generate oddeven \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MAX \
-    -num_outputs 3
+    param="$param""generate --nettype=$n"\
+" --inputs=LOAD_SHIFT_REGISTER"\
+" --outputs=STORE_SHIFT_REGISTER"\
+" --cs=BITCS_SYNC"\
+" --template=SortNetSync.vhd"\
+" --N=10"\
+" --W=8"\
+" --num_outputs=3"\
+" --shape=$s"\
+" - "
+    done
+done
 
-python netgen.py generate oddeven \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MIN \
-    -num_outputs 3
-
-python netgen.py generate oddeven \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MEDIAN \
-    -num_outputs 3
-
-python netgen.py generate bitonic \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MAX \
-    -num_outputs 3
-
-python netgen.py generate bitonic \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MIN \
-    -num_outputs 3
-
-python netgen.py generate bitonic \
-    -input LOAD_SHIFT_REGISTER \
-    -output STORE_SHIFT_REGISTER \
-    -cs BITCS_SYNC \
-    -template SortNetSync.vhd \
-    -N 10 \
-    -shape MEDIAN \
-    -num_outputs 3
+#printf "$param"
+python netgen.py $param write_log report

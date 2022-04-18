@@ -13,6 +13,7 @@ class Generator:
             "num_outputs": "Number of output elements.",
         }
         self.A = [[]]  # Connection matrix
+        self.log_dict = {}
 
     def __str__(self):
         print(self.name)
@@ -74,42 +75,39 @@ class Generator:
 
         return self.A
 
-    def generate(self, template, **kwargs):
+    def generate(self, inputs, outputs, cs, template, N, W=8, num_outputs=0, shape=""):
         """Takes kwargs and returns template object with generated network."""
-        if not any(kw in kwargs.keys() for kw in self.keywords):
-            print("Error: The following parameters are required:")
-            print(self)
-            return
 
         # Default shape of network is max.
         shape = "max"
-        if "shape" in kwargs.keys() and kwargs["shape"].lower() in (
+        if not shape.lower() in (
             "max",
             "min",
             "median",
         ):
-            shape = kwargs["shape"].lower()
-
-        N = int(kwargs["N"])
+            shape = "max"
+        shape = shape.lower()
 
         # Begin building connection matrix from parameters.
         self.A = self.create_connection_matrix(N)
         self.A = self.reduce_connection_matrix(N)
-
-        # Default number of outputs is N
-        num_outputs = N
-        if "num_outputs" in kwargs.keys() and int(kwargs["num_outputs"]) > 0:
-            num_outputs = kwargs["num_outputs"]
-
+        print(N, W, num_outputs, shape)
         # Using shape and number of output elements, build output_set.
-        output_set = output_set = set(range(0, num_outputs))
         if shape == "median":
-            if "num_outputs" not in kwargs.keys():
+            if not num_outputs == N:
                 # If N is even, we want the two center outputs
                 num_outputs = 1 + (N + 1) % 2
             output_set = set(range((N - num_outputs) // 2, (N + num_outputs) // 2))
         elif shape == "min":
+            if not num_outputs:
+                num_outputs = N
             output_set = set(range(N - num_outputs, N))
+        else:
+            shape = "max"
+            # Default number of outputs is N
+            if not num_outputs:
+                num_outputs = N
+            output_set = output_set = set(range(0, num_outputs))
 
         # With output_set, prune unneeded CS and outputs. Might also reduce
         # depth of network.
@@ -117,13 +115,17 @@ class Generator:
         self.A = self.prune_connection_matrix(output_set.copy())
         depth = len(self.A)
 
+        self.log_dict["network"] = self.name
+        self.log_dict["num_inputs"] = N
+        self.log_dict["shape"] = shape
+        self.log_dict["num_outputs"] = num_outputs
+        self.log_dict["depth"] = depth
+
         # Begin building content for placeholder tokens of template.
         top_name = "{}_{}_TO_{}_{}".format(
             self.name.upper(), N, num_outputs, shape.upper()
         )
-        bit_width = 8
-        if "W" in kwargs.keys():
-            bit_width = kwargs["W"]
+        bit_width = W
 
         # components = kwargs["input"].as_component() + "\n"
         # components += kwargs["output"].as_component() + "\n"
@@ -132,11 +134,14 @@ class Generator:
         generics = {"W": bit_width}
         ports = {"CLK": "CLK", "E": "E", "RST": "RST"}
 
+        self.log_dict["CS"] = 0
+        self.log_dict["distance_hist"] = [0 for i in range(0, N)]
         instances = ""
         # Create instances of CS elements forming the network.
         for i in range(depth):
             for j in range(N):
                 if self.A[i][j][1] > j:
+                    self.log_dict["CS"] += 1
                     a = j
                     b = self.A[i][j][1]
                     specific = dict()
@@ -150,13 +155,18 @@ class Generator:
                         specific["B1"] = "wire({})({})".format(a, i + 1)
 
                     specific["START"] = "START({})".format(i)
-                    instances += kwargs["cs"].as_instance(
+                    instances += cs.as_instance(
                         "CS_D{}_A{}_B{}".format(i, a, b),
                         generics,
                         ports | specific,
                     )
 
+                    self.log_dict["distance_hist"][b - a] += 1
+
         # Fill bypasses with delay elements.
+
+        self.log_dict["FF_hist"] = [0 for i in range(0, depth)]
+
         bypasses = ""
         for i in range(depth):
             for j in range(N):
@@ -166,6 +176,9 @@ class Generator:
                     while bypass_end < depth and self.A[bypass_end][j][0] == "+":
                         self.A[bypass_end][j] = ("", j)
                         bypass_end += 1
+
+                    self.log_dict["FF_hist"][bypass_end - bypass_beg] += 1
+
                     bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
                     )
@@ -182,7 +195,7 @@ class Generator:
             specific["SER_OUTPUT"] = "wire({})(0)".format(i)
             specific["LOAD"] = "START(START'low)"
 
-            instances += kwargs["input"].as_instance(
+            instances += inputs.as_instance(
                 "input_{}".format(i), generics, ports | specific
             )
 
@@ -197,7 +210,7 @@ class Generator:
             specific["PAR_OUTPUT"] = "output({})".format(i)
             specific["SER_INPUT"] = "wire({})({})".format(output_list[i], depth)
             specific["STORE"] = "START(START'high)"
-            instances += kwargs["output"].as_instance(
+            instances += outputs.as_instance(
                 "output_{}".format(i), generics, ports | specific
             )
 
@@ -351,7 +364,7 @@ if cond:
     gen.create_connection_matrix(8)
     for layer in gen.A:
         print(layer)
-    print()
+    print(gen.log_dict)
     # self.A = gen.reduce_connection_matrix(self.A, 10)
     # for layer in self.A:
     #     print(layer)

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
+import fire
+import csv
+
 from scripts.vhdl_parser import *
 from scripts.vhdl_container import *
 from scripts.network_generators import *
-import fire
 
 
 def get_sources(path=Path()):
@@ -32,6 +34,10 @@ class Interface:
         self.entities = get_sources(Path("src/"))
         self.templates = dict()
         self.templates = get_templates(Path("templates/"))
+        self.logs = []
+
+    def __str__(self):
+        return ""
 
     def list(self, listtype=""):
         """List available components and templates.
@@ -84,29 +90,65 @@ class Interface:
             print("templates:")
             for template in Path("templates/").glob("**/*.vhd"):
                 print("\t" + template.name)
+        return self
 
-    def generate(self, generator_name="", **kwargs):
-        template = self.templates[kwargs.pop("template")]
-        if "oddeven" == generator_name.lower():
-            names = ["input", "output", "cs"]
-            for name in names:
-                kwargs[name] = self.entities[kwargs[name]]
+    def generate(
+        self,
+        nettype,
+        inputs,
+        outputs,
+        cs,
+        template,
+        N,
+        W,
+        num_outputs,
+        shape,
+    ):
+        print(
+            nettype,
+            inputs,
+            outputs,
+            cs,
+            template,
+            N,
+            W,
+            num_outputs,
+            shape,
+        )
+        template = self.templates[template]
+        inputs = self.entities[inputs]
+        outputs = self.entities[outputs]
+        cs = self.entities[cs]
+        if "oddeven" == nettype.lower():
             generator = OddEven()
-            template = generator.generate(template, **kwargs)
+            template = generator.generate(
+                inputs, outputs, cs, template, N, W, num_outputs, shape
+            )
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
-        elif "bitonic" == generator_name.lower():
-            names = ["input", "output", "cs"]
-            for name in names:
-                kwargs[name] = self.entities[kwargs[name]]
+            self.logs.append(generator.log_dict)
+
+        elif "bitonic" == nettype.lower():
             generator = Bitonic()
-            template = generator.generate(template, **kwargs)
+            template = generator.generate(
+                inputs, outputs, cs, template, N, W, num_outputs, shape
+            )
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
+            self.logs.append(generator.log_dict)
         else:
             print("Options: oddeven, bitonic")
+        return self
+
+    def write_log(self, logfile="report.csv"):
+        with open("build/{}.csv".format(logfile), "w") as fd:
+            w = csv.DictWriter(fd, self.logs[0].keys())
+            # w.writerow(dict((fn, fn) for fn in log_dict.keys()))
+            w.writeheader()
+            w.writerows(self.logs)
+        return self
 
     def test(self):
         #        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))
