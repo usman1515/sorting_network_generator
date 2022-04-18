@@ -37,13 +37,13 @@ architecture TB of TB_BITCS_CONTROLLOGIC is
   signal e_i                      : std_logic;
   signal rst                      : std_logic;
 
-  signal value_0_i                : std_logic_vector(W - 1 downto 0) ;
-  signal value_1_i                : std_logic_vector(W - 1 downto 0) ;
-  signal output_0_i               : std_logic_vector(W - 1 downto 0) ;
-  signal output_1_i               : std_logic_vector(W - 1 downto 0) ;
+  signal value_0_i                : std_logic_vector(W - 1 downto 0);
+  signal value_1_i                : std_logic_vector(W - 1 downto 0);
+  signal output_0_i               : std_logic_vector(W - 1 downto 0);
+  signal output_1_i               : std_logic_vector(W - 1 downto 0);
 
-  signal larger_value             : std_logic_vector(W - 1 downto 0) ;
-  signal smaller_value            : std_logic_vector(W - 1 downto 0) ;
+  signal larger_value             : std_logic_vector(W - 1 downto 0);
+  signal smaller_value            : std_logic_vector(W - 1 downto 0);
 
 begin
 
@@ -57,7 +57,7 @@ begin
 
   end process CLK_PROCESS;
 
-  UUT_0 : BITCS
+  UUT_0 : entity work.bitcs
     port map (
       A0    => a0_i,
       B0    => b0_i,
@@ -66,62 +66,66 @@ begin
       START => start_i
     );
 
-  CYCLE_TIMER_1 : entity work.CYCLE_TIMER
+  CYCLE_TIMER_1 : entity work.cycle_timer
     generic map (
       W => W
     )
     port map (
-      CLK     => clk,
-      RST     => rst,
+      CLK   => clk,
+      RST   => rst,
       E     => e_i,
       START => start_i
     );
 
-  LOAD_SHIFT_REGISTER_1 : entity work.LOAD_SHIFT_REGISTER
+  LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register
     generic map (
       W => W
     )
     port map (
       CLK        => clk,
-      E        => e_i,
-      LOAD         => start_i,
-      PAR_INPUT      => value_0_i,
-      SER_OUTPUT => a0
+      RST        => rst,
+      E          => e_i,
+      LOAD       => start_i,
+      PAR_INPUT  => value_0_i,
+      SER_OUTPUT => a0_i
     );
 
-  LOAD_SHIFT_REGISTER_2 : LOAD_SHIFT_REGISTER
+  LOAD_SHIFT_REGISTER_2 : entity work.load_shift_register
     generic map (
       W => W
     )
     port map (
       CLK        => clk,
-      E_I        => e_i,
-      LD         => start_i,
-      INPUT      => value_1_i,
-      SER_OUTPUT => b0
+      RST        => rst,
+      E          => e_i,
+      LOAD       => start_i,
+      PAR_INPUT  => value_1_i,
+      SER_OUTPUT => b0_i
     );
 
-  STORE_SHIFT_REGISTER_1 : STORE_SHIFT_REGISTER
+  STORE_SHIFT_REGISTER_1 : entity work.store_shift_register
     generic map (
       W => W
     )
     port map (
       CLK        => clk,
-      E_I        => e,
-      ST         => start_i,
-      SER_INPUT  => a1,
+      RST        => rst,
+      E          => e_i,
+      STORE      => start_i,
+      SER_INPUT  => a1_i,
       PAR_OUTPUT => output_0_i
     );
 
-  STORE_SHIFT_REGISTER_2 : STORE_SHIFT_REGISTER
+  STORE_SHIFT_REGISTER_2 : entity work.store_shift_register
     generic map (
       W => W
     )
     port map (
-      E          => e,
       CLK        => clk,
-      ST         => start_i,
-      SER_INPUT  => b1,
+      RST        => rst,
+      E          => e_i,
+      STORE      => start_i,
+      SER_INPUT  => b1_i,
       PAR_OUTPUT => output_1_i
     );
 
@@ -129,11 +133,11 @@ begin
 
   begin
 
+    rst           <= '1';
     larger_value  <= "10110110";
     smaller_value <= "10100111";
     e_i           <= '0';
     wait for CKTIME / 2;
-    rst           <= '1';
     value_0_i     <= larger_value;
     value_1_i     <= smaller_value;
     wait for CKTIME;

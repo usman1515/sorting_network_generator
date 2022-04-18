@@ -33,7 +33,7 @@ architecture TB of TB_BITCS_SMALLNET is
 
   signal start_i            : std_logic;
   signal e_i                : std_logic;
-  signal rst_i              : std_logic;
+  signal rst                : std_logic;
 
   type memblock is array (3 downto 0) of std_logic_vector(W - 1 downto 0);
 
@@ -60,9 +60,9 @@ begin
     b_vec <= (others => (others => '0'));
     e_i   <= '0';
     wait for CKTIME / 2;
-    rst_i <= '1';
+    rst   <= '1';
     wait for CKTIME;
-    rst_i <= '0';
+    rst   <= '0';
     e_i   <= '1';
     wait for (W - 1) * CKTIME;
     -- assert ((larger_value = A1) and (smaller_value = D)) report "Mismatch:: " &
@@ -94,6 +94,7 @@ begin
       )
       port map (
         CLK        => clk,
+        RST        => rst,
         E          => e_i,
         LOAD       => start_i,
         PAR_INPUT  => a_vec(i),
@@ -110,6 +111,7 @@ begin
       )
       port map (
         CLK        => clk,
+        RST        => rst,
         E          => e_i,
         STORE      => start_i,
         PAR_OUTPUT => b_vec(i),
@@ -172,7 +174,7 @@ begin
     )
     port map (
       CLK   => clk,
-      RST   => rst_i,
+      RST   => rst,
       E     => e_i,
       START => start_i
     );

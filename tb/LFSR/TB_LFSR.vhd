@@ -29,7 +29,7 @@ architecture TB of TB_LFSR is
 
   constant CKTIME     : time := 10 ns;
   constant W          : integer := 8;
-  constant P          : std_logic_vector(W - 1 downto 0) := "10111000";
+  constant POLY          : std_logic_vector(W - 1 downto 0) := "10111000";
 
   signal clk          : std_logic;
   signal rst_i        : std_logic;
@@ -52,7 +52,7 @@ begin
   LSFR_1 : entity work.lfsr
     generic map (
       W => W,
-      P => P
+      POLY => POLY
     )
     port map (
       CLK    => clk,

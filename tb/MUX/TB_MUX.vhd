@@ -43,7 +43,7 @@ begin
     port map (
       A0  => input_i(0),
       B0  => input_i(1),
-      SEL => SEL,
+      SEL => sel_i(0),
       A1  => output0_i(0),
       B1  => output0_i(1)
     );
@@ -52,7 +52,7 @@ begin
     port map (
       A0  => input_i(0),
       B0  => input_i(1),
-      SEL => SEL,
+      SEL => sel_i(0),
       A1  => output1_i(0),
       B1  => output1_i(1)
     );

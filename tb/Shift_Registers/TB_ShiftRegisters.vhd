@@ -24,7 +24,8 @@ architecture TB of TB_SHIFTREGISTERS is
 
   constant CKTIME        : time := 10 ns;
 
-  signal clock           : std_logic;
+  signal clk             : std_logic;
+  signal rst             : std_logic;
   signal e_i             : std_logic;
   signal load_i          : std_logic_vector(0 downto 0);
   signal store_i         : std_logic_vector(0 downto 0);
@@ -37,9 +38,9 @@ begin
   CLOCK_PROCESS : process is
   begin
 
-    clock <= '0';
+    clk <= '0';
     wait for CKTIME / 2;
-    clock <= '1';
+    clk <= '1';
     wait for CKTIME / 2;
 
   end process CLOCK_PROCESS;
@@ -49,7 +50,8 @@ begin
       W => W
     )
     port map (
-      CLK        => clock,
+      CLK        => clk,
+      RST        => rst,
       LOAD       => load_i(0),
       E          => e_i,
       PAR_INPUT  => input_i,
@@ -61,7 +63,8 @@ begin
       W => W
     )
     port map (
-      CLK        => clock,
+      CLK        => clk,
+      RST        => rst,
       STORE      => store_i(0),
       E          => e_i,
       SER_INPUT  => serial_i,
@@ -71,7 +74,9 @@ begin
   TEST_PROCESS : process is
   begin
 
+    rst     <= '1';
     wait for CKTIME;
+    rst     <= '0';
     input_i <= "11001011";
     load_i  <= "1";
     e_i     <= '1';
