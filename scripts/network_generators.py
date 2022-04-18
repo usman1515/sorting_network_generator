@@ -115,7 +115,9 @@ class Generator:
         depth = len(A)
 
         # Begin building content for placeholder tokens of template.
-        top_name = "ODDEVEN_{}_TO_{}_{}".format(N, num_outputs, shape.upper())
+        top_name = "{}_{}_TO_{}_{}".format(
+            self.name.upper(), N, num_outputs, shape.upper()
+        )
         bit_width = 8
         if "W" in kwargs.keys():
             bit_width = kwargs["W"]
@@ -133,7 +135,7 @@ class Generator:
             for j in range(N):
                 if A[i][j][1] > j:
                     a = j
-                    b = A[i][j]
+                    b = A[i][j][1]
                     specific = dict()
                     specific["A0"] = "wire({})({})".format(a, i)
                     specific["B0"] = "wire({})({})".format(b, i)
@@ -157,7 +159,7 @@ class Generator:
                     bypass_beg = i
                     bypass_end = i
                     while bypass_end < depth and A[bypass_end][j][0] == "+":
-                        A[bypass_end][j][0] = ""
+                        A[bypass_end][j] = ("", j)
                         bypass_end += 1
                     bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
@@ -212,6 +214,7 @@ class Generator:
 class OddEven(Generator):
     def __init__(self):
         super().__init__()
+        self.name = "ODDEVEN"
         self.keywords = {
             "input": "Name of input component",
             "output": "Name of output component",
@@ -245,6 +248,7 @@ class OddEven(Generator):
 class Bitonic(Generator):
     def __init__(self):
         super().__init__()
+        self.name = "BITONIC"
         self.keywords = {
             "input": "Name of input component",
             "output": "Name of output component",
@@ -258,16 +262,15 @@ class Bitonic(Generator):
         # https://courses.cs.duke.edu//fall08/cps196.1/Pthreads/bitonic.c
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
-        A = [[("+", j) for j in range(N)] for i in range(depth)]
+        A = [[("+", j) for j in range(2**logp)] for i in range(depth)]
         d = -1  # Current network depth index
         #
         for k_e in range(0, logp + 1):
             k = 2**k_e
             for j_e in range(k_e - 1, -1, -1):
                 j = 2**j_e
-                print(k_e, j_e)
                 d += 1
-                for i in range(N):
+                for i in range(2**logp):
                     x = i ^ j
                     if x > i:
                         if i & k:
@@ -282,23 +285,24 @@ class Bitonic(Generator):
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
-    gen = OddEven()
-    A = gen.create_connection_matrix(8)
-    for layer in A:
-        print(layer)
-    print()
+    # gen = OddEven()
+    # A = gen.create_connection_matrix(8)
+    # for layer in A:
+    #     print(layer)
     gen = Bitonic()
-    A = gen.create_connection_matrix(8)
+    print()
+    A = gen.create_connection_matrix(10)
     for layer in A:
         print(layer)
     print()
-    A = gen.reduce_connection_matrix(A, 8)
+    A = gen.reduce_connection_matrix(A, 10)
     for layer in A:
         print(layer)
     print()
     output_set = set()
     output_set.add(0)
-    output_set.add(7)
+    output_set.add(1)
+    output_set.add(2)
     print(output_set)
     A = gen.prune_connection_matrix(A, output_set.copy())
     output_list = list(output_set)

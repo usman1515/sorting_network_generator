@@ -96,8 +96,17 @@ class Interface:
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
+        elif "bitonic" == generator_name.lower():
+            names = ["input", "output", "cs"]
+            for name in names:
+                kwargs[name] = self.entities[kwargs[name]]
+            generator = Bitonic()
+            template = generator.generate(template, **kwargs)
+            path = Path("build/{}.vhd".format(template.name))
+            with open(str(path), "w") as fd:
+                fd.write(template.as_template())
         else:
-            print("Options: oddeven")
+            print("Options: oddeven, bitonic")
 
     def test(self):
         #        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))

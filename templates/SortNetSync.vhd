@@ -27,8 +27,8 @@ entity {top_name} is
     CLK      : in    std_logic;
     E        : in    std_logic;
     RST      : in    std_logic;
-    INPUT    : in    SLVArray(N - 1 downto 0)(W - 1 downto 0);
-    OUTPUT   : out   SLVArray(M - 1 downto 0)(W - 1 downto 0)
+    INPUT    : in    SLVArray(0 to N - 1)(W - 1 downto 0);
+    OUTPUT   : out   SLVArray(0 to M - 1)(W - 1 downto 0)
   );
 end entity {top_name};
 
