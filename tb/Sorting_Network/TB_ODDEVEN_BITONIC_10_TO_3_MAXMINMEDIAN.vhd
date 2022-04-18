@@ -148,7 +148,7 @@ begin
     wait for (W) * CKTIME;
     -- F8 F2 E1 A8 73 5C 55 41 2B 2B
     max_i    <= (X"F8", X"F2", X"E1");
-    min_i    <= (X"41", X"55", X"73");
+    min_i    <= (X"2B", X"2B", X"41");
     median_i <= (X"A8", X"73", X"5C");
     a0_i     <= (X"12", X"48", X"B2", X"5C", X"2B", X"A8", X"C2", X"5C", X"71", X"05");
 

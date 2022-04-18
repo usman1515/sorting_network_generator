@@ -61,7 +61,11 @@ begin
   begin
 
     if (rising_edge(CLK)) then
-      start(start'high downto start'low + 1) <= start(start'high - 1 downto start'low);
+      if (RST = '1') then
+        start(start'high downto start'low + 1) <= (others => '0');
+      else
+        start(start'high downto start'low + 1) <= start(start'high - 1 downto start'low);
+        end if;
     end if;
 
   end process STARTDELAY;

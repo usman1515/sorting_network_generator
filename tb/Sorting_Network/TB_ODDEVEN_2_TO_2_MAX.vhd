@@ -37,7 +37,7 @@ architecture TB of TB_ODDEVEN_2_TO_2_MAX is
 
 begin
 
-  ODDEVEN_2_1 : entity work.ODDEVEN_2_TO_2_MAX
+  ODDEVEN_2_1 : entity work.oddeven_2_to_2_max
     generic map (
       W     => W,
       DEPTH => DEPTH,
@@ -61,24 +61,37 @@ begin
 
   end process CLK_PROCESS;
 
-  TEST_PROCESS : process is
+  SIGNAL_PROCESS : process is
 
   begin
-    a_sorted_i <= (others => (others => '0'));
-    e_i        <= '0';
+
     wait for CKTIME / 2;
-    rst_i      <= '1';
-    a0_i       <= (X"2B", X"A8");
+    e_i   <= '0';
+    rst_i <= '1';
     wait for CKTIME;
-    rst_i      <= '0';
-    e_i        <= '1';
-    wait for (W) * CKTIME;
+    a0_i  <= (X"2B", X"A8");
+    rst_i <= '0';
+    e_i   <= '1';
+    wait for W * CKTIME;
+    a0_i  <= (X"F1", X"F2");
+
+    wait for W * CKTIME;
+
+    wait;
+
+  end process SIGNAL_PROCESS;
+
+  ASSERT_PROCESS : process is
+  begin
+
+    a_sorted_i <= (others => (others => '0'));
+    wait for CKTIME / 2;
     a_sorted_i <= (X"A8", X"2B");
-    a0_i       <= (X"F1", X"F2");
+    wait for DEPTH * CKTIME;
+    wait for W * CKTIME;
+    wait for W * CKTIME;
 
-    wait for 2 * CKTIME;
-
-    for i in 0 to 1 loop
+    for i in 0 to N - 1 loop
 
       assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
@@ -89,24 +102,22 @@ begin
 
     end loop;
 
-    wait for CKTIME;
     a_sorted_i <= (X"F2", X"F1");
-
     wait for W * CKTIME;
 
-    for i in 0 to 1 loop
+    for i in 0 to N - 1 loop
 
       assert a1_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
                " i=      " & integer'image(i) &
-               " B(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
+               " a1_i(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
                " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
-               " Expectation  B(i) = A_Sorted(i)";
+               " Expectation  a1_i(i) = A_Sorted_i(i)";
 
     end loop;
 
     wait;
 
-  end process TEST_PROCESS;
+  end process ASSERT_PROCESS;
 
 end architecture TB;

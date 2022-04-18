@@ -53,6 +53,7 @@ begin
     if (rising_edge(CLK)) then
       if (RST = '1') then
         sreg <= (others => '0');
+        PAR_OUTPUT <= (others => '0');
       else
         if (E = '1') then
           sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;

@@ -12,6 +12,7 @@ class Generator:
             "shape": "Shape of Network: min, max, median",
             "num_outputs": "Number of output elements.",
         }
+        self.A = [[]]  # Connection matrix
 
     def __str__(self):
         print(self.name)
@@ -24,31 +25,31 @@ class Generator:
     def create_connection_matrix(self, N):
         pass
 
-    def reduce_connection_matrix(self, A, N):
+    def reduce_connection_matrix(self, N):
         """Reduces size connection matrix to N inputs."""
         # Nothing to do of target and actual size are the same.
-        if N == len(A[0]):
-            return A
-        depth = len(A)
+        if N == len(self.A[0]):
+            return self.A
+        depth = len(self.A)
         for d in range(depth):
             for i in range(N):
                 # Look for CS elements whose inputs are outside of the target
                 # size. Replace them with bypass elements.
-                if A[d][i][1] >= N:
-                    A[d][i] = ("+", i)
+                if self.A[d][i][1] >= N:
+                    self.A[d][i] = ("+", i)
             # Resize stage to target size.
-            A[d] = A[d][:N]
-        return A
+            self.A[d] = self.A[d][:N]
+        return self.A
 
-    def prune_connection_matrix(self, A, output_set=set()):
+    def prune_connection_matrix(self, output_set=set()):
         """Prunes CS elements not belonging to outputs in output_set.
         Starting at the end of the network, all CS not relevant for sorting
         elements of the output are pruned. Each stage of the network, wires
         connected to the outputs through CS elements are added to the set to
         ensure correctness.
         """
-        depth = len(A)
-        N = len(A[0])
+        depth = len(self.A)
+        N = len(self.A[0])
         d = depth
 
         # Beginning at the output end of the network...
@@ -56,20 +57,22 @@ class Generator:
             d -= 1
             for i in range(N):
                 # ... remove all CS elements not in output_set ...
-                if A[d][i][1] not in output_set and i not in output_set:
-                    A[d][i] = ("", i)
+                if self.A[d][i][1] not in output_set and i not in output_set:
+                    self.A[d][i] = ("", i)
                 else:
                     # ... and add ports connected to wires into output_set.
-                    if A[d][i][0] in ("F", "R"):
-                        output_set.add(A[d][i][1])
+                    if self.A[d][i][0] in ("F", "R"):
+                        output_set.add(self.A[d][i][1])
             # If the output set contains all ports we are done.
             if len(output_set) == N:
                 break
 
         # Remove stages which only contain delay elements.
-        A = [stage for stage in A if any([pair[0] in ("F", "R") for pair in stage])]
+        self.A = [
+            stage for stage in self.A if any([pair[0] in ("F", "R") for pair in stage])
+        ]
 
-        return A
+        return self.A
 
     def generate(self, template, **kwargs):
         """Takes kwargs and returns template object with generated network."""
@@ -90,8 +93,8 @@ class Generator:
         N = int(kwargs["N"])
 
         # Begin building connection matrix from parameters.
-        A = self.create_connection_matrix(N)
-        A = self.reduce_connection_matrix(A, N)
+        self.A = self.create_connection_matrix(N)
+        self.A = self.reduce_connection_matrix(N)
 
         # Default number of outputs is N
         num_outputs = N
@@ -99,20 +102,20 @@ class Generator:
             num_outputs = kwargs["num_outputs"]
 
         # Using shape and number of output elements, build output_set.
-        output_set = output_set = set(range(N - num_outputs, N))
+        output_set = output_set = set(range(0, num_outputs))
         if shape == "median":
             if "num_outputs" not in kwargs.keys():
                 # If N is even, we want the two center outputs
                 num_outputs = 1 + (N + 1) % 2
             output_set = set(range((N - num_outputs) // 2, (N + num_outputs) // 2))
         elif shape == "min":
-            output_set = set(range(0, num_outputs))
+            output_set = set(range(N - num_outputs, N))
 
         # With output_set, prune unneeded CS and outputs. Might also reduce
         # depth of network.
         #
-        A = self.prune_connection_matrix(A, output_set.copy())
-        depth = len(A)
+        self.A = self.prune_connection_matrix(output_set.copy())
+        depth = len(self.A)
 
         # Begin building content for placeholder tokens of template.
         top_name = "{}_{}_TO_{}_{}".format(
@@ -133,13 +136,13 @@ class Generator:
         # Create instances of CS elements forming the network.
         for i in range(depth):
             for j in range(N):
-                if A[i][j][1] > j:
+                if self.A[i][j][1] > j:
                     a = j
-                    b = A[i][j][1]
+                    b = self.A[i][j][1]
                     specific = dict()
                     specific["A0"] = "wire({})({})".format(a, i)
                     specific["B0"] = "wire({})({})".format(b, i)
-                    if A[i][j][0] == "F":
+                    if self.A[i][j][0] == "F":
                         specific["A1"] = "wire({})({})".format(a, i + 1)
                         specific["B1"] = "wire({})({})".format(b, i + 1)
                     else:
@@ -148,18 +151,20 @@ class Generator:
 
                     specific["START"] = "START({})".format(i)
                     instances += kwargs["cs"].as_instance(
-                        "CS_D{}_A{}_B{}".format(i, a, b), generics, ports | specific
+                        "CS_D{}_A{}_B{}".format(i, a, b),
+                        generics,
+                        ports | specific,
                     )
 
         # Fill bypasses with delay elements.
         bypasses = ""
         for i in range(depth):
             for j in range(N):
-                if A[i][j][0] == "+":
+                if self.A[i][j][0] == "+":
                     bypass_beg = i
                     bypass_end = i
-                    while bypass_end < depth and A[bypass_end][j][0] == "+":
-                        A[bypass_end][j] = ("", j)
+                    while bypass_end < depth and self.A[bypass_end][j][0] == "+":
+                        self.A[bypass_end][j] = ("", j)
                         bypass_end += 1
                     bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
@@ -228,7 +233,7 @@ class OddEven(Generator):
         # https://en.wikipedia.org/wiki/Batcher_odd%E2%80%93even_mergesort
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
-        A = [[("+", j) for j in range(N)] for i in range(depth)]
+        self.A = [[("+", j) for j in range(N)] for i in range(depth)]
         d = -1  # Current network depth index
         for p_e in range(0, logp):
             p = 2**p_e
@@ -240,9 +245,9 @@ class OddEven(Generator):
                         if math.floor((i + j) / (p * 2)) == math.floor(
                             (i + j + k) / (p * 2)
                         ):
-                            A[d][i + j] = ("F", i + j + k)
-                            A[d][i + j + k] = ("F", i + j)
-        return A
+                            self.A[d][i + j] = ("F", i + j + k)
+                            self.A[d][i + j + k] = ("F", i + j)
+        return self.A
 
 
 class Bitonic(Generator):
@@ -257,57 +262,109 @@ class Bitonic(Generator):
             "N": "Number of inputs. Must be power of 2",
         }
 
+    def max_pow2_less_N(self, N):
+        k = 1
+        while k > 0 and k < N:
+            k = k << 1
+        return k >> 1
+
+    def bitonicSort(self, low_bound, N, depth, asc=True):
+        if N > 1:
+            # print("BSort:", low_bound, N, depth)
+            middle = N // 2
+            # print(low_bound, middle, N - middle, depth)
+            d1 = self.bitonicSort(low_bound, middle, depth, not asc)
+            d2 = self.bitonicSort(low_bound + middle, N - middle, depth, asc)
+            return self.bitonicMerge(low_bound, N, max(d1, d2), asc)
+        else:
+            return 0
+
+    def bitonicMerge(self, low_bound, N, depth, asc=True):
+        if N > 1:
+            # middle = math.floor(math.log2(N))
+            middle = self.max_pow2_less_N(N)
+            # print("BMerge:", low_bound, N, depth)
+            for i in range(low_bound, low_bound + N - middle):
+                if asc:
+                    self.A[depth][i] = ("F", i + middle)
+                    self.A[depth][i + middle] = ("F", i)
+                else:
+                    self.A[depth][i] = ("R", i + middle)
+                    self.A[depth][i + middle] = ("R", i)
+            # print(
+            #     "\tCalling BMerge({},{},{},{})".format(
+            #         low_bound, middle, depth + 1, asc
+            #     )
+            # )
+            d1 = self.bitonicMerge(low_bound, middle, depth + 1, asc)
+            # print(
+            #     "\tCalling BMerge({},{},{},{})".format(
+            #         low_bound + middle, N - middle, depth + 1, asc
+            #     )
+            # )
+            d2 = self.bitonicMerge(low_bound + middle, N - middle, depth + 1, asc)
+
+            return max(d1, d2)
+        else:
+            return depth
+
+    def reduce_connection_matrix(self, N):
+        return self.A
+
     def create_connection_matrix(self, N):
         # Adaption of algorithm described at
         # https://courses.cs.duke.edu//fall08/cps196.1/Pthreads/bitonic.c
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
-        A = [[("+", j) for j in range(2**logp)] for i in range(depth)]
-        d = -1  # Current network depth index
-        #
-        for k_e in range(0, logp + 1):
-            k = 2**k_e
-            for j_e in range(k_e - 1, -1, -1):
-                j = 2**j_e
-                d += 1
-                for i in range(2**logp):
-                    x = i ^ j
-                    if x > i:
-                        if i & k:
-                            A[d][i] = ("R", x)
-                            A[d][x] = ("R", i)
-                        else:
-                            A[d][i] = ("F", x)
-                            A[d][x] = ("F", i)
-        return A
+        self.A = [[("+", j) for j in range(N)] for i in range(depth)]
+
+        self.bitonicSort(0, N, 0)
+
+        # d = -1  # Current network depth index
+        # #
+        # for k_e in range(0, logp + 1):
+        #     k = 2**k_e
+        #     for j_e in range(k_e - 1, -1, -1):
+        #         j = 2**j_e
+        #         d += 1
+        #         for i in range(2**logp):
+        #             x = i ^ j
+        #             if x > i:
+        #                 if i & k:
+        #                     self.A[d][i] = ("R", x)
+        #                     self.A[d][x] = ("R", i)
+        #                 else:
+        #                     self.A[d][i] = ("F", x)
+        #                     self.A[d][x] = ("F", i)
+        return self.A
 
 
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
     # gen = OddEven()
-    # A = gen.create_connection_matrix(8)
-    # for layer in A:
+    # self.A = gen.create_connection_matrix(8)
+    # for layer in self.A:
     #     print(layer)
     gen = Bitonic()
     print()
-    A = gen.create_connection_matrix(10)
-    for layer in A:
+    gen.create_connection_matrix(8)
+    for layer in gen.A:
         print(layer)
     print()
-    A = gen.reduce_connection_matrix(A, 10)
-    for layer in A:
-        print(layer)
-    print()
-    output_set = set()
-    output_set.add(0)
-    output_set.add(1)
-    output_set.add(2)
-    print(output_set)
-    A = gen.prune_connection_matrix(A, output_set.copy())
-    output_list = list(output_set)
-    output_list.sort()
-    print(output_list)
-    for layer in A:
-        print(layer)
-    print()
+    # self.A = gen.reduce_connection_matrix(self.A, 10)
+    # for layer in self.A:
+    #     print(layer)
+    # print()
+    # output_set = set()
+    # output_set.add(0)
+    # output_set.add(1)
+    # output_set.add(2)
+    # print(output_set)
+    # self.A = gen.prune_connection_matrix(self.A, output_set.copy())
+    # output_list = list(output_set)
+    # output_list.sort()
+    # print(output_list)
+    # for layer in self.A:
+    #     print(layer)
+    # print()
