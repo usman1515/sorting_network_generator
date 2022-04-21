@@ -34,6 +34,7 @@ architecture TB of TB_ODDEVEN_BITONIC_4_TO_4_MAX is
   signal a_sorted_i       : SLVArray(0 to N - 1)(W - 1 downto 0);
   signal a0_i             : SLVArray(0 to N - 1)(W - 1 downto 0);
   signal a1_oe_i          : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal a1_b_i           : SLVArray(0 to N - 1)(W - 1 downto 0);
 
 begin
 

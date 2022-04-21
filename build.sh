@@ -2,9 +2,11 @@
 
 param=" "
 max=10
-for (( i=1; i<=$max; i++ )); do
-    pow=$((2 ** $i))
-    param="$param""generate --nettype=oddeven"\
+nettype=("oddeven" "bitonic")
+for n in "${nettype[@]}"; do
+    for (( i=1; i<=$max; i++ )); do
+        pow=$((2 ** $i))
+        param="$param""generate --nettype=$n"\
 " --inputs=LOAD_SHIFT_REGISTER"\
 " --outputs=STORE_SHIFT_REGISTER"\
 " --cs=BITCS_SYNC"\
@@ -13,13 +15,12 @@ for (( i=1; i<=$max; i++ )); do
 " --W=8"\
 " --num_outputs=$pow"\
 " --shape=max"
-    if (( i != $max )); then
-        param=$param" - "
-    fi
-
+        if (( i != $max )); then
+            param=$param" - "
+        fi
+    done
 done
 
-nettype=("oddeven" "bitonic")
 shape=("max" "min" "median")
 for n in "${nettype[@]}"; do
     for s in "${shape[@]}"; do
