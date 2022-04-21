@@ -135,7 +135,7 @@ class Generator:
         ports = {"CLK": "CLK", "E": "E", "RST": "RST"}
 
         self.log_dict["CS"] = 0
-        self.log_dict["distance_hist"] = [0 for i in range(0, N)]
+        distance_hist = [0 for i in range(0, N)]
         instances = ""
         # Create instances of CS elements forming the network.
         for i in range(depth):
@@ -160,12 +160,19 @@ class Generator:
                         generics,
                         ports | specific,
                     )
+                    distance_hist[b - a] += 1
 
-                    self.log_dict["distance_hist"][b - a] += 1
+        # Remove trailing zero buckets from histogram.
+        i = depth
+        while i > 1:
+            i -= 1
+            if distance_hist[i]:
+                break
+        self.log_dict["distance_hist"] = distance_hist[: i + 1]
 
         # Fill bypasses with delay elements.
 
-        self.log_dict["FF_hist"] = [0 for i in range(0, depth)]
+        FF_hist = [0 for i in range(0, depth)]
 
         bypasses = ""
         for i in range(depth):
@@ -177,11 +184,20 @@ class Generator:
                         self.A[bypass_end][j] = ("", j)
                         bypass_end += 1
 
-                    self.log_dict["FF_hist"][bypass_end - bypass_beg] += 1
+                    FF_hist[bypass_end - bypass_beg] += 1
 
                     bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
                     )
+
+        # Remove trailing zero buckets from histogram.
+        i = depth
+        while i > 1:
+            i -= 1
+            if FF_hist[i]:
+                break
+        self.log_dict["FF_hist"] = FF_hist[: i + 1]
+
         # Enclose bypassed wires in synchronous process.
         if bypasses:
             instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
