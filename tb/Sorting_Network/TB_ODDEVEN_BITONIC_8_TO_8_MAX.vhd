@@ -16,25 +16,26 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity TB_ODDEVEN_8 is
-end entity TB_ODDEVEN_8;
+entity TB_ODDEVEN_BITONIC_8_TO_8_MAX is
+end entity TB_ODDEVEN_BITONIC_8_TO_8_MAX;
 
-architecture TB of TB_ODDEVEN_8 is
+architecture TB of TB_ODDEVEN_BITONIC_8_TO_8_MAX is
 
-  constant W            : integer := 8;
-  constant DEPTH        : integer := 6;
-  constant N            : integer := 8;
-  constant M            : integer := 8;
+  constant W               : integer := 8;
+  constant DEPTH           : integer := 6;
+  constant N               : integer := 8;
+  constant M               : integer := 8;
 
-  constant CKTIME       : time := 10 ns;
-  signal   clk          : std_logic;
+  constant CKTIME          : time := 10 ns;
+  signal   clk             : std_logic;
 
-  signal rst_i          : std_logic;
-  signal e_i            : std_logic;
+  signal rst_i             : std_logic;
+  signal e_i               : std_logic;
 
-  signal a0_i           : SLVArray(0 to N - 1)(W - 1 downto 0);
-  signal a_sorted_i     : SLVArray(0 to M - 1)(W - 1 downto 0);
-  signal a1_i           : SLVArray(0 to M - 1)(W - 1 downto 0);
+  signal a0_i              : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal a_sorted_i        : SLVArray(0 to M - 1)(W - 1 downto 0);
+  signal a1_oe_i           : SLVArray(0 to M - 1)(W - 1 downto 0);
+  signal a1_b_i            : SLVArray(0 to M - 1)(W - 1 downto 0);
 
 begin
 
@@ -47,7 +48,19 @@ begin
       E      => e_i,
       RST    => rst_i,
       INPUT  => a0_i,
-      OUTPUT => a1_i
+      OUTPUT => a1_oe_i
+    );
+
+  BITONIC_8_1 : entity work.bitonic_8_to_8_max
+    generic map (
+      W => W
+    )
+    port map (
+      CLK    => clk,
+      E      => e_i,
+      RST    => rst_i,
+      INPUT  => a0_i,
+      OUTPUT => a1_b_i
     );
 
   CLK_PROCESS : process is
@@ -92,12 +105,23 @@ begin
 
     for i in 0 to N - 1 loop
 
-      assert a1_i(i) = a_sorted_i(i)
+      assert a1_oe_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
                " i=      " & integer'image(i) &
-               " a1_i(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
+               " a1_oe_i(i)=   " & integer'image(to_integer(unsigned(a1_oe_i(i)))) &
                " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
-               " Expectation  a1_i(i) = A_Sorted_i(i)";
+               " Expectation  a1_oe_i(i) = A_Sorted_i(i)";
+
+    end loop;
+
+    for i in 0 to N - 1 loop
+
+      assert a1_b_i(i) = a_sorted_i(i)
+        report "Mismatch:: " &
+               " i=      " & integer'image(i) &
+               " a1_b_i(i)=   " & integer'image(to_integer(unsigned(a1_b_i(i)))) &
+               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
+               " Expectation  a1_b_i(i) = A_Sorted_i(i)";
 
     end loop;
 
@@ -106,12 +130,23 @@ begin
 
     for i in 0 to N - 1 loop
 
-      assert a1_i(i) = a_sorted_i(i)
+      assert a1_oe_i(i) = a_sorted_i(i)
         report "Mismatch:: " &
                " i=      " & integer'image(i) &
-               " a1_i(i)=   " & integer'image(to_integer(unsigned(a1_i(i)))) &
+               " a1_oe_i(i)=   " & integer'image(to_integer(unsigned(a1_oe_i(i)))) &
                " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
-               " Expectation  a1_i(i) = A_Sorted_i(i)";
+               " Expectation  a1_oe_i(i) = A_Sorted_i(i)";
+
+    end loop;
+
+    for i in 0 to N - 1 loop
+
+      assert a1_b_i(i) = a_sorted_i(i)
+        report "Mismatch:: " &
+               " i=      " & integer'image(i) &
+               " a1_b_i(i)=   " & integer'image(to_integer(unsigned(a1_b_i(i)))) &
+               " A_Sorted_i(i)= " & integer'image(to_integer(unsigned(a_sorted_i(i)))) &
+               " Expectation  a1_b_i(i) = A_Sorted_i(i)";
 
     end loop;
 
