@@ -31,9 +31,9 @@ architecture TB of TB_SORTNETSIMPLE is
   signal rst_i          : std_logic;
   signal e_i            : std_logic;
 
-  signal a0_sorted_i    : SLVArray(3 downto 0)(W - 1 downto 0);
-  signal a0_i           : SLVArray(3 downto 0)(W - 1 downto 0);
-  signal a1_i           : SLVArray(3 downto 0)(W - 1 downto 0);
+  signal a0_sorted_i    : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal a0_i           : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal a1_i           : SLVArray(0 to N - 1)(W - 1 downto 0);
 
 begin
 

@@ -116,14 +116,12 @@ class Interface:
             shape,
         )
         template = self.templates[template]
-        inputs = self.entities[inputs]
-        outputs = self.entities[outputs]
+        # inputs = self.entities[inputs]
+        # outputs = self.entities[outputs]
         cs = self.entities[cs]
         if "oddeven" == nettype.lower():
             generator = OddEven()
-            template = generator.generate(
-                inputs, outputs, cs, template, N, W, num_outputs, shape
-            )
+            template = generator.generate(cs, template, N, W, num_outputs, shape)
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())
@@ -131,9 +129,7 @@ class Interface:
 
         elif "bitonic" == nettype.lower():
             generator = Bitonic()
-            template = generator.generate(
-                inputs, outputs, cs, template, N, W, num_outputs, shape
-            )
+            template = generator.generate(cs, template, N, W, num_outputs, shape)
             path = Path("build/{}.vhd".format(template.name))
             with open(str(path), "w") as fd:
                 fd.write(template.as_template())

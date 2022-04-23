@@ -75,7 +75,7 @@ class Generator:
 
         return self.A
 
-    def generate(self, inputs, outputs, cs, template, N, W=8, num_outputs=0, shape=""):
+    def generate(self, cs, template, N, W=8, num_outputs=0, shape=""):
         """Takes kwargs and returns template object with generated network."""
 
         # Default shape of network is max.
@@ -204,31 +204,38 @@ class Generator:
                 bypasses
             )
 
-        # Add serializers for each network input.
+        # Add connections to serial input.
         for i in range(N):
-            specific = dict()
-            specific["PAR_INPUT"] = "input({})".format(i)
-            specific["SER_OUTPUT"] = "wire({})(0)".format(i)
-            specific["LOAD"] = "START(START'low)"
+            connection = "wire({0})(0) <= SER_INPUT({0});\n".format(i)
+            instances = connection + instances
+            # specific = dict()
+            # specific["PAR_INPUT"] = "input({})".format(i)
+            # specific["SER_OUTPUT"] = "wire({})(0)".format(i)
+            # specific["LOAD"] = "START(START'low)"
 
-            instances += inputs.as_instance(
-                "input_{}".format(i), generics, ports | specific
-            )
+            # instances += inputs.as_instance(
+            #     "input_{}".format(i), generics, ports | specific
+            # )
 
-        # Add deserializers for each network output.
+        # Add connections to serial output.
         output_list = list(output_set)
         output_list.sort()
         if shape == "min":
             output_list.reverse()
-
+        j = 0
         for i in range(num_outputs):
-            specific = dict()
-            specific["PAR_OUTPUT"] = "output({})".format(i)
-            specific["SER_INPUT"] = "wire({})({})".format(output_list[i], depth)
-            specific["STORE"] = "START(START'high)"
-            instances += outputs.as_instance(
-                "output_{}".format(i), generics, ports | specific
+            connection = "SER_OUTPUT({}) <= wire({})({});\n".format(
+                j, output_list[i], depth
             )
+            instances = instances + connection
+            j += 1
+            # specific = dict()
+            # specific["PAR_OUTPUT"] = "output({})".format(i)
+            # specific["SER_INPUT"] = "wire({})({})".format(output_list[i], depth)
+            # specific["STORE"] = "START(START'high)"
+            # instances += outputs.as_instance(
+            #     "output_{}".format(i), generics, ports | specific
+            # )
 
         tokens = {
             "top_name": top_name,
@@ -250,11 +257,11 @@ class OddEven(Generator):
         super().__init__()
         self.name = "ODDEVEN"
         self.keywords = {
-            "input": "Name of input component",
-            "output": "Name of output component",
+            # "input": "Name of input component",
+            # "output": "Name of output component",
             "CS": "Name of compare swap element",
             "template": "Name of template",
-            "N": "Number of inputs. Must be power of 2",
+            "N": "Number of inputs.",
         }
 
     def create_connection_matrix(self, N):
@@ -284,11 +291,11 @@ class Bitonic(Generator):
         super().__init__()
         self.name = "BITONIC"
         self.keywords = {
-            "input": "Name of input component",
-            "output": "Name of output component",
+            # "input": "Name of input component",
+            # "output": "Name of output component",
             "CS": "Name of compare swap element",
             "template": "Name of template",
-            "N": "Number of inputs. Must be power of 2",
+            "N": "Number of inputs.",
         }
 
     def max_pow2_less_N(self, N):

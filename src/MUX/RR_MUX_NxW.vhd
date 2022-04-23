@@ -33,7 +33,7 @@ entity RR_MUX_NXW is
     -- Synchronous reset.
     RST      : in    std_logic;
     -- N x W-Bit input.
-    INPUT    : in    SLVArray(N - 1 downto 0)(W - 1 downto 0);
+    INPUT    : in    SLVArray(0 to N - 1)(W - 1 downto 0);
     -- W-Bit output.
     OUTPUT   : out   std_logic_vector(W - 1 downto 0)
   );

@@ -21,30 +21,26 @@ end entity TB_SORTER;
 
 architecture TB of TB_SORTER is
 
-  constant W                 : integer := 8;
-  constant DEPTH             : integer := 3;
-  constant N                 : integer := 8;
+  constant CKTIME  : time := 10 ps;
+  signal   clk     : std_logic;
 
-  constant CKTIME            : time := 10 ns;
-  signal   clk               : std_logic;
-
-  constant SEED_I            : std_logic_vector(W - 1 downto 0) := "10110001";
-  constant P_I               : std_logic_vector(W - 1 downto 0) := "01101010";
-
-  signal rst_i               : std_logic;
-  signal e_i                 : std_logic;
-
-  signal e_delayed_i         : std_logic_vector(2 downto 0);
-  -- Output of LFSRs
-  signal rand_data_i         : SLVArray(N / W - 1 downto 0)(W - 1 downto 0);
-  -- Output of Round-Robin DMUXs
-  signal unsorted_data_i     : SLVArray(N - 1 downto 0)(W - 1 downto 0);
-  -- Output of Sorting Network
-  signal sorted_data_i       : SLVArray(N - 1 downto 0)(W - 1 downto 0);
-
-  signal valid_i             : std_logic;
+  constant W       : integer := 8;
+  signal   rst_i   : std_logic; -- Debounced reset signal.
+  signal   e_i     : std_logic; -- Debounced enable signal.
+  signal   valid_i : std_logic;
 
 begin
+
+  TEST_SORTER_X_1 : entity work.test_sorter_x
+    generic map (
+      W => W
+    )
+    port map (
+      CLK   => clk,
+      RST   => rst_i,
+      E     => e_i,
+      VALID => valid_i
+    );
 
   CLK_PROCESS : process is
   begin
@@ -56,99 +52,29 @@ begin
 
   end process CLK_PROCESS;
 
-  TEST_PROCESS : process is
+  SIGNAL_PROCESS : process is
 
   begin
 
-    e_i   <= '0';
     wait for CKTIME / 2;
+    e_i   <= '0';
     rst_i <= '1';
     wait for CKTIME;
     rst_i <= '0';
     e_i   <= '1';
-    wait for (W) * CKTIME;
+    wait for 10 * W * CKTIME;
 
     wait;
 
-  end process TEST_PROCESS;
+  end process SIGNAL_PROCESS;
 
-  INPUT : for i in 0 to N / W - 1 generate
+  ASSERT_PROCESS : process is
+  begin
 
-    LFSR_1 : entity work.lfsr
-      generic map (
-        W => W,
-        POLY => P_I
-      )
-      port map (
-        CLK    => clk,
-        E      => e_i,
-        RST    => rst_i,
-        SEED   => SEED_I,
-        OUTPUT => rand_data_i(i)
-      );
+    wait for 10 * W * CKTIME;
 
-    RRDMUX_NXW_1 : entity work.rr_dmux_nxw
-      generic map (
-        W => W,
-        N => W
-      )
-      port map (
-        CLK    => clk,
-        E      => e_i,
-        RST    => rst_i,
-        INPUT  => rand_data_i(i),
-        OUTPUT => unsorted_data_i((i + 1)*W - 1 downto i*W)
-      );
+    wait;
 
-  end generate INPUT;
-
-  ENABLEDELAY_1 : entity work.shift_register
-    generic map (
-      W => W - 1
-    )
-    port map (
-      CLK   => clk,
-      E     => not rst_i,
-      RST   => rst_i,
-      SER_INPUT  => e_i,
-      SER_OUTPUT => e_delayed_i(0)
-    );
-
-  SORTNET : entity work.ODDEVEN_8_TO_8_MAX
-    generic map (
-      W => W
-    )
-    port map (
-      CLK    => clk,
-      E      => e_delayed_i(0),
-      RST    => rst_i,
-      INPUT  => unsorted_data_i,
-      OUTPUT => sorted_data_i
-    );
-
-  ENABLEDELAY_2 : entity work.shift_register
-    generic map (
-      W => W + DEPTH + 1
-    )
-    port map (
-      CLK   => clk,
-      E     => not rst_i,
-      RST   => rst_i,
-      SER_INPUT  => e_delayed_i(0),
-      SER_OUTPUT => e_delayed_i(1)
-    );
-
-  VALIDATOR_1 : entity work.validator
-    generic map (
-      W => W,
-      N => N
-    )
-    port map (
-      CLK   => clk,
-      E     => e_delayed_i(1),
-      RST   => rst_i,
-      INPUT => sorted_data_i,
-      VALID => valid_i
-    );
+  end process ASSERT_PROCESS;
 
 end architecture TB;

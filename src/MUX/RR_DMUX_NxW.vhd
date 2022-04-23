@@ -35,7 +35,7 @@ entity RR_DMUX_NXW is
     -- W-Bit input.
     INPUT    : in    std_logic_vector(W - 1 downto 0);
     -- N x W-Bit output.
-    OUTPUT   : out   SLVArray(N - 1 downto 0)(W - 1 downto 0)
+    OUTPUT   : out   SLVArray(0 to N - 1)(W - 1 downto 0)
   );
 end entity RR_DMUX_NXW;
 
