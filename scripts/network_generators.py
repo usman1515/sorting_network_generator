@@ -79,7 +79,6 @@ class Generator:
         """Takes kwargs and returns template object with generated network."""
 
         # Default shape of network is max.
-        shape = "max"
         if not shape.lower() in (
             "max",
             "min",
@@ -91,10 +90,9 @@ class Generator:
         # Begin building connection matrix from parameters.
         self.A = self.create_connection_matrix(N)
         self.A = self.reduce_connection_matrix(N)
-        print(N, W, num_outputs, shape)
         # Using shape and number of output elements, build output_set.
         if shape == "median":
-            if not num_outputs == N:
+            if num_outputs == 0:
                 # If N is even, we want the two center outputs
                 num_outputs = 1 + (N + 1) % 2
             output_set = set(range((N - num_outputs) // 2, (N + num_outputs) // 2))
@@ -154,7 +152,7 @@ class Generator:
                         specific["A1"] = "wire({})({})".format(b, i + 1)
                         specific["B1"] = "wire({})({})".format(a, i + 1)
 
-                    specific["START"] = "START({})".format(i)
+                    specific["START"] = "start_i({})".format(i)
                     instances += cs.as_instance(
                         "CS_D{}_A{}_B{}".format(i, a, b),
                         generics,
@@ -186,7 +184,7 @@ class Generator:
 
                     FF_hist[bypass_end - bypass_beg] += 1
 
-                    bypasses += "wire({row})({end} downto {beg}+1) <= wire({row})({end}-1 downto {beg});\n".format(
+                    bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
                     )
 

@@ -95,8 +95,6 @@ class Interface:
     def generate(
         self,
         nettype,
-        inputs,
-        outputs,
         cs,
         template,
         N,
@@ -104,17 +102,15 @@ class Interface:
         num_outputs,
         shape,
     ):
-        print(
-            nettype,
-            inputs,
-            outputs,
-            cs,
-            template,
-            N,
-            W,
-            num_outputs,
-            shape,
-        )
+        # print(
+        #     nettype,
+        #     cs,
+        #     template,
+        #     N,
+        #     W,
+        #     num_outputs,
+        #     shape,
+        # )
         template = self.templates[template]
         # inputs = self.entities[inputs]
         # outputs = self.entities[outputs]

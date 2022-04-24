@@ -7,8 +7,6 @@ for n in "${nettype[@]}"; do
     for (( i=1; i<=$max; i++ )); do
         pow=$((2 ** $i))
         param="$param""generate --nettype=$n"\
-#" --inputs=LOAD_SHIFT_REGISTER"\
-#" --outputs=STORE_SHIFT_REGISTER"\
 " --cs=BITCS_SYNC"\
 " --template=Network.vhd"\
 " --N=$pow"\
@@ -24,10 +22,7 @@ done
 shape=("max" "min" "median")
 for n in "${nettype[@]}"; do
     for s in "${shape[@]}"; do
-
     param="$param""generate --nettype=$n"\
-#" --inputs=LOAD_SHIFT_REGISTER"\
-#" --outputs=STORE_SHIFT_REGISTER"\
 " --cs=BITCS_SYNC"\
 " --template=Network.vhd"\
 " --N=10"\

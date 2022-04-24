@@ -28,6 +28,8 @@ entity {top_name} is
   port (
     -- System clock
     CLK           : in    std_logic;
+    -- Synchronous reset.
+    RST           : in    std_logic;
     -- Start signal marking the beginning of a new word.
     START         : in    std_logic;
     -- Serial input of the N input words.
@@ -41,7 +43,7 @@ end entity {top_name};
 
 architecture BEHAVIORAL of {top_name} is
 
-  type wire_t is array (0 to N - 1) of std_logic_vector(0 to DEPTH-1);
+  type wire_t is array (0 to N - 1) of std_logic_vector(0 to DEPTH);
   -- Wire grid with the dimensions of NxDepth
   signal wire     : wire_t;
   -- Start signal vector. Each bit corresponds to a stage of the network.
