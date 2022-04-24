@@ -38,9 +38,11 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 400;
+  constant N             : integer := 32;
   constant DEPTH         : integer := N * (N + 1) / 2;
-
+  constant POLY_BASE     : integer := 654;
+  constant SEED_BASE     : integer := 58;
+   
   signal e_delayed_i     : std_logic_vector(2 downto 0);
   -- Output of LFSRs
   signal rand_data_i     : SLVArray(0 to N / W)(W - 1 downto 0);
@@ -59,14 +61,14 @@ begin
       generic map (
         W    => W,
         -- Attempt to create unique LFSR configuration to prevent consolidation at synthesis.
-        POLY => std_logic_vector(to_unsigned(i,W))
+        POLY => std_logic_vector(to_unsigned(POLY_BASE + i,W))
       )
       port map (
         CLK    => CLK,
         E      => E,
         RST    => RST,
         -- Same reason as with assignment of POLY.
-        SEED   => std_logic_vector(to_unsigned(i/2**W ,W)),
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W ,W)),
         OUTPUT => rand_data_i(i)
       );
 
@@ -92,13 +94,13 @@ begin
     LFSR_rem : entity work.lfsr
       generic map (
         W    => W,
-        POLY => std_logic_vector(to_unsigned(N/W,W))
+        POLY => std_logic_vector(to_unsigned(POLY_BASE + N/W,W)) 
       )
       port map (
         CLK    => CLK,
         E      => E,
         RST    => RST,
-        SEED   => std_logic_vector(to_unsigned(N/W/2**W,W)),
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W/2**W,W)),
         OUTPUT => rand_data_i(N/W)
       );
       

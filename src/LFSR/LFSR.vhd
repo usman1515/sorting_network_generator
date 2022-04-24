@@ -20,7 +20,7 @@ entity LFSR is
     -- Bit-width of LFSR
     W    : integer          := 8;
     -- Generator Polynomial
-    POLY : std_logic_vector := "10001101"
+    POLY : std_logic_vector
   );
   port (
     -- System Clock
