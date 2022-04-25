@@ -21,9 +21,9 @@ entity SORTER is
     -- Bit-width of words
     W     : integer := 8;
     -- Number of input words.
-    N     : integer := 32;
+    N     : integer := 350;
     -- Number of sorted ouput words.
-    M     : integer := 32
+    M     : integer := 350
   );
   port (
     -- System clock
@@ -77,7 +77,7 @@ begin
       SER_OUTPUT => ser_unsorted_i
     );
 
-  SORTING_NETWORK_1 : entity work.oddeven_32_to_32_max
+  SORTING_NETWORK_1 : entity work.oddeven_350_to_350_max
     generic map (
       -- Bit-width of words
       W => W

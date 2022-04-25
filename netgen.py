@@ -102,18 +102,7 @@ class Interface:
         num_outputs,
         shape,
     ):
-        # print(
-        #     nettype,
-        #     cs,
-        #     template,
-        #     N,
-        #     W,
-        #     num_outputs,
-        #     shape,
-        # )
         template = self.templates[template]
-        # inputs = self.entities[inputs]
-        # outputs = self.entities[outputs]
         cs = self.entities[cs]
         if "oddeven" == nettype.lower():
             generator = OddEven()
@@ -143,8 +132,6 @@ class Interface:
         return self
 
     def test(self):
-        #        print(parse_entity_vhdl(Path("templates/SortNet.vhd")))
-
         gen = OddEven()
         A = gen.create_connection_matrix(8)
         for layer in A:

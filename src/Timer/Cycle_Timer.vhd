@@ -44,17 +44,17 @@ begin
         count <= 0;
         START <= '0';
       else
-        if (count = W - 1) then
-          count <= 0;
-        else
-          if (E = '1') then
+        if (E = '1') then
+          if (count = W - 1) then
+            count <= 0;
+          else
             count <= count + 1;
           end if;
-        end if;
-        if (count = 0) then
-          START <= '1';
-        else
-          START <= '0';
+          if (count = 0) then
+            START <= '1';
+          else
+            START <= '0';
+          end if;
         end if;
       end if;
     end if;
