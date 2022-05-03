@@ -48,7 +48,7 @@ begin
   -- COUNTER---------------------------------------------------------------------
   -- Simple Counter with reset and enable.
   -------------------------------------------------------------------------------
-  COUNTER : process is
+  COUNTER : process(CLK) is
   begin
 
     if (rising_edge(CLK)) then
@@ -66,10 +66,10 @@ begin
   -- MUX-----------------------------------------------------------------------
   -- Synchronously multiplexes INPUT to OUTPUT with count as selection signal.
   -------------------------------------------------------------------------------
-  MUX : process is
+  MUX : process(CLK) is
   begin
 
-    if rising_edge(CLK) then
+    if (rising_edge(CLK)) then
       OUTPUT <= INPUT(count);
     end if;
 

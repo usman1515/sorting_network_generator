@@ -32,9 +32,10 @@ architecture TB of TB_LFSR_RRDMUX_RRMUX is
   signal rst             : std_logic;
   signal e_i             : std_logic;
   signal input_i         : std_logic_vector(W - 1 downto 0);
-  signal inter_i         : SLVArray(N - 1 downto 0)(W - 1 downto 0);
+  signal inter_i         : SLVArray(0 to N - 1)(W - 1 downto 0);
   signal output_i        : std_logic_vector(W - 1 downto 0);
 
+  signal value_buffer    : SLVarray(0 to W)(W-1 downto 0);
 begin
 
   CLK_PROCESS : process is
@@ -86,7 +87,7 @@ begin
       OUTPUT => output_i
     );
 
-  TEST_PROCESS : process is
+  TEST_STIM : process is
   begin
 
     wait for CKTIME / 2;
@@ -95,10 +96,36 @@ begin
     wait for CKTIME / 2;
     e_i <= '1';
     rst <= '0';
-    wait for 16 * CKTIME / 2;
+
+    for j in 0 to 4 loop
+      for i in 0 to W loop
+        value_buffer(i) <= input_i;
+        wait for CKTIME;
+      end loop;
+    end loop;
 
     wait;
 
-  end process TEST_PROCESS;
+  end process TEST_STIM;
+
+  TEST_ASSER : process is
+  begin
+    wait for CKTIME;
+    wait for CKTIME * W;
+
+    for j in 0 to 4 loop
+      for i in 0 to W loop
+        wait for CKTIME;
+        assert (value_buffer(i) = output_i)
+          report "Mismatch:: " &
+                " Input      = " & integer'image(to_integer(unsigned(value_buffer(i)))) &
+                " Output     = " & integer'image(to_integer(unsigned(output_i))) &
+                " Expectation= " & integer'image(to_integer(unsigned(value_buffer(i))));
+      end loop;
+    end loop;
+
+    wait;
+
+  end process TEST_ASSER;
 
 end architecture TB;
