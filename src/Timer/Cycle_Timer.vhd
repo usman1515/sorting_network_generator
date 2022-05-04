@@ -17,7 +17,10 @@ library IEEE;
 
 entity CYCLE_TIMER is
   generic (
-    W : integer := 8                    -- Width of input bits
+    -- Width of input bits
+    W : integer := 8,
+    -- Length of subwords to be output at a time.
+    SW : integer := 1
   );
   port (
     CLK     : in    std_logic;
@@ -29,7 +32,7 @@ end entity CYCLE_TIMER;
 
 architecture BEHAVIORAL of CYCLE_TIMER is
 
-  signal count : integer range 0 to W - 1;
+  signal count : integer range 0 to ((W + SW -1) / SW) - 1;
 
 begin
 
@@ -45,7 +48,7 @@ begin
         START <= '0';
       else
         if (E = '1') then
-          if (count = W - 1) then
+          if (count = ((W + SW -1) / SW) - 1) then
             count <= 0;
           else
             count <= count + 1;

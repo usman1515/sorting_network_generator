@@ -52,11 +52,14 @@ begin
   begin
 
     if (rising_edge(CLK)) then
-      if (RST = '1' or count = N - 1) then
-        count <= 0;
-      else
-        if (E = '1') then
-          count <= count + 1;
+      -- If N = 1 there is nothing to distribute and therfore no need for the timer.
+      if (N > 1) then
+        if (RST = '1' or count = N - 1) then
+          count <= 0;
+        else
+          if (E = '1') then
+            count <= count + 1;
+          end if;
         end if;
       end if;
     end if;
@@ -66,14 +69,19 @@ begin
   -- DEMUX-----------------------------------------------------------------------
   -- Synchronously demultiplexes INPUT to OUTPUT with count as selection signal.
   -------------------------------------------------------------------------------
-  DEMUX : process(CLK) is
+  DEMUX : process (CLK) is
   begin
 
     if rising_edge(CLK) then
       if (RST = '1') then
         OUTPUT <= (others => (others => '0'));
       else
-        OUTPUT(count) <= INPUT;
+        -- Similarily, the output becomes independent of the timer if N = 1.
+        if (N>1) then
+          OUTPUT(count) <= INPUT;
+        else
+          OUTPUT(0) <= INPUT;
+        end if;
       end if;
     end if;
 
