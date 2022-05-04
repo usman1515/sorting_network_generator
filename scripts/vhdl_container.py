@@ -41,7 +41,8 @@ class Entity:
 
     def as_instance(self, instance_name="", genassign=dict(), portassign=dict()):
         a = "{} : entity work.{}\n".format(instance_name, self.name)
-        if self.generics and genassign:
+
+        if bool(self.generics) and bool(genassign):
             a += "generic map(\n"
             keys = list(self.generics.keys())
             for i in range(0, len(self.generics)):

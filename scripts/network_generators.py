@@ -75,7 +75,7 @@ class Generator:
 
         return self.A
 
-    def generate(self, cs, template, N, W=8, num_outputs=0, shape=""):
+    def generate(self, cs, template, N, W=8, SW=1, num_outputs=0, shape=""):
         """Takes kwargs and returns template object with generated network."""
 
         # Default shape of network is max.
@@ -124,12 +124,13 @@ class Generator:
             self.name.upper(), N, num_outputs, shape.upper()
         )
         bit_width = W
+        subword_width = SW
 
         # components = kwargs["input"].as_component() + "\n"
         # components += kwargs["output"].as_component() + "\n"
         # components += kwargs["cs"].as_component() + "\n"
 
-        generics = {"W": bit_width}
+        generics = {"W": bit_width, "SW": subword_width}
         ports = {"CLK": "CLK", "E": "E", "RST": "RST"}
 
         self.log_dict["CS"] = 0
@@ -241,6 +242,7 @@ class Generator:
             "num_inputs": N,
             "num_outputs": num_outputs,
             "bit_width": bit_width,
+            "subword_width": subword_width,
             # "components": components,
             "instances": instances,
             "date": datetime.now(),

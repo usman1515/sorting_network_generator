@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Serializer_SW - Structural
+-- Module Name: SerializerSW_SR - Structural
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Serializer for N W-bit values in parallel. Uses Load Shift Registers.
@@ -17,7 +17,7 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity SERIALIZER_SW is
+entity SERIALIZERSW_SR is
   generic (
     -- Number of values serialized in parallel.
     N : integer;
@@ -40,9 +40,9 @@ entity SERIALIZER_SW is
     -- bit-serial output
     SER_OUTPUT            : out   SLVArray(0 to N - 1)(SW - 1 downto 0)
   );
-end entity SERIALIZER_SW;
+end entity SERIALIZERSW_SR;
 
-architecture STRUCTURAL of SERIALIZER_SW is
+architecture STRUCTURAL of SERIALIZERSW_SR is
 
 begin
 

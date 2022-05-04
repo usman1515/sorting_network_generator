@@ -18,7 +18,7 @@ library IEEE;
 entity CYCLE_TIMER is
   generic (
     -- Width of input bits
-    W : integer := 8,
+    W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
   );
@@ -32,7 +32,7 @@ end entity CYCLE_TIMER;
 
 architecture BEHAVIORAL of CYCLE_TIMER is
 
-  signal count : integer range 0 to ((W + SW -1) / SW) - 1;
+  signal count : integer range 0 to ((W + SW - 1) / SW) - 1;
 
 begin
 
@@ -45,23 +45,36 @@ begin
     if (rising_edge(CLK)) then
       if (RST = '1') then
         count <= 0;
-        START <= '0';
       else
         if (E = '1') then
-          if (count = ((W + SW -1) / SW) - 1) then
+          if (count = ((W + SW - 1) / SW) - 1) then
             count <= 0;
           else
             count <= count + 1;
-          end if;
-          if (count = 0) then
-            START <= '1';
-          else
-            START <= '0';
           end if;
         end if;
       end if;
     end if;
 
   end process COUNTER;
+
+  -- SETSTART---------------------------------------------------------------------
+  -- Asynchronous process setting start if counter is zero so long as the
+  -- counter is not reset and enabled.
+  --------------------------------------------------------------------------------
+  SETSTART : process (count, RST, E) is
+  begin
+
+    if (RST = '0' and E = '1') then
+      if (count = 0) then
+        START <= '1';
+      else
+        START <= '0';
+      end if;
+    else
+      START <= '0';
+    end if;
+
+  end process SETSTART;
 
 end architecture BEHAVIORAL;

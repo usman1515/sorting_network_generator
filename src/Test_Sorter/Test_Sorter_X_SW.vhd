@@ -40,8 +40,8 @@ end entity TEST_SORTER_X_SW;
 
 architecture STRUCTURAL of TEST_SORTER_X_SW is
 
-  constant N             : integer := 704;
-  constant DEPTH         : integer := 55;
+  constant N             : integer := 16;
+  constant DEPTH         : integer := 10;
   constant POLY_BASE     : integer := 654;
   constant SEED_BASE     : integer := 58;
   constant ceilWSW       : integer := ((W + SW - 1) / SW);
@@ -57,7 +57,7 @@ architecture STRUCTURAL of TEST_SORTER_X_SW is
 
 begin
 
-  INPUT : for i in 0 to N / (W / SW) - 1 generate
+  INPUT : for i in 0 to N / ceilWSW - 1 generate
 
     LFSR_1 : entity work.lfsr
       generic map (
@@ -84,7 +84,7 @@ begin
         E      => E,
         RST    => RST,
         INPUT  => rand_data_i(i),
-        OUTPUT => unsorted_data_i(i*W to (i + 1)*W - 1)
+        OUTPUT => unsorted_data_i(i*ceilWSW to (i + 1)*ceilWSW - 1)
       );
 
   end generate INPUT;
@@ -107,22 +107,21 @@ begin
     RR_DMUX_NXW_REM : entity work.rr_dmux_nxw
       generic map (
         W => W,
-        N => W
+        N => N mod ceilWSW
       )
       port map (
         CLK                      => CLK,
         E                        => E,
         RST                      => RST,
         INPUT                    => rand_data_i(N/ceilWSW),
-        OUTPUT(0 to N rem W - 1) => unsorted_data_i((N/ceilWSW)*W to N - 1),
-        OUTPUT(N rem W to W - 1) => unused_i(0 to W - 1 - N rem ceilWSW)
+        OUTPUT => unsorted_data_i(N - N mod ceilWSW to N -1)
       );
 
   end generate INPUT_REM;
 
   ENABLEDELAY_1 : entity work.delay_timer
     generic map (
-      DELAY => W - 1
+      DELAY => ceilWSW - 1
     )
     port map (
       CLK       => CLK,
@@ -132,9 +131,10 @@ begin
       A_DELAYED => e_delayed_i(0)
     );
 
-  SORTER_1 : entity work.sorter
+  SORTER_1 : entity work.sorter_sw
     generic map (
       W => W,
+      SW => SW,
       N => N,
       M => N
     )
@@ -148,7 +148,7 @@ begin
 
   ENABLEDELAY_2 : entity work.delay_timer
     generic map (
-      DELAY => W + DEPTH + 1
+      DELAY => ceilWSW + DEPTH + 1
     )
     port map (
       CLK       => CLK,

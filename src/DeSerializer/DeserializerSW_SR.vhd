@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Deserializer_SW - Structural
+-- Module Name: DeserializerSW_SR - Structural
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Deserializer for N W-bit values in parallel. Uses Store Shift Registers.
@@ -17,7 +17,7 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity DESERIALIZER_SW is
+entity DESERIALIZERSW_SR is
   generic (
     -- Number of values serialized in parallel.
     N : integer;
@@ -40,9 +40,9 @@ entity DESERIALIZER_SW is
     -- w-bit parallel output
     PAR_OUTPUT              : out   SLVArray(0 to N - 1)(W - 1 downto 0)
   );
-end entity DESERIALIZER_SW;
+end entity DESERIALIZERSW_SR;
 
-architecture STRUCTURAL of DESERIALIZER_SW is
+architecture STRUCTURAL of DESERIALIZERSW_SR is
 
 begin
 

@@ -36,7 +36,7 @@ def parse_entity_vhdl(path=Path()):
 
         # Attempt to find generic clause.
         generic_clause = regex.findall(
-            r"generic\s\((.*)\);\s*port", entity_def, regex.M | regex.S
+            r"generic\s*\((.*)\);\s*port", entity_def, regex.M | regex.S
         )
         if generic_clause:
             # Extract generics.
@@ -80,3 +80,13 @@ def parse_template_vhdl(path=Path()):
         return Template(entity.name, content, entity.ports, entity.generics, tokens)
     else:
         return None
+
+
+# Elpy shenanigans
+cond = __name__ == "__main__"
+if cond:
+    # gen = OddEven()
+    # self.A = gen.create_connection_matrix(8)
+    # for layer in self.A:
+    #     print(layer)
+    print(parse_entity_vhdl(Path("../src/CS/SubWordCS.vhd")))
