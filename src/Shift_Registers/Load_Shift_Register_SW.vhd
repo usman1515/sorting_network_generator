@@ -18,7 +18,7 @@ library IEEE;
 entity LOAD_SHIFT_REGISTER_SW is
   generic (
     -- Width of parallel input/ word.
-    W : integer := 8;
+    W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
   );
@@ -34,16 +34,15 @@ entity LOAD_SHIFT_REGISTER_SW is
     -- w-bit parallel input
     PAR_INPUT             : in    std_logic_vector(W - 1 downto 0);
     -- subword parallel to bit-serial output
-    SER_OUTPUT            : out   std_logic_vector(SW -1 downto 0)
+    SER_OUTPUT            : out   std_logic_vector(SW - 1 downto 0)
   );
 end entity LOAD_SHIFT_REGISTER_SW;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER_SW is
 
-  signal sreg : std_logic_vector(W - SW downto 0); -- Shift register.
-  -- We can make do with the number of subword bits less as the first PAR_INPUT bits
-  -- are immediatly send to SER_OUTPUT.
-
+  signal sreg : std_logic_vector(SW * (W / SW) - 1 downto 0); -- Shift register.
+  -- Since some bits are immediatly sent to output upon loading, we can make do
+  -- with less.
 begin
 
   -- SHIFT-CONTENT----------------------------------------------------------------
@@ -78,13 +77,13 @@ begin
 
     if (LOAD = '1') then
       if (W mod SW > 0) then
-          SER_OUTPUT(SW - 1 downto SW - W mod SW) <= (others => '0');
-          SER_OUTPUT(W mod SW -1 downto 0) <= PAR_INPUT(PAR_INPUT'high downto SW * (W / SW ) );
-        else
-          SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
-        end if;
+        SER_OUTPUT(SW - 1 downto W mod SW) <= (others => '0');
+        SER_OUTPUT(W mod SW - 1 downto 0)  <= PAR_INPUT(PAR_INPUT'high downto SW * (W / SW));
+      else
+        SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
+      end if;
     else
-      SER_OUTPUT <= sreg(sreg'high downto sreg'high - (SW-1));
+      SER_OUTPUT <= sreg(sreg'high downto sreg'high - (SW - 1));
     end if;
 
   end process ASYNC_OUTPUT;
