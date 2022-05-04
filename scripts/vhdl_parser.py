@@ -85,8 +85,9 @@ def parse_template_vhdl(path=Path()):
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
+    pass
     # gen = OddEven()
     # self.A = gen.create_connection_matrix(8)
     # for layer in self.A:
     #     print(layer)
-    print(parse_entity_vhdl(Path("../src/CS/SubWordCS.vhd")))
+    # print(parse_entity_vhdl(Path("../src/CS/SubWordCS.vhd")))
