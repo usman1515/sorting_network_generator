@@ -11,6 +11,7 @@ for n in "${nettype[@]}"; do
 " --template=Network.vhd"\
 " --N=$pow"\
 " --W=8"\
+" --SW=1\"
 " --num_outputs=$pow"\
 " --shape=max"
         if (( i != $max )); then
@@ -27,6 +28,7 @@ for n in "${nettype[@]}"; do
 " --template=Network.vhd"\
 " --N=10"\
 " --W=8"\
+" --SW=1\"
 " --num_outputs=3"\
 " --shape=$s"\
 " - "
