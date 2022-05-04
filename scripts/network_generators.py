@@ -226,7 +226,7 @@ class Bitonic(Generator):
         depth = logp * (logp + 1) // 2
         network = Network(N, depth)
         network.typename = self.name
-        self.bitonicSort(0, N, 0)
+        self.bitonicSort(network, 0, N, 0)
 
         # d = -1  # Current network depth index
         # #

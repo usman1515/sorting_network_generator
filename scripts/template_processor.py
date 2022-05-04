@@ -71,7 +71,7 @@ class Template_Processor:
                     bypass_beg = i
                     bypass_end = i
                     while bypass_end < depth and network[bypass_end][j][0] == "+":
-                        network[bypass_end][j] = ("", j)
+                        network[bypass_end][j] = ("-", j)
                         bypass_end += 1
 
                     bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
@@ -91,8 +91,6 @@ class Template_Processor:
 
         # Add connections to serial output.
         output_list = list(output_set)
-        print(output_set)
-        print(output_list)
         output_list.sort()
         if shape == "min":
             output_list.reverse()

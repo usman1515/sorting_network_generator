@@ -42,10 +42,7 @@ class Interface:
         self.reporter = Reporter()
 
     def __str__(self):
-        if self.network:
-            return str(self.network)
-        else:
-            return ""
+        return ""
 
     def list(self, listtype=""):
         """List available components and templates.

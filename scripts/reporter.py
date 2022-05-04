@@ -15,7 +15,7 @@ class Report:
 
         # Estimate network shape
         if network.shape:
-            content["shape"] = network
+            content["shape"] = network.shape
         else:
             output_list = list(network.get_output_set())
             output_list.sort()
@@ -43,7 +43,7 @@ class Report:
         N = network.get_N()
         num_cs = 0
         distance_hist = [0 for i in range(N)]
-        FF_hist = [0 for i in range(0, depth)]
+        FF_hist = [0 for i in range(depth)]
         for i in range(depth):
             for j in range(N):
                 # Each out of order value constitutes a cs.
@@ -63,16 +63,14 @@ class Report:
 
                     FF_hist[bypass_end - bypass_beg] += 1
 
-        # Remove trailing zero buckets from histograms
-        i = depth - 1
-        while i > 1 and not distance_hist[i]:
-            i -= 1
-        content["distance_hist"] = distance_hist[: i + 1]
-
-        i = depth - 1
-        while i > 1 and not FF_hist[i]:
-            i -= 1
-        content["FF_hist"] = FF_hist[: i + 1]
+        content["distance_hist"] = dict()
+        for i in range(N):
+            if distance_hist[i]:
+                content["distance_hist"][i] = distance_hist[i]
+        content["FF_hist"] = dict()
+        for i in range(depth):
+            if FF_hist[i]:
+                content["FF_hist"][i] = FF_hist[i]
 
         content["num_cs"] = num_cs
         return content
