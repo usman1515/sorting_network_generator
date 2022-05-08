@@ -36,27 +36,34 @@ end entity SHIFT_REGISTER;
 
 architecture BEHAVIORAL of SHIFT_REGISTER is
 
-  signal reg : std_logic_vector(W - 1 downto 0);
+  signal sreg : std_logic_vector(W - 1 downto 0);
 
 begin
 
   -- SHIFT------------------------------------------------------------------------
   -- Shifts value from SER_INPUT into sreg and MSB of sreg out to SER_OUTPUT.
   --------------------------------------------------------------------------------
-  SHIFT : process(CLK) is
+  SHIFT : process (CLK) is
   begin
 
     if (rising_edge(CLK)) then
       if (RST = '1') then
-        reg <= (others => '0');
+        sreg <= (others => '0');
       else
         if (E = '1') then
-          reg <= reg(reg'high - 1 downto reg'low) & SER_INPUT;
+          sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;
         end if;
       end if;
-      SER_OUTPUT <= reg(reg'high);
     end if;
 
   end process SHIFT;
+
+  -- ASYNC_OUTPUT---------------------------------------------------------------
+  -- Asynchronously outputs the MSB of sreg.
+  -----------------------------------------------------------------------------
+  ASYNC_OUTPUT : process (sreg) is
+  begin
+    SER_OUTPUT <= sreg(sreg'high);
+  end process ASYNC_OUTPUT;
 
 end architecture BEHAVIORAL;

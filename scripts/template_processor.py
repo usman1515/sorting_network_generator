@@ -1,15 +1,79 @@
 #!/usr/bin/env python3
-
 from pathlib import Path
 from scripts.vhdl_container import *
 from scripts.network_generators import *
+from scripts.resource_allocator import FF_Replacement
 
 
 class Template_Processor:
     def __init__(self):
         pass
 
-    def fill_main_file(self, template, cs, network, W=8, SW=1):
+    def process_shift_registers(self, network, ff_replacements):
+
+        instances = ""
+        for m in range(len(ff_replacements)):
+            repl = ff_replacements[m]
+            ports = {"CLK": "CLK", "E": "'1'", "RST": "RST"}
+
+            # Create instances of CS elements forming the network.
+            for i in range(len(repl.groups)):
+                group = repl.groups[i]
+
+                generics = {
+                    "NUM_INPUT": len(group),
+                }
+
+                a = "port map(\n"
+                specific = dict()
+                for j in range(len(group)):
+                    y, x = group[j]
+                    specific["REG_INPUT({})".format(j)] = "wire({})({})".format(x, y)
+
+                for j in range(len(group)):
+                    y, x = group[j]
+                    specific["REG_OUTPUT({})".format(j)] = "wire({})({})".format(
+                        x, y + 1
+                    )
+
+                items = list((ports | specific).items())
+                for j in range(0, len(items)):
+                    key, value = items[j]
+                    a += "   {} => {}".format(key, value)
+                    if j + 1 < len(items):
+                        a += ","
+                    a += "\n"
+                a += ");\n"
+
+                instances += repl.entity.as_instance_portmanual(
+                    "FF_REPLACEMENT_{}_GRP{}".format(m, i), generics, a
+                )
+        N = network.get_N()
+        depth = network.get_depth()
+        # Fill bypasses with delay elements.
+        bypasses = ""
+        for i in range(depth):
+            for j in range(N):
+                if network[i][j][0] == "+":
+                    bypass_beg = i
+                    bypass_end = i
+                    while bypass_end < depth and network[bypass_end][j][0] == "+":
+                        network[bypass_end][j] = ("-", j)
+                        bypass_end += 1
+
+                    bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
+                        row=j, end=bypass_end, beg=bypass_beg
+                    )
+
+        # Enclose bypassed wires in synchronous process.
+        if bypasses:
+            instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
+                bypasses
+            )
+
+        return instances
+
+    def fill_main_file(self, template, cs, network, ff_replacements, W=8, SW=1):
         """Takes kwargs and returns template object with generated network."""
 
         N = network.get_N()
@@ -63,26 +127,7 @@ class Template_Processor:
                         ports | specific,
                     )
 
-        # Fill bypasses with delay elements.
-        bypasses = ""
-        for i in range(depth):
-            for j in range(N):
-                if network[i][j][0] == "+":
-                    bypass_beg = i
-                    bypass_end = i
-                    while bypass_end < depth and network[bypass_end][j][0] == "+":
-                        network[bypass_end][j] = ("-", j)
-                        bypass_end += 1
-
-                    bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
-                        row=j, end=bypass_end, beg=bypass_beg
-                    )
-
-        # Enclose bypassed wires in synchronous process.
-        if bypasses:
-            instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
-                bypasses
-            )
+        instances += self.process_shift_registers(network, ff_replacements)
 
         # Add connections to serial input.
         for i in range(N):

@@ -9,6 +9,7 @@ from scripts.reporter import *
 from scripts.vhdl_parser import *
 from scripts.vhdl_container import *
 from scripts.network_generators import *
+from scripts.resource_allocator import *
 
 
 def get_sources(path=Path()):
@@ -39,6 +40,7 @@ class Interface:
         self.generator = None
         self.network = None
         self.template = None
+        self.ffreplacements = []
         self.reporter = Reporter()
 
     def __str__(self):
@@ -108,8 +110,17 @@ class Interface:
             self.generator = Bitonic()
             self.network = self.generator.create(2**logp)
             self.network = self.generator.reduce(self.network, N)
+        elif "blank" == network_type.lower():
+            logp = int(math.ceil(math.log2(N)))
+            depth = logp * (logp + 1) // 2
+            self.network = Network(N, depth)
+            self.network.depth = depth
+            for i in range(depth):
+                for j in range(N):
+                    self.network[i][j] = ("+", j)
+
         else:
-            print("Options: oddeven, bitonic")
+            print("Options: oddeven, bitonic, blank")
         return self
 
     def shape(self, shape_type, num_outputs):
@@ -147,12 +158,19 @@ class Interface:
             print("No template selected.")
         return self
 
+    def replace_ff(self, entity_name, max_entities=20, ff_per_entity=48):
+        entity = self.entities[entity_name]
+        ralloc = Resource_Allocator()
+        ffrepl = ralloc.reallocate_ff(self.network, entity, max_entities, ff_per_entity)
+        self.ffreplacements.append(ffrepl)
+        return self
+
     def fill_template(self, template_name, cs, W=8, SW=1):
         self.template = self.templates[template_name]
         cs = self.entities[cs]
         template_processor = Template_Processor()
         self.template = template_processor.fill_main_file(
-            self.template, cs, self.network, W, SW
+            self.template, cs, self.network, self.ffreplacements, W, SW
         )
         self.reporter.add(self.network)
         return self
@@ -169,64 +187,6 @@ class Interface:
             path = "build/report.csv"
         self.reporter.write_report(path)
         return self
-
-    # def generate(
-    #     self,
-    #     nettype,
-    #     cs,
-    #     template,
-    #     N,
-    #     W,
-    #     SW,
-    #     num_outputs,
-    #     shape,
-    # ):
-    #     template = self.templates[template]
-    #     cs = self.entities[cs]
-    #     if "oddeven" == nettype.lower():
-    #         generator = OddEven()
-    #         template = generator.generate(cs, template, N, W, SW, num_outputs, shape)
-    #         path = Path("build/{}.vhd".format(template.name))
-    #         with open(str(path), "w") as fd:
-    #             fd.write(template.as_template())
-    #         self.logs.append(generator.log_dict)
-
-    #     elif "bitonic" == nettype.lower():
-    #         generator = Bitonic()
-    #         template = generator.generate(cs, template, N, W, SW, num_outputs, shape)
-    #         path = Path("build/{}.vhd".format(template.name))
-    #         with open(str(path), "w") as fd:
-    #             fd.write(template.as_template())
-    #         self.logs.append(generator.log_dict)
-    #     else:
-    #         print("Options: oddeven, bitonic")
-    #     return self
-
-    # def write_log(self, logfile="report.csv"):
-    #     with open("build/{}.csv".format(logfile), "w") as fd:
-    #         w = csv.DictWriter(fd, self.logs[0].keys())
-    #         # w.writerow(dict((fn, fn) for fn in log_dict.keys()))
-    #         w.writeheader()
-    #         w.writerows(self.logs)
-    #     return self
-
-    def test(self):
-        gen = OddEven()
-        A = gen.create_connection_matrix(8)
-        for layer in A:
-            print(layer)
-        print()
-        A = gen.reduce_connection_matrix(A, 8)
-        for layer in A:
-            print(layer)
-        print()
-        output_set = set()
-        output_set.add(1)
-        output_set.add(4)
-        A = gen.prune_connection_matrix(A, output_set)
-        for layer in A:
-            print(layer)
-        print()
 
 
 # a = Interface()

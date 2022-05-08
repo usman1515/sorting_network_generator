@@ -25,7 +25,7 @@ architecture TB of TB_SORTER_SW is
   signal   clk     : std_logic;
 
   constant W       : integer := 8;
-  constant SW       : integer := 8;
+  constant SW       : integer := 3;
   signal   rst_i   : std_logic; -- Debounced reset signal.
   signal   e_i     : std_logic; -- Debounced enable signal.
   signal   valid_i : std_logic;

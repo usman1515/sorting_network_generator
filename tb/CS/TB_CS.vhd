@@ -206,8 +206,8 @@ begin
       CLK   => clk,
       A0    => a0,
       B0    => b0,
-      A1    => a1_SW,
-      B1    => b1_SW,
+      A1    => a1_sw,
+      B1    => b1_sw,
       START => start
     );
 
@@ -411,39 +411,39 @@ begin
   TEST_ASSERT_SUBWORD : process is
   begin
 
-    result_a_SW <= (others => '0');
-    result_b_SW <= (others => '0');
+    result_a_sw <= (others => '0');
+    result_b_sw <= (others => '0');
     wait for CKTIME / 2;
     wait for CKTIME * 2;
     deserialize(
     W_i       => W,
     SW_i      => SW,
-    serial_a1 => a1_SW,
-    serial_b1 => b1_SW,
-    value_a1  => result_a_SW,
-    value_b1  => result_b_SW
+    serial_a1 => a1_sw,
+    serial_b1 => b1_sw,
+    value_a1  => result_a_sw,
+    value_b1  => result_b_sw
     );
 
     assert_order (
       a0 => operand_a,
       b0 => operand_b,
-      a1 => result_a_SW,
-      b1 => result_b_SW);
+      a1 => result_a_sw,
+      b1 => result_b_sw);
 
     deserialize(
     W_i       => W,
     SW_i      => SW,
-    serial_a1 => a1_SW,
-    serial_b1 => b1_SW,
-    value_a1  => result_a_SW,
-    value_b1  => result_b_SW
+    serial_a1 => a1_sw,
+    serial_b1 => b1_sw,
+    value_a1  => result_a_sw,
+    value_b1  => result_b_sw
     );
 
     assert_order (
       a0 => operand_a,
       b0 => operand_b,
-      a1 => result_a_SW,
-      b1 => result_b_SW);
+      a1 => result_a_sw,
+      b1 => result_b_sw);
 
     wait;
 

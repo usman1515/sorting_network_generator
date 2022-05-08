@@ -60,7 +60,7 @@ class Report:
                         "-",
                     ]:
                         bypass_end += 1
-
+                    bypass_end = bypass_end - 1
                     FF_hist[bypass_end - bypass_beg] += 1
 
         content["distance_hist"] = dict()

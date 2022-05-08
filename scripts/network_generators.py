@@ -26,6 +26,10 @@ class Network:
         else:
             return len(self.cn[0])
 
+    def at(self, pair):
+        x, y = pair
+        return self.cn[x][y]
+
     def get_depth(self):
         return len(self.cn)
 
@@ -250,26 +254,7 @@ class Bitonic(Generator):
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
-    # gen = OddEven()
-    # network = gen.create(8)
-    # for layer in network:
-    #     print(layer)
-    gen = Bitonic()
-    gen.create(8)
-    gen.reduce(10)
-    nw = gen.nw
-    print(nw)
-    print(nw.get_output_set())
-
-    # output_set = set()
-    # output_set.add(0)
-    # output_set.add(1)
-    # output_set.add(2)
-    # print(output_set)
-    # network = gen.prune(network, output_set.copy())
-    # output_list = list(output_set)
-    # output_list.sort()
-    # print(output_list)
-    # for layer in network:
-    #     print(layer)
-    # print()
+    gen = OddEven()
+    nw = gen.create(16)
+    for stage in nw:
+        print([flag for flag, perm in stage])

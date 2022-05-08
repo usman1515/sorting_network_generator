@@ -18,69 +18,77 @@
 --
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.all;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
--- library UNISIM;
--- use UNISIM.VComponents.all;
-
-entity LoadMUXFF is
-  generic(
-    w : integer := 8
-    );
+entity LOAD_MUX_FF is
+  generic (
+    -- Width of parallel input/ word.
+    W  : integer := 8;
+    -- Length of subwords to be output at a time.
+    SW : integer := 1
+  );
   port (
+    -- System Clock
+    CLK                   : in    std_logic;
+    -- Synchonous Reset
+    RST                   : in    std_logic;
+    -- Enable
+    E                     : in    std_logic;
+    -- Load signal
+    LOAD                  : in    std_logic;
+    -- w-bit parallel input
+    PAR_INPUT             : in    std_logic_vector(W - 1 downto 0);
+    -- subword parallel to bit-serial output
+    SER_OUTPUT            : out   std_logic_vector(SW - 1 downto 0)
+  );
+end entity LOAD_MUX_FF;
 
-    CLK        : in  std_logic;
-    LD         : in  std_logic;
-    E          : in  std_logic;
-    input      : in  std_logic_vector(w-1 downto 0);
-    ser_output : out std_logic := '0'
-    );
-end LoadMUXFF;
+architecture BEHAVIORAL of LOAD_MUX_FF is
 
+  signal buf : std_logic_vector(SW * (W / SW) - 1 downto 0); -- Shift register.
+  -- Since some bits are immediatly sent to output upon loading, we can make do
+  -- with less.
+  signal count : integer range 0 to W / SW - 1;
 
-architecture Behavioral of LoadMUXFF is
--- We can make do with one bit less as the first input bit
--- is immediatly output with ser_output.
-  signal buf : std_logic_vector(w-1 downto 0) := (others => '0');
-  signal count: integer range 0 to w-1;
 begin
 
-  process
+  process is
   begin
+
     wait until rising_edge(CLK);
-    if LD = '1' or count = w-1 then
+
+    if (LOAD = '1' or count = W - 1) then
       count <= 0;
     else
-      if E = '1' then
+      if (E = '1') then
         count <= count + 1;
       end if;
     end if;
+
   end process;
 
-  process
+  process is
   begin
+
     wait until rising_edge(CLK);
-    if LD = '1' then
-      buf <= input(input'high downto input'low);
+
+    if (LOAD = '1') then
+      buf <= PAR_INPUT(PAR_INPUT'high downto PAR_INPUT'low);
     end if;
+
   end process;
 
-  process(LD, buf, input)
+  process (LOAD, buf, PAR_INPUT) is
   begin
-    if LD = '1' then
-      ser_output <= input(0);
+
+    if (LOAD = '1') then
+      SER_OUTPUT <= PAR_INPUT(0);
     else
-      ser_output <= buf(count);
+      SER_OUTPUT <= buf(count);
     end if;
+
   end process;
 
-
-end Behavioral;
+end architecture BEHAVIORAL;

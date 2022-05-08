@@ -47,9 +47,10 @@ class Entity:
             keys = list(self.generics.keys())
             for i in range(0, len(self.generics)):
                 key = keys[i]
-                a += "   {} => {}".format(key, genassign[key])
-                if i + 1 < len(self.generics):
-                    a += ","
+                if key in genassign.keys():
+                    a += "   {} => {}".format(key, genassign[key])
+                    if i + 1 < len(genassign):
+                        a += ","
                 a += "\n"
             a += ")\n"
         if self.ports:
@@ -62,6 +63,25 @@ class Entity:
                     a += ","
                 a += "\n"
             a += ");\n"
+        return a
+
+    def as_instance_portmanual(
+        self, instance_name="", genassign=dict(), port_string=""
+    ):
+        a = "{} : entity work.{}\n".format(instance_name, self.name)
+
+        if bool(self.generics) and bool(genassign):
+            a += "generic map(\n"
+            keys = list(self.generics.keys())
+            for i in range(0, len(self.generics)):
+                key = keys[i]
+                if key in genassign.keys():
+                    a += "   {} => {}".format(key, genassign[key])
+                    if i + 1 < len(genassign):
+                        a += ","
+                a += "\n"
+            a += ")\n"
+        a += port_string
         return a
 
     def __str__(self):
