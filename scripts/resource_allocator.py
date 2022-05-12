@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from scripts.network_generators import OddEven, Network
+from network_generators import OddEven, Network
 
 
 def is_ff(pair):
@@ -81,6 +81,50 @@ def print_nw_with_ffgroups(nw, groups):
         print(line)
 
 
+def get_distance_score_rect(nw, rect):
+    a, b = rect
+    sx, sy = a
+    ex, ey = b
+
+    min_x = ex + 1
+    min_y = ey + 1
+    max_x = sx
+    max_y = sy
+    for y in range(sy, ey + 1):
+        for x in range(sx, ex + 1):
+            if in_bounds(nw, (x, y)) and is_ff((x, y)):
+                if x < min_x:
+                    min_x = x
+                if x < max_x:
+                    max_x = x
+                if y < min_y:
+                    min_y = y
+                if y < max_y:
+                    max_y = y
+    diag2 = (max_x - min_x) ** 2 + (max_y - min_y) ** 2
+    return diag2
+
+
+def get_distance_score_group(nw, group):
+
+    min_x = 0
+    min_y = 0
+    max_x = nw.get_N()
+    max_y = nw.get_depth()
+    for point in group:
+        x, y = point
+        if x < min_x:
+            min_x = x
+        if x < max_x:
+            max_x = x
+        if y < min_y:
+            min_y = y
+        if y < max_y:
+            max_y = y
+    diag2 = (max_x - min_x) ** 2 + (max_y - min_y) ** 2
+    return diag2
+
+
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
@@ -98,4 +142,5 @@ if cond:
     target_ff = 5
     groups = alloc.allocate_ff_groups(nw, 5)
     print_nw_with_ffgroups(nw, groups)
-    print(groups)
+    for group in groups
+    print(get_distance_score_group(group), group)
