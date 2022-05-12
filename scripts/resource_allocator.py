@@ -10,7 +10,6 @@ def is_ff(pair):
 
 def in_bounds(nw, point):
     x, y = point
-    print(nw.get_depth(), nw.get_N())
     if 0 <= y and y < nw.get_depth():
         if 0 <= x and x < nw.get_N():
             return True
@@ -65,7 +64,6 @@ class Simple_Allocator(Resource_Allocator):
             ff_points, next_start = self.allocate_row(
                 network, next_start, max_ff_per_group
             )
-            print(next_start, in_bounds(network, next_start))
             ff_groups.append(ff_points)
         return ff_groups
 
@@ -78,7 +76,6 @@ class Block_Allocator(Resource_Allocator):
         """Takes a rectangle and a division index and attempts to distribute ffs
         evenly between blocks respecting some degree of locality.
         """
-        print(rect, total_ff, num_groups)
         a, b = rect
         start_x, start_y = a
         end_x, end_y = b
@@ -96,9 +93,10 @@ class Block_Allocator(Resource_Allocator):
                 for x in range(start_x, end_x):
                     if is_ff(network.at((x, y))):
                         # If we have a FF ...
-                        for i, group in enumerate(groups):
-                            if len(group) < target_nff[i]:
-                                group.append((x, y))
+                        for i in range(len(groups)):
+                            if len(groups[i]) < target_nff[i]:
+                                groups[i].append((x, y))
+                                break
 
         else:
             # Y range is the long edge.
@@ -108,9 +106,10 @@ class Block_Allocator(Resource_Allocator):
                 for y in range(start_y, end_y):
                     if is_ff(network.at((x, y))):
                         # If we have a FF ...
-                        for i, group in enumerate(groups):
-                            if len(group) < target_nff[i]:
-                                group.append((x, y))
+                        for i in range(len(groups)):
+                            if len(groups[i]) < target_nff[i]:
+                                groups[i].append((x, y))
+                                break
 
         self.groups += groups
 
@@ -143,7 +142,6 @@ class Block_Allocator(Resource_Allocator):
             ]
         # Perform scan on list
         ff_per_cr = [sum(ff_per_cr[: i + 1]) for i in range(len(ff_per_cr))]
-        print(ff_per_cr)
         # Find index at which halve the number of ffs are above and below.
         total = ff_per_cr[-1]
 
@@ -156,15 +154,15 @@ class Block_Allocator(Resource_Allocator):
         if total > 3 * max_ff_per_group:
             # Total number of blocks exceeds 3 times the maximum.
             # Recursively subdivide.
-            print("Rectangle:", rect, "with", total, "FF divided into")
+            # print("Rectangle:", rect, "with", total, "FF divided into")
             rect0 = (0, 0)
             rect1 = (0, 0)
             if orientation:
-                rect0 = (a, (index + 1, end_y))
-                rect1 = ((index + 1, start_y), b)
+                rect0 = (a, (index, end_y))
+                rect1 = ((index, start_y), b)
             else:
-                rect0 = (a, (end_x, index + 1))
-                rect1 = ((start_y, index + 1), b)
+                rect0 = (a, (end_x, index))
+                rect1 = ((start_y, index), b)
             print("Rect0:", rect0)
             self.divide_block(network, rect0, max_ff_per_group)
             print("Rect1:", rect1)
@@ -173,7 +171,7 @@ class Block_Allocator(Resource_Allocator):
             print("Distributing:", rect, "with", total, "FF")
             # Total number of ff are less than thrice the maximum number.
             # In this case, distribute ff between blocks evenly.
-            num_groups = (total + max_ff_per_group + 1) // max_ff_per_group
+            num_groups = (total) // max_ff_per_group
             self.distribute_to_groups(network, rect, total, num_groups)
 
     def allocate_ff_groups(self, network, max_ff_per_group):
@@ -213,34 +211,34 @@ def get_distscore_rect(nw, rect):
             if in_bounds(nw, (x, y)) and is_ff((x, y)):
                 if x < min_x:
                     min_x = x
-                if x < max_x:
+                if x > max_x:
                     max_x = x
                 if y < min_y:
                     min_y = y
-                if y < max_y:
+                if y > max_y:
                     max_y = y
-    diag2 = (max_x - min_x) ** 2 + (max_y - min_y) ** 2
-    return diag2
+    diag2 = (max_x - min_x) + (max_y - min_y)
+    return abs(diag2)
 
 
 def get_distscore_group(nw, group):
 
-    min_x = 0
-    min_y = 0
-    max_x = nw.get_N()
-    max_y = nw.get_depth()
+    max_x = 0
+    max_y = 0
+    min_x = nw.get_N()
+    min_y = nw.get_depth()
     for point in group:
         x, y = point
         if x < min_x:
             min_x = x
-        if x < max_x:
+        if x > max_x:
             max_x = x
         if y < min_y:
             min_y = y
-        if y < max_y:
+        if y > max_y:
             max_y = y
-    diag2 = (max_x - min_x) ** 2 + (max_y - min_y) ** 2
-    return diag2
+    diag2 = (max_x - min_x) + (max_y - min_y)
+    return abs(diag2)
 
 
 # Elpy shenanigans
