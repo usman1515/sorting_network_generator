@@ -83,7 +83,7 @@ architecture TB of TB_SHIFT_REGISTERS is
 
   end procedure assert_equal;
 
-  constant W                : integer := 8;
+  constant W                : integer := 4;
   constant N                : integer := 1;
 
   signal clk                : std_logic;
@@ -94,8 +94,6 @@ architecture TB of TB_SHIFT_REGISTERS is
 
   signal serial_reference   : std_logic_vector(N - 1 downto 0);
   signal reference          : std_logic_vector(W - 1 downto 0);
-
-  signal serial_dsp         : std_logic_vector(N - 1 downto 0);
 
   signal inter_dsp          : SLVArray(0 to N - 1)(W - 1 downto 0);
   signal dsp                : std_logic_vector(W - 1 downto 0);
@@ -128,23 +126,23 @@ begin
 
   end generate SR;
 
-  DSP_SR : for i in N - 1 downto 0 generate
+  
 
-    REGISTER_DSP_1 : entity work.register_dsp
-      generic map (
-        NUM_INPUT => W
-      )
-      port map (
-        CLK        => clk,
-        RST        => rst,
-        E          => e_i,
-        REG_INPUT  => inter_dsp(i)( W - 2 downto 0) & serial_input(i),
-        REG_OUTPUT => inter_dsp(i)
-      );
+  REGISTER_DSP_1 : entity work.register_dsp
+  generic map (
+    NUM_INPUT => W
+  )
+  port map (
+    CLK        => clk,
+    RST        => rst,
+    E          => e_i,
+    REG_INPUT  => serial_input(0) & inter_dsp(0)(W - 1 downto 1),
+    REG_OUTPUT => inter_dsp(0)
+  );
 
-  serial_dsp (i) <= inter_dsp(i)(W-1);
+  
 
-  end generate DSP_SR;
+  
 
   TEST_STIM : process is
   begin
@@ -185,7 +183,7 @@ begin
     dsp <= (others => '0');
     wait for CKTIME;
     wait for (W ) * CKTIME;
-    deserialize(W, serial_dsp(0), dsp);
+    deserialize(W, inter_dsp(0)(0), dsp);
     wait for CKTIME;
     assert_equal(dsp, reference);
 

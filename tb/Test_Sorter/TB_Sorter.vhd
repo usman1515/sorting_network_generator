@@ -21,7 +21,7 @@ end entity TB_SORTER;
 
 architecture TB of TB_SORTER is
 
-  constant CKTIME  : time := 10 ps;
+  constant CKTIME  : time := 10 ns;
   signal   clk     : std_logic;
 
   constant W       : integer := 8;
