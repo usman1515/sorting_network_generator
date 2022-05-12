@@ -28,7 +28,7 @@ class Network:
 
     def at(self, pair):
         x, y = pair
-        return self.cn[x][y]
+        return self.cn[y][x]
 
     def get_depth(self):
         return len(self.cn)
