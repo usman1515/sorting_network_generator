@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import numpy as np
 from datetime import datetime
 
 
@@ -13,25 +14,23 @@ class Network:
         self.output_set = set()
         # Connection matrix of the network.
         self.cn = list()
-        if N > 0 and depth > 0:
-            self.setup(N, depth)
+        self.setup(N, depth)
 
     def setup(self, N, depth):
-        self.cn = [[("+", j) for j in range(N)] for i in range(depth)]
-        self.output_set = set(range(0, self.get_N()))
+        self.cn = np.empty([depth, N], dtype=object)
+        for i in range(N * depth):
+            self.cn.flat[i] = ("+", i % N)
+        self.output_set = set(range(0, N))
 
     def get_N(self):
-        if not self.cn:
-            return 0
-        else:
-            return len(self.cn[0])
-
-    def at(self, pair):
-        x, y = pair
-        return self.cn[y][x]
+        return np.shape(self.cn)[1]
 
     def get_depth(self):
-        return len(self.cn)
+        return np.shape(self.cn)[0]
+
+    def at(self, point):
+        x, y = point
+        return self.cn[y][x]
 
     def get_output_set(self):
         return self.output_set
@@ -258,3 +257,10 @@ if cond:
     nw = gen.create(16)
     for stage in nw:
         print([flag for flag, perm in stage])
+    start_x = 0
+    start_y = 0
+    end_x = nw.get_N()
+    end_y = nw.get_depth()
+    print(
+        [[nw.at((x, y)) for y in range(start_y, end_y)] for x in range(start_x, end_x)]
+    )

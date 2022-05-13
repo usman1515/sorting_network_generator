@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import numpy as np
 from network_generators import OddEven, Network
 
 
@@ -55,11 +56,11 @@ class Simple_Allocator(Resource_Allocator):
                 if ff >= num_ff:
                     break
             i += 1
-        return ff_points, ((i + 1) % N, (i + 1) // N)
+        return ff_points, np.asarray(((i + 1) % N, (i + 1) // N))
 
     def allocate_ff_groups(self, network, max_ff_per_group):
         ff_groups = []
-        next_start = (0, 0)
+        next_start = np.array(2, 0)
         while in_bounds(network, next_start):
             ff_points, next_start = self.allocate_row(
                 network, next_start, max_ff_per_group
@@ -95,7 +96,7 @@ class Block_Allocator(Resource_Allocator):
                         # If we have a FF ...
                         for i in range(len(groups)):
                             if len(groups[i]) < target_nff[i]:
-                                groups[i].append((x, y))
+                                groups[i].append(np.asarray((x, y)))
                                 break
 
         else:
@@ -108,7 +109,7 @@ class Block_Allocator(Resource_Allocator):
                         # If we have a FF ...
                         for i in range(len(groups)):
                             if len(groups[i]) < target_nff[i]:
-                                groups[i].append((x, y))
+                                groups[i].append(np.asarray((x, y)))
                                 break
 
         self.groups += groups
@@ -122,7 +123,6 @@ class Block_Allocator(Resource_Allocator):
         a, b = rect
         start_x, start_y = a
         end_x, end_y = b
-
         # Orientation == True if we halve in the x range.
         orientation = end_y - start_y < end_x - start_x
         # Number of ffs either per column or row
@@ -155,20 +155,20 @@ class Block_Allocator(Resource_Allocator):
             # Total number of blocks exceeds 3 times the maximum.
             # Recursively subdivide.
             # print("Rectangle:", rect, "with", total, "FF divided into")
-            rect0 = (0, 0)
-            rect1 = (0, 0)
+            rect0 = ((0, 0), (0, 0))
+            rect1 = ((0, 0), (0, 0))
             if orientation:
                 rect0 = (a, (index, end_y))
                 rect1 = ((index, start_y), b)
             else:
                 rect0 = (a, (end_x, index))
-                rect1 = ((start_y, index), b)
+                rect1 = ((start_x, index), b)
             print("Rect0:", rect0)
             self.divide_block(network, rect0, max_ff_per_group)
             print("Rect1:", rect1)
             self.divide_block(network, rect1, max_ff_per_group)
         else:
-            print("Distributing:", rect, "with", total, "FF")
+            # print("Distributing:", rect, "with", total, "FF")
             # Total number of ff are less than thrice the maximum number.
             # In this case, distribute ff between blocks evenly.
             num_groups = (total) // max_ff_per_group
@@ -187,17 +187,24 @@ def print_nw_with_ffgroups(nw, groups):
         line = ""
         for j in range(len(nw[i])):
             if is_ff(nw[i][j]):
-                elem = "+ "
+                elem = "+"
                 for k in range(len(groups)):
-                    if (j, i) in groups[k]:
-                        elem = "{} ".format(k)
+                    if np.any(np.all(np.asarray((j, i)) == groups[k], axis=1)):
+                        elem = "{}".format(k)
                 line += elem
             else:
-                line += "  "
+                line += " "
         print(line)
 
 
+def norm2square(point):
+    return np.dot(point, point)
+
+
 def get_distscore_rect(nw, rect):
+    """Calculates the smallest bounding box of FF contained in given rectangle.
+    Returns square of diagonal."""
+
     a, b = rect
     start_x, start_y = a
     end_x, end_y = b
@@ -217,11 +224,13 @@ def get_distscore_rect(nw, rect):
                     min_y = y
                 if y > max_y:
                     max_y = y
-    diag2 = (max_x - min_x) + (max_y - min_y)
-    return abs(diag2)
+    diff = np.asarray((max_x, max_y)) - np.asarray((min_x, min_y))
+    return norm2square(diff)
 
 
 def get_distscore_group(nw, group):
+    """Calculates the smallest bounding box of FF in grouping.
+    Returns square of diagonal."""
 
     max_x = 0
     max_y = 0
@@ -237,8 +246,112 @@ def get_distscore_group(nw, group):
             min_y = y
         if y > max_y:
             max_y = y
-    diag2 = (max_x - min_x) + (max_y - min_y)
-    return abs(diag2)
+    diff = np.asarray((max_x, max_y)) - np.asarray((min_x, min_y))
+    return norm2square(diff)
+
+
+def get_mean(group):
+    mean = np.asarray((0, 0))
+    for x, y in group:
+        mean[0] += x
+        mean[1] += y
+    mean[0] /= len(group)
+    mean[1] /= len(group)
+    return mean
+
+
+def get_cost(group, point=None):
+    if not point:
+        point = get_mean(point)
+    cost = 0
+    for gpoint in group:
+        cost += norm2square(gpoint, point)
+    return cost
+
+
+def get_transferral_cost(point, group_s, group_t):
+    """Calculates improvement of cost if point is transferred from group_s
+    to group_t.
+
+    See https://proceedings.mlr.press/v9/telgarsky10a.html for details"""
+    cost_target = (
+        len(group_t) / (len(group_t) + 1) * norm2square(get_mean(group_t) - point)
+    )
+    cost_source = (
+        len(group_s) / (len(group_s) - 1) * norm2square(get_mean(group_s) - point)
+    )
+
+    return cost_target - cost_source
+
+
+def get_swap_cost(point_a, group_a, point_b, group_b):
+    """Calculates cost of swapping point a from group a with b from group b.
+    Simply sums the transferral costs.
+    """
+    transf_a = get_transferral_cost(point_a, group_a, group_b)
+    transf_b = get_transferral_cost(point_b, group_b, group_a)
+
+    if transf_a + transf_b > 0:
+        print(transf_a, transf_b)
+    return transf_a + transf_b
+
+
+def swap_points_at_index(index_a, group_a, index_b, group_b):
+    point = group_a[index_a]
+    group_a[index_a] = group_b[index_b]
+    group_b[index_b] = point
+
+
+def select_point(cur_point, cur_group, groups, start_group_index):
+    """Finds the next best point which has positive cost.
+    Iterates over groups starting at index start_group_index and points in groups.
+    returns pair of point index and related group.
+    """
+    print(
+        "Searching partner for point {} beginning at {}.".format(
+            cur_point, start_group_index
+        )
+    )
+    for i in range(start_group_index, len(groups)):
+        for j in range(len(groups[i])):
+            cost = get_swap_cost(cur_point, cur_group, groups[i][j], groups[i])
+            if cost > 0:
+                print(
+                    "Found point in group number {} with index {} and cost {}".format(
+                        i, j, cost
+                    )
+                )
+                return j, groups[i]
+    return None
+
+
+def find_group(cur_point, cur_group, groups, start_group_index):
+    """Finds the next best point which has positive cost.
+    Iterates over groups starting at index start_group_index and points in groups.
+    returns pair of point index and related group.
+    """
+    print(
+        "Searching partner for point {} beginning at {}.".format(
+            cur_point, start_group_index
+        )
+    )
+    for i in range(start_group_index, len(groups)):
+        cost = get_transferral_cost(cur_point, cur_group, groups[i])
+        if cost > 0:
+            print("Found group number {} and cost {}".format(i, cost))
+            return groups[i]
+    return None
+
+
+def find_best_swap_partner(cur_point, cur_group, group_b):
+    best_index = 0
+    best_cost = 0
+    for i, y in enumerate(group_b):
+        cost = get_transferral_cost(y, group_b, cur_group)
+        if best_cost < cost:
+            best_cost = cost
+            best_index = i
+    return best_index, best_cost
 
 
 # Elpy shenanigans
@@ -261,3 +374,13 @@ if cond:
     print_nw_with_ffgroups(nw, groups)
     for group in groups:
         print(get_distscore_group(nw, group), group)
+    for n in range(0, 1):
+        for i, group_a in enumerate(groups):
+            for j, x in enumerate(group_a):
+                group_b = find_group(x, group_a, groups, i + 1)
+                k, cost = find_best_swap_partner(x, group_a, group_b)
+                print(k, cost, len(group_a), len(group_b))
+                swap_points_at_index(j, group_a, k, group_b)
+                break
+
+            print_nw_with_ffgroups(nw, groups)
