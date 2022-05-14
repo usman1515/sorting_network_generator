@@ -13,37 +13,55 @@ class Network:
         # Set of outputs containing valid items
         self.output_set = set()
         # Connection matrix of the network.
-        self.cn = list()
+        self.con_net = None
         self.setup(N, depth)
+        self.control_layers = list()
 
     def setup(self, N, depth):
-        self.cn = np.empty([depth, N], dtype=object)
+        self.con_net = np.empty([depth, N], dtype=object)
         for i in range(N * depth):
-            self.cn.flat[i] = ("+", i % N)
+            self.con_net.flat[i] = ("+", i % N)
         self.output_set = set(range(0, N))
 
+    def add_layer(self):
+        N = self.get_N()
+        depth = self.get_depth()
+        self.control_layers.append(np.empty([depth, N], dtype=object))
+        for i in range(N * depth):
+            self.control_layers[-1].flat[i] = ("+", 0)
+
     def get_N(self):
-        return np.shape(self.cn)[1]
+        return np.shape(self.con_net)[1]
 
     def get_depth(self):
-        return np.shape(self.cn)[0]
+        return np.shape(self.con_net)[0]
 
     def at(self, point):
         x, y = point
-        return self.cn[y][x]
+        return self.con_net[y][x]
+
+    def num_ff_at(self, point):
+        x, y = point
+        count = 0
+        if self.con_net[y][x][0] == "+":
+            count += 1
+        for layer in self.control_layers:
+            if layer[y][x] == "+":
+                count += 1
+        return count
 
     def get_output_set(self):
         return self.output_set
 
     def __getitem__(self, key):
-        return self.cn.__getitem__(key)
+        return self.con_net.__getitem__(key)
 
     def __setitem__(self, key, value):
-        return self.cn.__setitem__(key, value)
+        return self.con_net.__setitem__(key, value)
 
     def __str__(self):
         a = "{0}: {1}\n".format(self.typename, self.get_N())
-        for layer in self.cn:
+        for layer in self.con_net:
             a += str(layer)
             a += "\n"
         a += str(self.get_output_set())
@@ -114,9 +132,9 @@ class Generator:
                 break
 
         # Remove stages which only contain delay elements.
-        network.cn = [
+        network.con_net = [
             stage
-            for stage in network.cn
+            for stage in network.con_net
             if any([pair[0] in ("F", "R") for pair in stage])
         ]
 

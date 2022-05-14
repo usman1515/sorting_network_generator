@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import numpy as np
 from network_generators import OddEven, Network
 
@@ -72,6 +73,7 @@ class Simple_Allocator(Resource_Allocator):
 class Block_Allocator(Resource_Allocator):
     def __init__(self):
         self.groups = []
+        self.sub_groups = []
 
     def distribute_to_groups(self, network, rect, total_ff, num_groups):
         """Takes a rectangle and a division index and attempts to distribute ffs
@@ -81,8 +83,12 @@ class Block_Allocator(Resource_Allocator):
         start_x, start_y = a
         end_x, end_y = b
         groups = [[] for i in range(num_groups)]
+
+        # Number of ff for each group
+        target_nff = [total_ff // (num_groups) for i in range(num_groups)]
+
+        # Distribute remainder among groups
         target_rem = (total_ff) % num_groups
-        target_nff = [total_ff // num_groups for i in range(num_groups)]
         for i in range(target_rem):
             target_nff[i] += 1
 
@@ -95,7 +101,9 @@ class Block_Allocator(Resource_Allocator):
                     if is_ff(network.at((x, y))):
                         # If we have a FF ...
                         for i in range(len(groups)):
+                            # ...and room in the group...
                             if len(groups[i]) < target_nff[i]:
+                                # ...add ff to group.
                                 groups[i].append(np.asarray((x, y)))
                                 break
 
@@ -108,7 +116,9 @@ class Block_Allocator(Resource_Allocator):
                     if is_ff(network.at((x, y))):
                         # If we have a FF ...
                         for i in range(len(groups)):
+                            # ...and room in the group...
                             if len(groups[i]) < target_nff[i]:
+                                # ...add ff to group.
                                 groups[i].append(np.asarray((x, y)))
                                 break
 
@@ -131,13 +141,13 @@ class Block_Allocator(Resource_Allocator):
         if orientation:
             # Get number of ff per column
             ff_per_cr = [
-                sum([1 for y in range(start_y, end_y) if is_ff(network.at((x, y)))])
+                sum([network.num_ff_at((x, y)) for y in range(start_y, end_y)])
                 for x in range(start_x, end_x)
             ]
         else:
             # Get number of ff per row
             ff_per_cr = [
-                sum([1 for x in range(start_x, end_x) if is_ff(network.at((x, y)))])
+                sum([network.num_ff_at((x, y)) for x in range(start_x, end_x)])
                 for y in range(start_y, end_y)
             ]
         # Perform scan on list
@@ -151,46 +161,127 @@ class Block_Allocator(Resource_Allocator):
                 index = i
                 break
         # We need to decide how and if further subdivision is required:
-        if total > 3 * max_ff_per_group:
+        if total > 3 * max_ff_per_group and 0 < norm2square(
+            (end_x - start_x, end_y - start_y)
+        ):
             # Total number of blocks exceeds 3 times the maximum.
             # Recursively subdivide.
             # print("Rectangle:", rect, "with", total, "FF divided into")
             rect0 = ((0, 0), (0, 0))
             rect1 = ((0, 0), (0, 0))
             if orientation:
-                rect0 = (a, (index, end_y))
-                rect1 = ((index, start_y), b)
+                rect0 = (a, (start_x + index, end_y))
+                rect1 = ((start_x + index, start_y), b)
             else:
-                rect0 = (a, (end_x, index))
-                rect1 = ((start_x, index), b)
-            print("Rect0:", rect0)
+                rect0 = (a, (end_x, start_y + index))
+                rect1 = ((start_x, start_y + index), b)
+            # print("From: ", rect)
+            # print("Calling divide_block on:")
+            # print("  Rect0:", rect0)
+            # print("  Rect1:", rect1)
             self.divide_block(network, rect0, max_ff_per_group)
-            print("Rect1:", rect1)
             self.divide_block(network, rect1, max_ff_per_group)
         else:
             # print("Distributing:", rect, "with", total, "FF")
             # Total number of ff are less than thrice the maximum number.
             # In this case, distribute ff between blocks evenly.
-            num_groups = (total) // max_ff_per_group
-            self.distribute_to_groups(network, rect, total, num_groups)
+            if total:
+                num_groups = math.ceil(total / max_ff_per_group)
+                if num_groups == 0:
+                    num_groups = 1
+                self.distribute_to_groups(network, rect, total, num_groups)
 
-    def allocate_ff_groups(self, network, max_ff_per_group):
+    def allocate_ff_groups(self, network, num_ff_per_entity, group_sizes_layers=[]):
         self.groups = []
         N = network.get_N()
         depth = network.get_depth()
-        self.divide_block(network, ((0, 0), (N, depth)), max_ff_per_group)
-        return self.groups
+        num_ff_per_group = num_ff_per_entity - sum(group_sizes_layers)
+
+        self.divide_block(network, ((0, 0), (N, depth)), num_ff_per_group)
+        # print(self.groups)
+        self.allocate_control_ff(network, group_sizes_layers)
+        # print(self.sub_groups)
+        return self.groups, self.sub_groups
+
+    def allocate_control_ff(self, network, group_sizes_layers=[]):
+        """Allocate ff of the control signals to already existing groups.
+
+        For each layer of control FF and for each FF in a layer, select the
+        nearest group (smallest distance to mean of existing FF coordinates)
+        with less than the specified number of control FF per layer.
+        """
+        layers = network.control_layers
+        for i, layer in enumerate(layers):
+            max_ff = group_sizes_layers[i]
+            self.__allocate_layer(i, layer, max_ff)
+        return self.sub_groups
+
+    def __allocate_layer(self, layer_index, layer, max_ff):
+        """Performs allocation of control signal layer ff to either existing groups,
+        or new groups if all existing groups have the maximum number of ffs."""
+
+        # If the number of groups we need to distribute the ff in the control layer
+        # exceeds the number of groups we already have, add empty groups.
+        total_ff = sum([is_ff(layer.flat[i]) for i in range(np.prod(np.shape(layer)))])
+        num_group_diff = math.ceil(total_ff / max_ff) - len(self.groups)
+
+        non_empty_len = len(self.groups)
+        if num_group_diff > 0:
+            for i in range(num_group_diff):
+                self.groups.append([])
+
+        # Add new sub_group should we process a new layer.
+        if len(self.sub_groups) < layer_index + 1:
+            self.sub_groups.append([[] for i in range(len(self.groups))])
+        sub_groups = self.sub_groups[layer_index]
+
+        for y, stage in enumerate(layer):
+            for x, pair in enumerate(stage):
+                if is_ff(pair):
+
+                    # Create a list containing group index and distance relative
+                    # to the point.
+
+                    # Find index of the closest group ...
+                    min_index = 0
+                    min_dist = -1
+
+                    for j in range(non_empty_len):
+                        group = self.groups[j]
+                        # ...if that group still has room
+                        if len(sub_groups[j]) < max_ff:
+                            dist = get_cost(group, (x, y))
+                            if min_dist == -1 or min_dist > dist:
+                                min_dist = dist
+                                min_index = j
+                            # print(min_index, min_dist, dist)
+
+                    # If a group has been found, add ff to sub_group at that layer.
+                    if min_dist > -1:
+                        sub_groups[min_index].append(np.asarray((x, y)))
+                    else:
+                        # Otherwise look into the empty groups
+                        for j in range(non_empty_len, len(self.groups)):
+                            group = self.groups[j]
+                            # ...if that group still has room
+                            if len(sub_groups[j]) < max_ff:
+                                sub_groups[j].append(np.asarray((x, y)))
+                                break
+        # print(sub_groups)
+        self.sub_groups[layer_index] = sub_groups
 
 
-def print_nw_with_ffgroups(nw, groups):
-    for i in range(len(nw.cn)):
+def print_layer_with_ffgroups(layer, groups):
+    for i in range(len(layer)):
         line = ""
-        for j in range(len(nw[i])):
-            if is_ff(nw[i][j]):
+        for j in range(len(layer[i])):
+            if is_ff(layer[i][j]):
                 elem = "+"
                 for k in range(len(groups)):
-                    if np.any(np.all(np.asarray((j, i)) == groups[k], axis=1)):
-                        elem = "{}".format(k)
+                    for point in groups[k]:
+                        if np.all(np.equal(np.asarray((j, i)), point)):
+                            elem = "{}".format(k)
+                            break
                 line += elem
             else:
                 line += " "
@@ -251,12 +342,14 @@ def get_distscore_group(nw, group):
 
 
 def get_mean(group):
+
     mean = np.asarray((0, 0))
-    for x, y in group:
-        mean[0] += x
-        mean[1] += y
-    mean[0] /= len(group)
-    mean[1] /= len(group)
+    if group:
+        for x, y in group:
+            mean[0] += x
+            mean[1] += y
+        mean[0] /= len(group)
+        mean[1] /= len(group)
     return mean
 
 
@@ -265,93 +358,25 @@ def get_cost(group, point=None):
         point = get_mean(point)
     cost = 0
     for gpoint in group:
-        cost += norm2square(gpoint, point)
+        cost += norm2square(gpoint - point)
     return cost
 
 
-def get_transferral_cost(point, group_s, group_t):
-    """Calculates improvement of cost if point is transferred from group_s
-    to group_t.
-
-    See https://proceedings.mlr.press/v9/telgarsky10a.html for details"""
-    cost_target = (
-        len(group_t) / (len(group_t) + 1) * norm2square(get_mean(group_t) - point)
-    )
-    cost_source = (
-        len(group_s) / (len(group_s) - 1) * norm2square(get_mean(group_s) - point)
-    )
-
-    return cost_target - cost_source
-
-
-def get_swap_cost(point_a, group_a, point_b, group_b):
-    """Calculates cost of swapping point a from group a with b from group b.
-    Simply sums the transferral costs.
-    """
-    transf_a = get_transferral_cost(point_a, group_a, group_b)
-    transf_b = get_transferral_cost(point_b, group_b, group_a)
-
-    if transf_a + transf_b > 0:
-        print(transf_a, transf_b)
-    return transf_a + transf_b
-
-
-def swap_points_at_index(index_a, group_a, index_b, group_b):
-    point = group_a[index_a]
-    group_a[index_a] = group_b[index_b]
-    group_b[index_b] = point
-
-
-def select_point(cur_point, cur_group, groups, start_group_index):
-    """Finds the next best point which has positive cost.
-    Iterates over groups starting at index start_group_index and points in groups.
-    returns pair of point index and related group.
-    """
-    print(
-        "Searching partner for point {} beginning at {}.".format(
-            cur_point, start_group_index
-        )
-    )
-    for i in range(start_group_index, len(groups)):
-        for j in range(len(groups[i])):
-            cost = get_swap_cost(cur_point, cur_group, groups[i][j], groups[i])
-            if cost > 0:
-                print(
-                    "Found point in group number {} with index {} and cost {}".format(
-                        i, j, cost
-                    )
-                )
-                return j, groups[i]
-    return None
-
-
-def find_group(cur_point, cur_group, groups, start_group_index):
-    """Finds the next best point which has positive cost.
-    Iterates over groups starting at index start_group_index and points in groups.
-    returns pair of point index and related group.
-    """
-    print(
-        "Searching partner for point {} beginning at {}.".format(
-            cur_point, start_group_index
-        )
-    )
-    for i in range(start_group_index, len(groups)):
-        cost = get_transferral_cost(cur_point, cur_group, groups[i])
-        if cost > 0:
-            print("Found group number {} and cost {}".format(i, cost))
-            return groups[i]
-    return None
-
-
-def find_best_swap_partner(cur_point, cur_group, group_b):
-    best_index = 0
-    best_cost = 0
-    for i, y in enumerate(group_b):
-        cost = get_transferral_cost(y, group_b, cur_group)
-        if best_cost < cost:
-            best_cost = cost
-            best_index = i
-    return best_index, best_cost
+def print_layer(layer):
+    line = "|"
+    for i in range(len(layer[0])):
+        line += "{:<2}".format(i % 10)
+    line += "|"
+    print(line)
+    for i, stage in enumerate(layer):
+        line = "|"
+        for pair in stage:
+            if is_ff(pair):
+                line += "+ "
+            else:
+                line += "  "
+        line += "| {}".format(i)
+        print(line)
 
 
 # Elpy shenanigans
@@ -361,26 +386,23 @@ if cond:
     # alloc = Simple_Allocator()
     alloc = Block_Allocator()
     nw = gen.create(16)
-    for stage in nw:
-        line = ""
-        for pair in stage:
-            if is_ff(pair):
-                line += "+ "
+    nw.add_layer()
+    clk_zone_w = 5
+    for y in range(nw.get_depth()):
+        for x in range(nw.get_N()):
+            center = math.ceil(clk_zone_w / 2)
+            if (x + center) % clk_zone_w == 0:
+                nw.control_layers[0][y][x] = ("+", 0)
             else:
-                line += "  "
-        print(line)
+                nw.control_layers[0][y][x] = (" ", 0)
+
+    print_layer(nw.con_net)
+    print_layer(nw.control_layers[0])
+
     target_ff = 5
-    groups = alloc.allocate_ff_groups(nw, 4)
-    print_nw_with_ffgroups(nw, groups)
+    groups, sub_groups = alloc.allocate_ff_groups(nw, target_ff, [2])
+    print_layer_with_ffgroups(nw.con_net, groups)
+    print_layer_with_ffgroups(nw.control_layers[0], sub_groups[0])
+
     for group in groups:
         print(get_distscore_group(nw, group), group)
-    for n in range(0, 1):
-        for i, group_a in enumerate(groups):
-            for j, x in enumerate(group_a):
-                group_b = find_group(x, group_a, groups, i + 1)
-                k, cost = find_best_swap_partner(x, group_a, group_b)
-                print(k, cost, len(group_a), len(group_b))
-                swap_points_at_index(j, group_a, k, group_b)
-                break
-
-            print_nw_with_ffgroups(nw, groups)
