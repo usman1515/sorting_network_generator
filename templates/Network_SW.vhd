@@ -60,7 +60,7 @@ begin
 
 
   -- STARTDELAY------------------------------------------------------------------
-  -- Generates a shift register for delaying the starting signal for each sorter
+  -- Generates a shift register for delaying the START signal for each sorter
   -- stage.
   -------------------------------------------------------------------------------
   STARTDELAY : process(CLK) is

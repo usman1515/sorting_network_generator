@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import math
+from datetime import datetime
 from pathlib import Path
 from scripts.vhdl_container import *
 from scripts.network_generators import *
@@ -7,36 +9,98 @@ from scripts.resource_allocator import FF_Replacement
 
 class Template_Processor:
     def __init__(self):
-        pass
+        self.signal_def = """
+  signal {}_i   : std_logic_vector(DEPTH downto 0);\n
+"""
+        self.signal_dist = """
+  -- {0}DELAY------------------------------------------------------------------\n
+  -- Generates a shift register for delaying the {0} signal for each sorter\n
+  -- stage.\n
+  -------------------------------------------------------------------------------\n
+  {0}DELAY : process(CLK) is\n
+  begin\n
+\n
+    if (rising_edge(CLK)) then\n
+      if (RST = '1') then\n
+        {0}_i({0}_i'high downto {0}_i'low + 1) <= (others => '0');\n
+      else\n
+        {0}_i({0}_i'high downto {0}_i'low + 1) <= {0}_i({0}_i'high - 1 downto {0}_i'low);\n
+        end if;\n
+    end if;\n
+\n
+  end process {0}DELAY;\ņ
+"""
+        self.replic_def = """
+  type {0}_replicated_t is array (DEPTH downto 0) of std_logic_vector(0 to {1} -1);\n
+  signal {0}_i   : {0}_replicated_t;\n
+"""
+        self.replic_dist = """
+  {0}_DISTRIBUTOR_1: entity work.SIGNAL_DISTRIBUTOR\n
+    generic map (\n
+      NUM_SIGNALS => {1},\n
+      MAX_FANOUT  => {2})\n
+    port map (\n
+      CLK    => CLK,\n
+      RST    => RST,\n
+      E      => E,\n
+      SOURCE => {0},\n
+      REPLIC => {0}_i(0)\n
+      );\n
+"""
 
-    def process_shift_registers(self, network, ff_replacements):
+    def process_shift_registers(self, network, ff_replacements, replicated_signals):
 
+        num_layers = len(network.control_layers)
         instances = ""
-        for m in range(len(ff_replacements)):
-            repl = ff_replacements[m]
+
+        for num_repl in range(len(ff_replacements)):
+            repl = ff_replacements[num_repl]
+            print(repl.sub_groups)
+
             ports = {"CLK": "CLK", "E": "'1'", "RST": "RST"}
 
             # Create instances of CS elements forming the network.
             for i in range(len(repl.groups)):
                 group = repl.groups[i]
 
-                generics = {
-                    "NUM_INPUT": len(group),
-                }
-
-                a = "port map(\n"
                 specific = dict()
                 for j in range(len(group)):
-                    y, x = group[j]
+                    x, y = group[j]
                     specific["REG_INPUT({})".format(j)] = "wire({})({})".format(x, y)
-
-                for j in range(len(group)):
-                    y, x = group[j]
                     specific["REG_OUTPUT({})".format(j)] = "wire({})({})".format(
                         x, y + 1
                     )
+                start_index = len(group)
 
-                items = list((ports | specific).items())
+                for k in range(num_layers):
+
+                    sub_group = repl.sub_groups[k][i]
+                    signame = repl.sub_group_sig[k]
+                    replic_count = replicated_signals[signame][0]
+                    signame = "{}_i".format(signame)
+
+                    for j in range(len(sub_group)):
+                        x, y = sub_group[j]
+                        x = x // replic_count
+                        specific[
+                            "REG_INPUT({})".format(start_index + j)
+                        ] = "{}({})({})".format(signame, y, x)
+                        specific[
+                            "REG_OUTPUT({})".format(start_index + j)
+                        ] = "{}({})({})".format(signame, y + 1, x)
+                    start_index += len(sub_group)
+
+                generics = {
+                    "NUM_INPUT": start_index,
+                }
+
+                items = list(specific.items())
+                items.sort(key=lambda kv: kv[0])
+
+                items = list(ports.items()) + items
+
+                a = "port map(\n"
+
                 for j in range(0, len(items)):
                     key, value = items[j]
                     a += "   {} => {}".format(key, value)
@@ -46,7 +110,7 @@ class Template_Processor:
                 a += ");\n"
 
                 instances += repl.entity.as_instance_portmanual(
-                    "FF_REPLACEMENT_{}_GRP{}".format(m, i), generics, a
+                    "FF_REPLACEMENT_{}_GRP{}".format(num_repl, i), generics, a
                 )
         N = network.get_N()
         depth = network.get_depth()
@@ -73,6 +137,74 @@ class Template_Processor:
 
         return instances
 
+    def __make_cs(self, network, cs, generics, ports, replicated_signals):
+        """Fills out ports and generics dicts of of all CS elements and returns
+        combined instance string."""
+        N = network.get_N()
+        depth = network.get_depth()
+        instances = ""
+        # Create instances of CS elements forming the network.
+        for i in range(depth):
+            for j in range(N):
+                if network[i][j][1] > j:
+                    # A CS is present, if the pair references a later index.
+                    a = j
+                    b = network[i][j][1]
+                    specific = dict()
+                    specific["A0"] = "wire({})({})".format(a, i)
+                    specific["B0"] = "wire({})({})".format(b, i)
+                    # We swap the outputs if sorting direction is not *F*orward
+                    if network[i][j][0] == "F":
+                        specific["A1"] = "wire({})({})".format(a, i + 1)
+                        specific["B1"] = "wire({})({})".format(b, i + 1)
+                    else:
+                        specific["A1"] = "wire({})({})".format(b, i + 1)
+                        specific["B1"] = "wire({})({})".format(a, i + 1)
+
+                    # Assign control signals to CS, differentiating between
+                    # replicated ones.
+                    for signal in cs.ports.keys():
+                        if signal in replicated_signals.keys():
+
+                            associated_replication = (
+                                (a * 2) % N
+                            ) // replicated_signals[signal][1]
+                            # Replicated signals can be found in 2D signal
+                            # arrays.
+                            specific[signal] = "{}_i({})({})".format(
+                                signal, i, associated_replication
+                            )
+                        elif signal not in (ports | specific).keys():
+                            # Non replicated signals are present in simple
+                            # std_logic_vectors.
+                            specific[signal] = "{}_i({})".format(signal, i)
+                    # Fill out CS generics and ports and add it to instances.
+                    instances += cs.as_instance(
+                        "CS_D{}_A{}_B{}".format(i, a, b),
+                        generics,
+                        ports | specific,
+                    )
+        return instances
+
+    def __make_control_signals(self, network, signals, replicated_signals):
+        signal_def = ""
+        signal_dist = ""
+        # First process non-replicated signals
+        for signal in signals:
+            signal_def += self.signal_def.format(signal)
+
+            signal_dist += self.signal_dist.format(signal)
+
+        N = network.get_N()
+        for signal, param in replicated_signals.items():
+            replic_count, replic_fanout = param
+            signal_def += self.replic_def.format(
+                signal,
+                replic_count,
+            )
+            signal_dist += self.replic_dist.format(signal, replic_count, replic_fanout)
+        return signal_def, signal_dist
+
     def fill_main_file(self, template, cs, network, ff_replacements, W=8, SW=1):
         """Takes kwargs and returns template object with generated network."""
 
@@ -84,6 +216,45 @@ class Template_Processor:
 
         bit_width = W
         subword_width = SW
+
+        # Process control signal layers from network as replicated signals
+        # 2 variables are generated:
+        # - max_replicated_delay: int
+        #   Since the signal replication incures a delay on startup, we need to
+        #   know the maximum delay present for the READY_DELAY counter.
+        # - replicated_signals: dict
+        #   For each signal name as key, a pair of the number of replications
+        #   and the fanout (rows per replication) is necessary. Both values
+        #   are reconstructed from the control signal layers of the network.
+        max_replicated_delay = 0
+        replicated_signals = dict()
+        for i, layer in enumerate(network.control_layers):
+            # Each FF in the first stage correspond to a signal replication.
+            replic_count = sum([1 for pair in layer[0] if pair[0] == "+"])
+            if replic_count > 1:
+                signal_name = network.signame[i]
+
+                replic_fanout = network.rows_per_signal[i]
+
+                replicated_signals[signal_name] = (replic_count, replic_fanout)
+                # Depth of the distributor is log of replic count to base of fanout
+                distributor_stages = math.ceil(math.log(replic_count, replic_fanout))
+                # Each stage involves a delay.
+                if distributor_stages > max_replicated_delay:
+                    max_replicated_delay = distributor_stages
+        # If replication is present, the actual delay is +1 the maximum number of
+        # stages.
+        if replicated_signals:
+            max_replicated_delay += 1
+
+        # Non-replicated signals are found as all control signals from CS
+        # without replicated signals.
+        exempt_sig = ["CLK", "A0", "A1", "B0", "B1"]
+        signals = [
+            signal
+            for signal in cs.ports.keys()
+            if signal not in network.signame and signal not in exempt_sig
+        ]
 
         # Default shape of network is max.
         if not shape.lower() in (
@@ -103,31 +274,18 @@ class Template_Processor:
         generics = {"W": bit_width, "SW": subword_width}
         ports = {"CLK": "CLK", "E": "E", "RST": "RST"}
 
+        (
+            control_signal_definition,
+            control_signal_distribution,
+        ) = self.__make_control_signals(network, signals, replicated_signals)
+
         instances = ""
-        # Create instances of CS elements forming the network.
-        for i in range(depth):
-            for j in range(N):
-                if network[i][j][1] > j:
-                    a = j
-                    b = network[i][j][1]
-                    specific = dict()
-                    specific["A0"] = "wire({})({})".format(a, i)
-                    specific["B0"] = "wire({})({})".format(b, i)
-                    if network[i][j][0] == "F":
-                        specific["A1"] = "wire({})({})".format(a, i + 1)
-                        specific["B1"] = "wire({})({})".format(b, i + 1)
-                    else:
-                        specific["A1"] = "wire({})({})".format(b, i + 1)
-                        specific["B1"] = "wire({})({})".format(a, i + 1)
 
-                    specific["START"] = "start_i({})".format(i)
-                    instances += cs.as_instance(
-                        "CS_D{}_A{}_B{}".format(i, a, b),
-                        generics,
-                        ports | specific,
-                    )
+        instances += self.__make_cs(network, cs, generics, ports, replicated_signals)
 
-        instances += self.process_shift_registers(network, ff_replacements)
+        instances += self.process_shift_registers(
+            network, ff_replacements, replicated_signals
+        )
 
         # Add connections to serial input.
         for i in range(N):
@@ -154,6 +312,9 @@ class Template_Processor:
             "num_outputs": num_outputs,
             "bit_width": bit_width,
             "subword_width": subword_width,
+            "control_signal_definition": control_signal_definition,
+            "control_signal_distribution": control_signal_distribution,
+            "ready_delay": max_replicated_delay,
             # "components": components,
             "instances": instances,
             "date": datetime.now(),

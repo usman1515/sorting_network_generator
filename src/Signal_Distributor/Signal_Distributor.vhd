@@ -93,7 +93,7 @@ begin
 
       for i in 0 to NUM_SIGNALS - 1 loop
 
-        REPLIC(i) <= tree((Y ** (S-1) - 1)*(Y - 1) - 1 + i);
+        REPLIC(i) <= tree((Y ** (S-1) - 1)/(Y - 1) + 1 + i);
 
       end loop;
 

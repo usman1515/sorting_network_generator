@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
-from network_generators import OddEven, Network
+from scripts.network_generators import OddEven, Network
 
 
 def is_ff(pair):
@@ -19,24 +19,43 @@ def in_bounds(nw, point):
 
 
 class FF_Replacement:
-    def __init__(self, entity, groups, ff_per_entity):
+    def __init__(self, entity, groups, sub_groups, sub_groups_sig, ff_per_entity):
         self.entity = entity
         self.ff_per_entity = ff_per_entity
         self.groups = groups
+        self.sub_groups = sub_groups
+        self.sub_group_sig = sub_groups_sig
 
 
 class Resource_Allocator:
     def allocate_ff_groups(self, network, max_ff_per_group):
         pass
 
-    def reallocate_ff(self, network, entity, max_entities, ff_per_entity):
-        ff_groups = self.allocate_ff_groups(network, ff_per_entity)
+    def reallocate_ff(
+        self, network, entity, max_entities, ff_per_entity, ff_per_entity_layer
+    ):
+        ff_groups, sub_groups = self.allocate_ff_groups(
+            network, ff_per_entity, ff_per_entity_layer
+        )
         ff_groups = ff_groups[:max_entities]
         for group in ff_groups:
             for point in group:
                 x, y = point
+                print(x, y)
                 network[y][x] = ("-", network[y][x][1])
-        return FF_Replacement(entity, ff_groups, ff_per_entity)
+        for i, sub_group in enumerate(sub_groups):
+            sub_group = sub_group[:max_entities]
+            for point in group:
+                x, y = point
+                print(x, y)
+                network.control_layers[i][y][x] = (
+                    "-",
+                    network.control_layers[i][y][x][1],
+                )
+        print(sub_groups[0])
+        return FF_Replacement(
+            entity, ff_groups, sub_groups, network.signame, ff_per_entity
+        )
 
 
 class Simple_Allocator(Resource_Allocator):
@@ -59,7 +78,11 @@ class Simple_Allocator(Resource_Allocator):
             i += 1
         return ff_points, np.asarray(((i + 1) % N, (i + 1) // N))
 
-    def allocate_ff_groups(self, network, max_ff_per_group):
+    def allocate_ff_groups(
+        self,
+        network,
+        max_ff_per_group,
+    ):
         ff_groups = []
         next_start = np.array(2, 0)
         while in_bounds(network, next_start):
@@ -382,20 +405,13 @@ def print_layer(layer):
 # Elpy shenanigans
 cond = __name__ == "__main__"
 if cond:
+    from network_generators import OddEven, Network
+
     gen = OddEven()
     # alloc = Simple_Allocator()
     alloc = Block_Allocator()
-    nw = gen.create(16)
-    nw.add_layer()
-    clk_zone_w = 5
-    for y in range(nw.get_depth()):
-        for x in range(nw.get_N()):
-            center = math.ceil(clk_zone_w / 2)
-            if (x + center) % clk_zone_w == 0:
-                nw.control_layers[0][y][x] = ("+", 0)
-            else:
-                nw.control_layers[0][y][x] = (" ", 0)
-
+    nw = gen.create(4)
+    nw = gen.distribute_signals(nw, {"START": 5})
     print_layer(nw.con_net)
     print_layer(nw.control_layers[0])
 

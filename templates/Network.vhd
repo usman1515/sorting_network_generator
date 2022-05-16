@@ -30,10 +30,15 @@ entity {top_name} is
     CLK           : in    std_logic;
     -- Synchronous reset.
     RST           : in    std_logic;
+    -- Enable Signal
+    E             : in    std_logic;
     -- Start signal marking the beginning of a new word.
     START         : in    std_logic;
     -- Serial input of the N input words.
     SER_INPUT     : in    std_logic_vector(0 to N - 1);
+    -- READY signal, marking the start of sorting.
+    -- Input may be shifted in when ready.
+    READY         : out   std_logic;
     -- Done signal, marking the end of sorting N words.
     DONE          : out   std_logic;
     -- Serial output of the M output words.
@@ -43,34 +48,37 @@ end entity {top_name};
 
 architecture BEHAVIORAL of {top_name} is
 
+  {control_signal_definition}
+
   type wire_t is array (0 to N - 1) of std_logic_vector(0 to DEPTH);
   -- Wire grid with the dimensions of NxDepth
   signal wire     : wire_t;
-  -- Start signal vector. Each bit corresponds to a stage of the network.
-  signal start_i   : std_logic_vector(DEPTH downto 0);
+
 
 begin
 
-  start_i(start_i'low) <= START;
-  DONE <= start_i(start_i'high);
+  SHIFT_REGISTER_READY: entity work.SHIFT_REGISTER
+    generic map (
+      W => 2)
+    port map (
+      CLK        => CLK,
+      RST        => RST,
+      E          => E,
+      SER_INPUT  => START,
+      SER_OUTPUT => READY);
 
+  SHIFT_REGISTER_DONE: entity work.SHIFT_REGISTER
+    generic map (
+      W => 2 + DEPTH)
+    port map (
+      CLK        => CLK,
+      RST        => RST,
+      E          => E,
+      SER_INPUT  => START,
+      SER_OUTPUT => DONE);
 
-  -- STARTDELAY------------------------------------------------------------------
-  -- Generates a shift register for delaying the starting signal for each sorter
-  -- stage.
-  -------------------------------------------------------------------------------
-  STARTDELAY : process(CLK) is
-  begin
+  {control_signal_distribution}
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
-        start_i(start_i'high downto start_i'low + 1) <= (others => '0');
-      else
-        start_i(start_i'high downto start_i'low + 1) <= start_i(start_i'high - 1 downto start_i'low);
-        end if;
-    end if;
-
-  end process STARTDELAY;
 
   {instances}
 

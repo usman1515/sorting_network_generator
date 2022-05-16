@@ -97,4 +97,6 @@ class Template(Entity):
         self.tokens = tokens
 
     def as_template(self):
+        for key, value in self.tokens.items():
+            print(key, value)
         return self.template_file.format_map(self.tokens)

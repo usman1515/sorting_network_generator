@@ -99,7 +99,10 @@ class Interface:
                 print("\t" + template.name)
         return self
 
-    def generate(self, network_type, N):
+    def generate(self, network_type, N, sig_per_row=0):
+        if not sig_per_row:
+            sig_per_row = N
+
         if "oddeven" == network_type.lower():
             logp = int(math.ceil(math.log2(N)))
             self.generator = OddEven()
@@ -121,6 +124,16 @@ class Interface:
 
         else:
             print("Options: oddeven, bitonic, blank")
+        return self
+
+    def distribute_signal(self, name, num_rows):
+        """Distributes the signal with the given name so that
+        each number of rows, one duplicated signal is used.
+        """
+        if self.network:
+            self.network = self.generator.distribute_signals(
+                self.network, {name: num_rows}
+            )
         return self
 
     def shape(self, shape_type, num_outputs):
@@ -158,10 +171,14 @@ class Interface:
             print("No template selected.")
         return self
 
-    def replace_ff(self, entity_name, max_entities=20, ff_per_entity=48):
+    def replace_ff(
+        self, entity_name, max_entities=20, ff_per_entity=48, ff_per_entity_layer=[]
+    ):
         entity = self.entities[entity_name]
-        ralloc = Resource_Allocator()
-        ffrepl = ralloc.reallocate_ff(self.network, entity, max_entities, ff_per_entity)
+        ralloc = Block_Allocator()
+        ffrepl = ralloc.reallocate_ff(
+            self.network, entity, max_entities, ff_per_entity, ff_per_entity_layer
+        )
         self.ffreplacements.append(ffrepl)
         return self
 
@@ -180,6 +197,7 @@ class Interface:
             path = "build/{}.vhd".format(self.template.name)
         with open(path, "w") as fd:
             fd.write(self.template.as_template())
+        print("Wrote {}".format(path))
         return self
 
     def write_report(self, path=""):

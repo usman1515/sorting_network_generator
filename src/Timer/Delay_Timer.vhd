@@ -49,25 +49,29 @@ begin
 
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
-        count        <= 0;
-        sig_received <= '0';
-        A_DELAYED    <= '0';
-      else
-        if (E = '1') then
-          if (sig_received = A) then
-            if (count = DELAY - 1) then
-              A_DELAYED <= sig_received;
+    if (DELAY > 0) then
+      if (rising_edge(CLK)) then
+        if (RST = '1') then
+          count        <= 0;
+          sig_received <= '0';
+          A_DELAYED    <= '0';
+        else
+          if (E = '1') then
+            if (sig_received = A) then
+              if (count = DELAY - 1) then
+                A_DELAYED <= sig_received;
+              else
+                count <= count + 1;
+              end if;
             else
-              count <= count + 1;
+              sig_received <= A;
+              count        <= 0;
             end if;
-          else
-            sig_received <= A;
-            count <= 0;
           end if;
         end if;
       end if;
+    else
+      A_DELAYED <= A;
     end if;
 
   end process COUNTER;

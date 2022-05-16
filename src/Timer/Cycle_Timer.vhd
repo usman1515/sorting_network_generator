@@ -20,7 +20,9 @@ entity CYCLE_TIMER is
     -- Width of input bits
     W  : integer := 8;
     -- Length of subwords to be output at a time.
-    SW : integer := 1
+    SW : integer := 1;
+    -- Delay after overflow until START is set to high.
+    DELAY: integer := 0
   );
   port (
     CLK     : in    std_logic;
@@ -66,7 +68,7 @@ begin
   begin
 
     if (RST = '0' and E = '1') then
-      if (count = 0) then
+      if (count = DELAY) then
         START <= '1';
       else
         START <= '0';

@@ -15,7 +15,12 @@ class Network:
         # Connection matrix of the network.
         self.con_net = None
         self.setup(N, depth)
+        # Layers of control signals
         self.control_layers = list()
+        # Signal name associated with each layer
+        self.signame = list()
+        # Number of rows per signal \approx fanout
+        self.rows_per_signal = list()
 
     def setup(self, N, depth):
         self.con_net = np.empty([depth, N], dtype=object)
@@ -23,7 +28,8 @@ class Network:
             self.con_net.flat[i] = ("+", i % N)
         self.output_set = set(range(0, N))
 
-    def add_layer(self):
+    def add_layer(self, signal_name):
+        self.signame.append(signal_name)
         N = self.get_N()
         depth = self.get_depth()
         self.control_layers.append(np.empty([depth, N], dtype=object))
@@ -61,10 +67,19 @@ class Network:
 
     def __str__(self):
         a = "{0}: {1}\n".format(self.typename, self.get_N())
-        for layer in self.con_net:
-            a += str(layer)
+        for stage in self.con_net:
+            a += str(stage)
             a += "\n"
         a += str(self.get_output_set())
+        a += "\n"
+
+        for i in range(len(self.control_layers)):
+            a += "{}. Control Layer for Signal '{}'\n".format(i + 1, self.signame[i])
+            for stage in self.control_layers[i]:
+                a += str(stage)
+                a += "\n"
+            a += "\n"
+
         return a
 
 
@@ -88,6 +103,18 @@ class Generator:
 
     def create(self, N):
         return Network()
+
+    def distribute_signals(self, network, sigdict=dict()):
+        for name, rows_per_signal in sigdict.items():
+            network.add_layer(name)
+            network.rows_per_signal.append(rows_per_signal)
+            for y in range(network.get_depth()):
+                for x in range(network.get_N()):
+                    if (x) % rows_per_signal == 0:
+                        network.control_layers[-1][y][x] = ("+", 0)
+                    else:
+                        network.control_layers[-1][y][x] = (" ", 0)
+        return network
 
     def reduce(self, network, N):
         """Reduces size connection matrix to N inputs."""
