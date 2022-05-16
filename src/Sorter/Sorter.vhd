@@ -56,7 +56,8 @@ begin
 
   CYCLE_TIMER_1 : entity work.cycle_timer
     generic map (
-      W => W
+      W => W,
+      DELAY => 2
     )
     port map (
       CLK   => CLK,
