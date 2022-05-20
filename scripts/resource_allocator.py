@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
-from scripts.network_generators import OddEven, Network
+from network_generators import OddEven, Network
 
 
 def is_ff(pair):
@@ -52,7 +52,6 @@ class Resource_Allocator:
                     "-",
                     network.control_layers[i][y][x][1],
                 )
-        print(sub_groups[0])
         return FF_Replacement(
             entity, ff_groups, sub_groups, network.signame, ff_per_entity
         )
@@ -294,22 +293,6 @@ class Block_Allocator(Resource_Allocator):
         self.sub_groups[layer_index] = sub_groups
 
 
-def print_layer_with_ffgroups(layer, groups):
-    for i in range(len(layer)):
-        line = ""
-        for j in range(len(layer[i])):
-            if is_ff(layer[i][j]):
-                elem = "+"
-                for k in range(len(groups)):
-                    for point in groups[k]:
-                        if np.all(np.equal(np.asarray((j, i)), point)):
-                            elem = "{}".format(k)
-                            break
-                line += elem
-            else:
-                line += " "
-        print(line)
-
 
 def norm2square(point):
     return np.dot(point, point)
@@ -401,6 +384,27 @@ def print_layer(layer):
         line += "| {}".format(i)
         print(line)
 
+def print_layer_with_ffgroups(layer, groups):
+    line = "|"
+    for i in range(len(layer[0])):
+        line += "{:<2}".format(i % 10)
+    line += "|"
+    print(line)
+    for i in range(len(layer)):
+        line = "|"
+        for j in range(len(layer[i])):
+            if is_ff(layer[i][j]):
+                elem = "+ "
+                for k in range(len(groups)):
+                    for point in groups[k]:
+                        if np.all(np.equal(np.asarray((j, i)), point)):
+                            elem = "{} ".format(k)
+                            break
+                line += elem
+            else:
+                line += "  "
+        print(line)
+
 
 # Elpy shenanigans
 cond = __name__ == "__main__"
@@ -412,12 +416,17 @@ if cond:
     alloc = Block_Allocator()
     nw = gen.create(4)
     nw = gen.distribute_signals(nw, {"START": 5})
+    print("Network Top Level:")
     print_layer(nw.con_net)
-    print_layer(nw.control_layers[0])
+    for i in range(len(nw.control_layers)):
+        print("Layer {}:".format(i+1))
+        print_layer(nw.control_layers[i])
 
+    print("\nAfter assignment:")
     target_ff = 5
     groups, sub_groups = alloc.allocate_ff_groups(nw, target_ff, [2])
     print_layer_with_ffgroups(nw.con_net, groups)
+    print("---------------------------")
     print_layer_with_ffgroups(nw.control_layers[0], sub_groups[0])
 
     for group in groups:
