@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
-from network_generators import OddEven, Network
+from scripts.network_generators import OddEven, Network
 
 
 def is_ff(pair):
@@ -293,7 +293,6 @@ class Block_Allocator(Resource_Allocator):
         self.sub_groups[layer_index] = sub_groups
 
 
-
 def norm2square(point):
     return np.dot(point, point)
 
@@ -384,6 +383,7 @@ def print_layer(layer):
         line += "| {}".format(i)
         print(line)
 
+
 def print_layer_with_ffgroups(layer, groups):
     line = "|"
     for i in range(len(layer[0])):
@@ -419,7 +419,7 @@ if cond:
     print("Network Top Level:")
     print_layer(nw.con_net)
     for i in range(len(nw.control_layers)):
-        print("Layer {}:".format(i+1))
+        print("Layer {}:".format(i + 1))
         print_layer(nw.control_layers[i])
 
     print("\nAfter assignment:")
