@@ -2,15 +2,11 @@
 
 * BitCS MSort
 *Warning:* Most files use VHDL2008 features!
-In order to change all files in the Vivado Project to VHDL2008, search and replace all occurrences of
-#+begin_src
-<FileInfo>
+In order to change all files in the Vivado Project to VHDL2008, search and replace all occurrences of =<FileInfo>= with =<FileInfo SFType​="VHDL2008">=.
+With sed simply run:
+#+begin_src bash
+sed -i 's/<FileInfo>/<FileInfo SFType="VHDL2008>/g' ProjectFile.xpr
 #+end_src
-with
-#+begin_src
-<FileInfo SFType="VHDL2008">
-#+end_src
-in the .xpr Vivado project file then close and open the project to update config.
 ** Folder Structure
 - src :: vhdl sources.
 - sim :: vhdl simulation sources.
