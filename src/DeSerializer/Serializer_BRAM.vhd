@@ -18,10 +18,14 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
+library UNISIM;
+  use UNISIM.vcomponents.all;
+
+library UNIMACRO;
+  use unimacro.Vcomponents.all;
+
 entity SERIALIZER_BRAM is
   generic (
-    -- Number of values serialized in parallel.
-    N : integer;
     -- Width of parallel input/ word.
     W : integer := 8
   );
@@ -35,9 +39,9 @@ entity SERIALIZER_BRAM is
     -- Load signal
     LOAD                  : in    std_logic;
     -- w-bit parallel input
-    PAR_INPUT             : in    SLVArray(0 to N - 1)(W - 1 downto 0);
+    PAR_INPUT             : in    std_logic_vector(W - 1 downto 0);
     -- bit-serial output
-    SER_OUTPUT            : out   std_logic_vector(0 to N - 1)
+    SER_OUTPUT            : out   std_logic
   );
 end entity SERIALIZER_BRAM;
 
@@ -45,7 +49,8 @@ architecture BEHAVIORAL of SERIALIZER_BRAM is
 
   function sub_hold (a : integer; b : integer) return integer is
   begin
-    if b > a then
+
+    if (b > a) then
       return 0;
     else
       return a - b;
@@ -53,24 +58,31 @@ architecture BEHAVIORAL of SERIALIZER_BRAM is
 
   end function sub_hold;
 
-  function get_num_bits (a : integer) return integer is
+  function add_modulo (a : integer; b : integer; max : integer) return integer is
   begin
 
-    if (a = 1) then
-      return 1;
-    else
-      return integer (ceil (log2 (real (a))));
-    end if;
+    return (a + b) mod (max + 1);
 
-  end function get_num_bits;
+  end function add_modulo;
+
+  constant BRAM_SIZE       : string := "18Kb";
+  constant RADDR_WIDTH     : integer := 14; -- get_addr_width(W, 1);
+  constant WADDR_WIDTH     : integer := 9;  -- get_addr_width(W, 1);
 
   -- WARNING: No checks prevent a address depth exceeding the allowed bounds of
   -- the BRAM block !
 
-  signal addr             : integer range 0 to N * W - 1;
-  signal bram             : SLVArray(0 to N - 1)( W-1 downto 0 );
+  constant WADDR           : integer range 0 to W - 1 := 0;
+
+  signal raddr             : integer range 0 to W - 1;
+  signal slv_raddr         : std_logic_vector(RADDR_WIDTH - 1 downto 0);
+  signal slv_waddr         : std_logic_vector(WADDR_WIDTH - 1 downto 0);
+  signal ser_output_i      : std_logic_vector(0 downto 0);
 
 begin
+
+  slv_raddr <= std_logic_vector(to_unsigned(raddr, RADDR_WIDTH));
+  slv_waddr <= std_logic_vector(to_unsigned(WADDR, WADDR_WIDTH));
 
   -- COUNTER----------------------------------------------------------------------
   -- Generic counter with reset and enable for address generation.
@@ -80,51 +92,57 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1' or LOAD = '1') then
-        addr <= W - 2 ;
+        raddr <= 0;
       else
         if (E = '1') then
-          addr <= sub_hold(addr, 1);
+          raddr <= add_modulo(raddr, 1, W - 1);
         end if;
       end if;
     end if;
 
   end process COUNTER;
 
-  BRAM_PROC : process (CLK) is
+  BRAM_OUT : process (RST, LOAD, PAR_INPUT, ser_output_i) is
   begin
 
-    if rising_edge(CLK) then
-      if (RST ='0') then
-        if (LOAD = '1') then
-          bram <= PAR_INPUT;
-        end if;
+    if (RST ='1') then
+      SER_OUTPUT <= '0';
+    else
+      if (LOAD = '1') then
+        SER_OUTPUT <= PAR_INPUT(W - 1);
+      else
+        SER_OUTPUT <= ser_output_i(0);
       end if;
     end if;
 
-  end process BRAM_PROC;
-  BRAM_OUT : process(RST,LOAD,PAR_INPUT, bram, addr)
-  begin
-      if (RST ='1') then
-        SER_OUTPUT <= (others => '0');
-      else
-        if (LOAD = '1') then
-
-          for i in 0 to N - 1 loop
-
-            SER_OUTPUT(i) <= PAR_INPUT(i)(W-1);
-
-          end loop;
-
-        else
-
-          for i in 0 to N - 1 loop
-
-            SER_OUTPUT(i) <= bram(i)(addr);
-
-          end loop;
-
-        end if;
-      end if;
-
   end process BRAM_OUT;
+
+  BRAM_SDP_MACRO_INST : BRAM_SDP_MACRO
+    generic map (
+      BRAM_SIZE   => "18Kb",
+      DEVICE      => "7SERIES",
+      WRITE_WIDTH => 32,
+      READ_WIDTH  => 1,
+      DO_REG      => 0,
+      INIT_FILE   => "NONE",
+      WRITE_MODE  => "READ_FIRST",
+      -- Collision check enable "ALL", "WARNING_ONLY",
+      -- "GENERATE_X_ONLY" or "NONE"
+      SIM_COLLISION_CHECK => "NONE"
+    )
+    port map (
+      RDCLK               => CLK,
+      WRCLK               => CLK,
+      RST                 => RST,
+      DI(W - 1 downto 0)  => PAR_INPUT,
+      DI(32 - 1 downto W) => (others => '0'),
+      WRADDR              => slv_waddr,
+      WE                  => "1111",
+      WREN                => E,
+      DO                  => ser_output_i,
+      RDADDR              => slv_raddr,
+      RDEN                => E,
+      REGCE               => '0'
+    );
+
 end architecture BEHAVIORAL;

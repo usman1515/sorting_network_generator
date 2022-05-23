@@ -65,7 +65,7 @@ architecture TB of TB_DESERIALIZER_BRAM is
   end procedure assert_equivalence;
 
   constant W               : integer := 8;
-  constant N               : integer := 4;
+  constant N               : integer := 1;
 
   signal clk               : std_logic;
   signal rst               : std_logic;
