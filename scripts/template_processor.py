@@ -44,7 +44,7 @@ class Template_Processor:
       RST    => RST,\n
       E      => E,\n
       SOURCE => {0},\n
-      REPLIC => {0}_i({2} - 1)\n
+      REPLIC => {0}_i({3})\n
       );\n
 """
 
@@ -76,12 +76,12 @@ class Template_Processor:
 
                     sub_group = repl.sub_groups[k][i]
                     signame = repl.sub_group_sig[k]
-                    replic_count = replicated_signals[signame][0]
+                    replic_fanout = replicated_signals[signame][1]
                     signame = "{}_i".format(signame)
 
                     for j in range(len(sub_group)):
                         x, y = sub_group[j]
-                        x = x // replic_count
+                        x = x // replic_fanout
                         specific[
                             "REG_INPUT({})".format(start_index + j)
                         ] = "{}({})({})".format(signame, y, x)
@@ -128,7 +128,21 @@ class Template_Processor:
                     bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
                         row=j, end=bypass_end, beg=bypass_beg
                     )
-
+        # for k, layer in enumerate(network.control_layers):
+        #     signame = network.signame[k]
+        #     signame = "{}_i".format(signame)
+        #     for i in range(depth):
+        #         for j in range(N):
+        #             if layer[i][j][0] == "+":
+        #                 bypass_beg = i
+        #                 bypass_end = i
+        #                 while bypass_end < depth and layer[bypass_end][j][0] == "+":
+        #                     layer[bypass_end][j] = ("-", j)
+        #                     bypass_end += 1
+        #                 # TODO Fix control signal shifting if not enough DSP are available.
+        #                 bypasses += "{signame}({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
+        #                     signame=signame, row=j, end=bypass_end, beg=bypass_beg
+        #                 )
         # Enclose bypassed wires in synchronous process.
         if bypasses:
             instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
@@ -205,7 +219,7 @@ class Template_Processor:
                 depth,
             )
             if count > 1:
-                signal_dist += self.replic_dist.format(signal, count, fanout)
+                signal_dist += self.replic_dist.format(signal, count, fanout, depth)
             else:
                 signal_dist += "{0}_i(0)(0) <= {0};\n".format(signal)
         return signal_def, signal_dist
@@ -235,7 +249,7 @@ class Template_Processor:
         replicated_signals = dict()
         for i, layer in enumerate(network.control_layers):
             # Each FF in the first stage correspond to a signal replication.
-            replic_count = sum([1 for pair in layer[-1] if pair[0] == "+"])
+            replic_count = sum([1 for pair in layer[-1] if pair[0] in ("+", "-")])
             signal_name = network.signame[i]
 
             replic_fanout = network.rows_per_signal[i]

@@ -111,6 +111,9 @@ class Generator:
             # We need to calculate the incurred delay by the
             # signal distributor
             num_sig = network.get_N() // max_fanout
+            print(num_sig)
+            if not num_sig:
+                num_sig = 1
             dist_depth = math.ceil(math.log(num_sig, max_fanout))
             # We also need to know the number of stages already present
             # in the network.
@@ -336,7 +339,7 @@ class Bitonic(Generator):
 cond = __name__ == "__main__"
 if cond:
     gen = OddEven()
-    nw = gen.create(16)
+    nw = gen.create(64)
     for stage in nw:
         print([flag for flag, perm in stage])
     for i, layer in enumerate(nw.control_layers):

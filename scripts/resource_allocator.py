@@ -41,17 +41,16 @@ class Resource_Allocator:
         for group in ff_groups:
             for point in group:
                 x, y = point
-                print(x, y)
                 network[y][x] = ("-", network[y][x][1])
-        for i, sub_group in enumerate(sub_groups):
-            sub_group = sub_group[:max_entities]
-            for point in group:
-                x, y = point
-                print(x, y)
-                network.control_layers[i][y][x] = (
-                    "-",
-                    network.control_layers[i][y][x][1],
-                )
+        for i, layer in enumerate(sub_groups):
+            sub_groups[i] = sub_groups[i][:max_entities]
+            for j, sub_group in enumerate(layer):
+                for point in sub_group:
+                    x, y = point
+                    network.control_layers[i][y][x] = (
+                        "-",
+                        network.control_layers[i][y][x][1],
+                    )
         return FF_Replacement(
             entity, ff_groups, sub_groups, network.signame, ff_per_entity
         )
@@ -414,8 +413,8 @@ if cond:
     gen = OddEven()
     # alloc = Simple_Allocator()
     alloc = Block_Allocator()
-    nw = gen.create(4)
-    nw = gen.distribute_signals(nw, {"START": 5})
+    nw = gen.create(64)
+    nw = gen.distribute_signals(nw, {"START": 10})
     print("Network Top Level:")
     print_layer(nw.con_net)
     for i in range(len(nw.control_layers)):
@@ -423,11 +422,13 @@ if cond:
         print_layer(nw.control_layers[i])
 
     print("\nAfter assignment:")
-    target_ff = 5
+    target_ff = 48
     groups, sub_groups = alloc.allocate_ff_groups(nw, target_ff, [2])
     print_layer_with_ffgroups(nw.con_net, groups)
     print("---------------------------")
-    print_layer_with_ffgroups(nw.control_layers[0], sub_groups[0])
-
-    for group in groups:
-        print(get_distscore_group(nw, group), group)
+    for i, layer in enumerate(nw.control_layers):
+        print_layer_with_ffgroups(layer, sub_groups[i])
+    # for i, group in enumerate(groups):
+    #     print(len(group), sum([len(subgroup) for subgroup in sub_groups[0][i]]), group)
+    for i, subgroup in enumerate(sub_groups[0]):
+        print(len(subgroup), subgroup)

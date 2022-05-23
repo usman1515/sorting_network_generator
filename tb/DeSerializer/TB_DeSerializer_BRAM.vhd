@@ -38,7 +38,7 @@ architecture TB of TB_DESERIALIZER_BRAM is
     input <= value;
     wait for CKTIME;
     load  <= '0';
-    wait for (W) * CKTIME;
+    wait for (W-1) * CKTIME;
     store <= '1';
     wait for CKTIME;
     store <= '0';
@@ -120,6 +120,7 @@ begin
   TEST_STIM : process is
   begin
 
+    wait for 1 ps;
     rst <= '1';
     e_i <= '0';
     wait for CKTIME / 2;
@@ -137,9 +138,9 @@ begin
 
   TEST_ASSER : process is
   begin
-
+    wait for 1 ps;
     wait for 3*CKTIME/2;
-    wait for CKTIME * (W+1);
+    wait for CKTIME * (W);
     assert_equivalence (
       N      => N,
       input  => input_i,

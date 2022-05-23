@@ -80,7 +80,7 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1' or LOAD = '1') then
-        addr <= W -1 ;
+        addr <= W - 2 ;
       else
         if (E = '1') then
           addr <= sub_hold(addr, 1);
@@ -102,7 +102,7 @@ begin
     end if;
 
   end process BRAM_PROC;
-  BRAM_OUT : process(RST,LOAD, bram, addr)
+  BRAM_OUT : process(RST,LOAD,PAR_INPUT, bram, addr)
   begin
       if (RST ='1') then
         SER_OUTPUT <= (others => '0');
@@ -111,7 +111,7 @@ begin
 
           for i in 0 to N - 1 loop
 
-            SER_OUTPUT(i) <= PAR_INPUT(i)(addr);
+            SER_OUTPUT(i) <= PAR_INPUT(i)(W-1);
 
           end loop;
 

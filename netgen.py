@@ -164,7 +164,6 @@ class Interface:
         return self
 
     def show_template(self):
-        print("hello")
         if self.template:
             print(self.template.as_template())
         else:
@@ -172,7 +171,7 @@ class Interface:
         return self
 
     def replace_ff(
-        self, entity_name, max_entities=20, ff_per_entity=48, ff_per_entity_layer=[]
+        self, entity_name, max_entities=1500, ff_per_entity=48, ff_per_entity_layer=[]
     ):
         entity = self.entities[entity_name]
         ralloc = Block_Allocator()

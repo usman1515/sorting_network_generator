@@ -38,8 +38,8 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 2;
-  constant DEPTH         : integer := 1;
+  constant N             : integer := 64;
+  constant DEPTH         : integer := 21;
   constant POLY_BASE     : integer := 654;
   constant SEED_BASE     : integer := 58;
 
