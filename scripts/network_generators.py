@@ -105,15 +105,52 @@ class Generator:
         return Network()
 
     def distribute_signals(self, network, sigdict=dict()):
-        for name, rows_per_signal in sigdict.items():
+        for name, max_fanout in sigdict.items():
             network.add_layer(name)
-            network.rows_per_signal.append(rows_per_signal)
+            network.rows_per_signal.append(max_fanout)
+            # We need to calculate the incurred delay by the
+            # signal distributor
+            num_sig = network.get_N() // max_fanout
+            dist_depth = math.ceil(math.log(num_sig, max_fanout))
+            # We also need to know the number of stages already present
+            # in the network.
+            data_delay = 0
             for y in range(network.get_depth()):
+
+                # A stage is a delay stage if all pairs are FF
+                if all([pair[0] == "+" for pair in network[y]]):
+                    data_delay += 1
+                else:
+                    # We only count stages from the beginning. If a
+                    # stage with CS is present, all subsequent stages
+                    # do not count toward data_delay.
+                    break
+            for y in range(network.get_depth()):
+
                 for x in range(network.get_N()):
-                    if (x) % rows_per_signal == 0:
+                    if (x) % max_fanout == 0:
                         network.control_layers[-1][y][x] = ("+", 0)
                     else:
                         network.control_layers[-1][y][x] = (" ", 0)
+
+            # If not enough delay stages are present, extend all layers
+            # with delay stages to the required amount.
+            if data_delay < dist_depth:
+                diff = dist_depth - data_delay
+                network.con_net = np.pad(
+                    network.con_net,
+                    ((diff, 0), (0, 0)),
+                    "edge",
+                )
+                for i in range(diff * network.get_N()):
+                    network.con_net.flat[i] = ("+", i % network.get_N())
+
+                for i, layer in enumerate(network.control_layers):
+                    network.control_layers[i] = np.pad(
+                        layer, ((diff, 0), (0, 0)), "edge"
+                    )
+                    for j in range(diff * network.get_N()):
+                        network.control_layers[i].flat[j] = ("", j % network.get_N())
         return network
 
     def reduce(self, network, N):
@@ -302,10 +339,21 @@ if cond:
     nw = gen.create(16)
     for stage in nw:
         print([flag for flag, perm in stage])
+    for i, layer in enumerate(nw.control_layers):
+        print("\n Layer:", i)
+        for stage in layer:
+            print([flag for flag, perm in stage])
+
     start_x = 0
     start_y = 0
     end_x = nw.get_N()
     end_y = nw.get_depth()
-    print(
-        [[nw.at((x, y)) for y in range(start_y, end_y)] for x in range(start_x, end_x)]
-    )
+    gen.distribute_signals(nw, {"START": 3})
+
+    print("-----")
+    for stage in nw:
+        print([flag for flag, perm in stage])
+    for i, layer in enumerate(nw.control_layers):
+        print("\n Layer:", i)
+        for stage in layer:
+            print([flag for flag, perm in stage])

@@ -36,9 +36,6 @@ entity {top_name} is
     START         : in    std_logic;
     -- Serial input of the N input words.
     SER_INPUT     : in    std_logic_vector(0 to N - 1);
-    -- READY signal, marking the start of sorting.
-    -- Input may be shifted in when ready.
-    READY         : out   std_logic;
     -- Done signal, marking the end of sorting N words.
     DONE          : out   std_logic;
     -- Serial output of the M output words.
@@ -57,19 +54,9 @@ architecture BEHAVIORAL of {top_name} is
 
 begin
 
-  SHIFT_REGISTER_READY: entity work.SHIFT_REGISTER
-    generic map (
-      W => 2)
-    port map (
-      CLK        => CLK,
-      RST        => RST,
-      E          => E,
-      SER_INPUT  => START,
-      SER_OUTPUT => READY);
-
   SHIFT_REGISTER_DONE: entity work.SHIFT_REGISTER
     generic map (
-      W => 2 + DEPTH)
+      W => W + DEPTH)
     port map (
       CLK        => CLK,
       RST        => RST,

@@ -44,7 +44,7 @@ class Template_Processor:
       RST    => RST,\n
       E      => E,\n
       SOURCE => {0},\n
-      REPLIC => {0}_i(0)\n
+      REPLIC => {0}_i({2} - 1)\n
       );\n
 """
 
@@ -196,13 +196,18 @@ class Template_Processor:
             signal_dist += self.signal_dist.format(signal)
 
         N = network.get_N()
+
         for signal, param in replicated_signals.items():
-            replic_count, replic_fanout = param
+            count, fanout, depth = param
             signal_def += self.replic_def.format(
                 signal,
-                replic_count,
+                count,
+                depth,
             )
-            signal_dist += self.replic_dist.format(signal, replic_count, replic_fanout)
+            if count > 1:
+                signal_dist += self.replic_dist.format(signal, count, fanout)
+            else:
+                signal_dist += "{0}_i(0)(0) <= {0};\n".format(signal)
         return signal_def, signal_dist
 
     def fill_main_file(self, template, cs, network, ff_replacements, W=8, SW=1):
@@ -230,22 +235,22 @@ class Template_Processor:
         replicated_signals = dict()
         for i, layer in enumerate(network.control_layers):
             # Each FF in the first stage correspond to a signal replication.
-            replic_count = sum([1 for pair in layer[0] if pair[0] == "+"])
-            if replic_count > 1:
-                signal_name = network.signame[i]
+            replic_count = sum([1 for pair in layer[-1] if pair[0] == "+"])
+            signal_name = network.signame[i]
 
-                replic_fanout = network.rows_per_signal[i]
+            replic_fanout = network.rows_per_signal[i]
+            replic_depth = math.ceil(math.log(replic_count, replic_fanout))
 
-                replicated_signals[signal_name] = (replic_count, replic_fanout)
-                # Depth of the distributor is log of replic count to base of fanout
-                distributor_stages = math.ceil(math.log(replic_count, replic_fanout))
-                # Each stage involves a delay.
-                if distributor_stages > max_replicated_delay:
-                    max_replicated_delay = distributor_stages
-        # If replication is present, the actual delay is +1 the maximum number of
-        # stages.
-        if replicated_signals:
-            max_replicated_delay += 1
+            replicated_signals[signal_name] = (
+                replic_count,
+                replic_fanout,
+                replic_depth,
+            )
+            # Depth of the distributor is log of replic count to base of fanout
+            distributor_stages = math.ceil(math.log(replic_count, replic_fanout))
+            # Each stage involves a delay.
+            if distributor_stages > max_replicated_delay:
+                max_replicated_delay = distributor_stages
 
         # Non-replicated signals are found as all control signals from CS
         # without replicated signals.

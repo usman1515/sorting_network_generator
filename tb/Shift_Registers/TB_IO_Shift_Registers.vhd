@@ -75,13 +75,18 @@ begin
   begin
 
     rst     <= '1';
+    e_i     <= '0';
+    input_i <= (others => '0');
+    load_i  <= "0";
+    store_i  <= "0";
+    wait for CKTIME/2;
     wait for CKTIME;
     rst     <= '0';
+    e_i     <= '1';
     input_i <= "11001011";
     load_i  <= "1";
-    e_i     <= '1';
 
-    for i in 0 to W - 3 loop
+    for i in 0 to W - 2 loop
 
       wait for CKTIME;
       load_i <= "0";

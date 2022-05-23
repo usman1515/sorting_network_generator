@@ -126,13 +126,13 @@ class Interface:
             print("Options: oddeven, bitonic, blank")
         return self
 
-    def distribute_signal(self, name, num_rows):
+    def distribute_signal(self, name, max_fanout):
         """Distributes the signal with the given name so that
-        each number of rows, one duplicated signal is used.
+        only a number of rows less than max_fanout is driven by the signal.
         """
         if self.network:
             self.network = self.generator.distribute_signals(
-                self.network, {name: num_rows}
+                self.network, {name: max_fanout}
             )
         return self
 

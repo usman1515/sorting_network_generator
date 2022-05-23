@@ -38,9 +38,7 @@ end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 2 downto 0); -- Shift register.
-  -- We can make do with one bit less as the first PAR_INPUT bit
-  -- is immediatly send to SER_OUTPUT.
+  signal sreg : std_logic_vector(W - 1 downto 0);
 
 begin
 
@@ -59,7 +57,8 @@ begin
           if (LOAD = '0') then
             sreg(sreg'high downto sreg'low + 1) <= sreg(sreg'high - 1 downto sreg'low);
           else
-            sreg <= PAR_INPUT(PAR_INPUT'high - 1 downto PAR_INPUT'low);
+            sreg(sreg'high downto sreg'low + 1)<= PAR_INPUT(PAR_INPUT'high -1 downto PAR_INPUT'low);
+            sreg(sreg'low) <= '1';
           end if;
         end if;
       end if;
