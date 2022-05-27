@@ -39,10 +39,10 @@ architecture BEHAVIORAL of BITCS_SYNC is
   constant GREATER       : std_logic_vector(1 downto 0)  := "01";
   constant LESSER        : std_logic_vector(1 downto 0)  := "10";
 
-  signal state           : std_logic_vector(1 downto 0);
-  signal next_state      : std_logic_vector(1 downto 0);
-  signal a1_i            : std_logic;
-  signal b1_i            : std_logic;
+  signal state           : std_logic_vector(1 downto 0)  := "00";
+  signal next_state      : std_logic_vector(1 downto 0)  := "00";
+  signal a1_i            : std_logic :='0';
+  signal b1_i            : std_logic :='0';
 
 begin
 

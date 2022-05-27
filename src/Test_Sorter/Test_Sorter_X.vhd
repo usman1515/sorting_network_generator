@@ -43,13 +43,13 @@ architecture STRUCTURAL of TEST_SORTER_X is
   constant POLY_BASE     : integer := 654;
   constant SEED_BASE     : integer := 58;
 
-  signal e_delayed_i     : std_logic_vector(1 downto 0);
+  signal e_delayed_i     : std_logic_vector(1 downto 0) := (others => '0');
   -- Output of LFSRs
-  signal rand_data_i     : SLVArray(0 to N / W)(W - 1 downto 0);
+  signal rand_data_i     : SLVArray(0 to N / W)(W - 1 downto 0) := (others => (others => '0'));
   -- Output of Round-Robin DMUXs
-  signal unsorted_data_i : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal unsorted_data_i : SLVArray(0 to N - 1)(W - 1 downto 0) := (others => (others => '0'));
   -- Output of Sorting Network
-  signal sorted_data_i   : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal sorted_data_i   : SLVArray(0 to N - 1)(W - 1 downto 0) := (others => (others => '0'));
   -- Since open outputs are disallowed...
   signal unused_i        : SLVArray(0 to W - 1 - N rem W)(W - 1 downto 0);
 

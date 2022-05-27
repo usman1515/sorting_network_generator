@@ -10,7 +10,7 @@ from scripts.resource_allocator import FF_Replacement
 class Template_Processor:
     def __init__(self):
         self.signal_def = """
-  signal {}_i   : std_logic_vector(DEPTH downto 0);\n
+  signal {}_i   : std_logic_vector(DEPTH downto 0) := (others => '0');\n
 """
         self.signal_dist = """
   -- {0}DELAY------------------------------------------------------------------\n
@@ -32,7 +32,7 @@ class Template_Processor:
 """
         self.replic_def = """
   type {0}_replicated_t is array (DEPTH downto 0) of std_logic_vector(0 to {1} -1);\n
-  signal {0}_i   : {0}_replicated_t;\n
+  signal {0}_i   : {0}_replicated_t := (others => (others => '0'));\n
 """
         self.replic_dist = """
   {0}_DISTRIBUTOR_1: entity work.SIGNAL_DISTRIBUTOR\n

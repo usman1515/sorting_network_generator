@@ -49,7 +49,7 @@ architecture BEHAVIORAL of {top_name} is
 
   type wire_t is array (0 to N - 1) of std_logic_vector(0 to DEPTH);
   -- Wire grid with the dimensions of NxDepth
-  signal wire     : wire_t;
+  signal wire     : wire_t := (others => (others => '0'));
 
 
 begin

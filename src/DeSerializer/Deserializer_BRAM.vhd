@@ -68,7 +68,7 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1' or STORE = '1') then
-        waddr <= (W + SW - 1)/SW;
+        waddr <= (W + SW - 1)/SW -1;
       else
         if (E = '1') then
           if (waddr = 0) then

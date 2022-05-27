@@ -64,7 +64,7 @@ begin
       START => start_i
     );
 
-  SERIALIZER_SR_2 : entity work.serializer_sr
+  SERIALIZER_SR_2 : entity work.serializer_bram
     generic map (
       N => N,
       W => W
@@ -93,7 +93,7 @@ begin
       SER_OUTPUT => ser_sorted_i
     );
 
-  DESERIALIZER_SR_1 : entity work.deserializer_sr
+  DESERIALIZER_SR_1 : entity work.deserializer_bram
     generic map (
       N => M,
       W => W
