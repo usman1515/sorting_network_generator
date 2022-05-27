@@ -95,11 +95,11 @@ begin
 
     if (rising_edge(clk)) then
       if (rst = '1' or load_i = "1") then
-        waddr <= (W + SW +1)/ SW - 1;
+        waddr <= (W + SW - 1)/ SW - 1;
       else
         if (e_i = '1') then
           if (waddr = 0) then
-            waddr <= (W + SW +1)/ SW - 1;
+            waddr <= (W + SW - 1)/ SW - 1;
           else
             waddr <= waddr - 1;
           end if;

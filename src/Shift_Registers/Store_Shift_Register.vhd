@@ -39,9 +39,23 @@ end entity STORE_SHIFT_REGISTER;
 architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
 
   -- Shift Register
-  signal sreg : std_logic_vector(W - 1 downto 0);
+  -- sreg must be two additional registers deep to keep timing in line with
+  -- the BRAM variant.
+  signal sreg         : std_logic_vector(W + 2 - 1 downto 0);
+  -- Delayed store signal required for the same reason as above.
+  signal store_i      : std_logic_vector(2 - 1 downto 0);
 
 begin
+
+  SET_LOAD_DELAYED : process (CLK) is
+  begin
+
+    if (rising_edge(CLK)) then
+      store_i(0)                                   <= STORE;
+      store_i(store_i'high downto store_i'low + 1) <= store_i(store_i'high - 1 downto store_i'low);
+    end if;
+
+  end process SET_LOAD_DELAYED;
 
   -- SHIFT_STORE----------------------------------------------------------------
   -- When enabled, shifts value from SER_INPUT into register and outputs
@@ -52,15 +66,15 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1') then
-        sreg <= (others => '0');
+        sreg       <= (others => '0');
         PAR_OUTPUT <= (others => '0');
       else
         if (E = '1') then
           sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;
         end if;
 
-        if (STORE = '1') then
-          PAR_OUTPUT <= sreg;
+        if (store_i(store_i'high) = '1') then
+          PAR_OUTPUT <= sreg(sreg'high downto sreg'high - (W - 1));
         end if;
       end if;
     end if;
