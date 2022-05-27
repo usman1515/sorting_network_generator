@@ -56,7 +56,6 @@ begin
 
   begin
 
-    wait for CKTIME / 2;
     e_i   <= '0';
     rst_i <= '1';
     wait for CKTIME;

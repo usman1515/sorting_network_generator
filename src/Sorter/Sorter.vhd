@@ -64,7 +64,7 @@ begin
       START => start_i
     );
 
-  SERIALIZER_SR_2 : entity work.serializer_bram
+  SERIALIZER_SR_2 : entity work.serializer_sr
     generic map (
       N => N,
       W => W

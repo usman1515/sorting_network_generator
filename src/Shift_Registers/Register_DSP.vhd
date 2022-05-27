@@ -45,11 +45,10 @@ end entity REGISTER_DSP;
 architecture BEHAVIORAL of REGISTER_DSP is
 
   signal open_carryout : std_logic;
-  signal zero_b        : std_logic_vector(NUM_INPUT - 1 downto 0);
+  constant zero_b        : std_logic_vector(NUM_INPUT - 1 downto 0) := (others => '0');
 
 begin
 
-  zero_b <= (others => '0');
   -- ADDSUB_MACRO: Variable width & latency - Adder / Subtrator implemented in a DSP48E
   --               Artix-7
   -- Xilinx HDL Language Template, version 2021.2
@@ -77,7 +76,7 @@ begin
       -- 1-bit carry-in input
       CARRYIN => '0',
       -- 1-bit clock enable input
-      CE => E,
+      CE => '1',
       -- 1-bit clock input
       CLK => CLK,
       -- 1-bit active high synchronous reset

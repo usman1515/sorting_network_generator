@@ -70,7 +70,7 @@ begin
 
   -- ASYNC_OUTPUT---------------------------------------------------------------
   -- Asynchronously outputs either the MSB of sreg or the MSB of PAR_INPUT
-  -- depeding on LOAD. Likely infers a latch...
+  -- depeding on LOAD.
   -----------------------------------------------------------------------------
   ASYNC_OUTPUT : process (LOAD, sreg, PAR_INPUT) is
   begin

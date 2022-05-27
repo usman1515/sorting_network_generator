@@ -15,23 +15,21 @@ library IEEE;
 
 entity TB_IO_SHIFT_REGISTERS is
   --  Port ( );
-  generic (
-    W : integer := 8
-  );
 end entity TB_IO_SHIFT_REGISTERS;
 
 architecture TB of TB_IO_SHIFT_REGISTERS is
 
-  constant CKTIME        : time := 10 ns;
-
-  signal clk             : std_logic;
-  signal rst             : std_logic;
-  signal e_i             : std_logic;
-  signal load_i          : std_logic_vector(0 downto 0);
-  signal store_i         : std_logic_vector(0 downto 0);
-  signal input_i         : std_logic_vector(W - 1 downto 0);
-  signal serial_i        : std_logic;
-  signal output_i        : std_logic_vector(W - 1 downto 0);
+  constant CKTIME          : time := 10 ns;
+  constant W               : integer := 8;
+  constant SW              : integer := 1;
+  signal   clk             : std_logic;
+  signal   rst             : std_logic;
+  signal   e_i             : std_logic;
+  signal   load_i          : std_logic_vector(0 downto 0);
+  signal   store_i         : std_logic_vector(0 downto 0);
+  signal   input_i         : std_logic_vector(W - 1 downto 0);
+  signal   serial_i        : std_logic;
+  signal   output_i        : std_logic_vector(W - 1 downto 0);
 
 begin
 
@@ -74,19 +72,21 @@ begin
   TEST_PROCESS : process is
   begin
 
+    wait for 1 * ps;
+    wait for CKTIME / 2;
     rst     <= '1';
     e_i     <= '0';
+    wait for CKTIME * 2;
     input_i <= (others => '0');
     load_i  <= "0";
-    store_i  <= "0";
-    wait for CKTIME/2;
+    store_i <= "0";
     wait for CKTIME;
     rst     <= '0';
     e_i     <= '1';
     input_i <= "11001011";
     load_i  <= "1";
 
-    for i in 0 to W - 2 loop
+    for i in 0 to (W + SW - 1) / SW - 3 loop
 
       wait for CKTIME;
       load_i <= "0";
@@ -98,14 +98,21 @@ begin
     e_i     <= '1';
     wait for CKTIME * 2;
     store_i <= "1";
+    load_i  <= "1";
+    input_i <= "00101010";
     wait for CKTIME;
     store_i <= "0";
-    assert (input_i = output_i)
-      report "Mismatch:: " &
-             " input_i= " & integer'image(to_integer(unsigned(input_i))) &
-             " output_i= " & integer'image(to_integer(unsigned(output_i))) &
-             " Expectation= input_i=output_i";
+    load_i  <= "0";
+    -- assert (input_i = output_i)
+    --   report "Mismatch:: " &
+    --          " input_i= " & integer'image(to_integer(unsigned(input_i))) &
+    --          " output_i= " & integer'image(to_integer(unsigned(output_i))) &
+    --          " Expectation= input_i=output_i";
 
+    wait for ((W + SW - 1) / SW - 1) * CKTIME;
+    store_i <= "1";
+    wait for CKTIME;
+    store_i <= "0";
     wait;
 
   end process TEST_PROCESS;

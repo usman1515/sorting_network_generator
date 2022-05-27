@@ -46,6 +46,7 @@ begin
 
   BRAM_1 : entity work.serializer_bram
     generic map (
+      N => 1,
       W => W
     )
     port map (
