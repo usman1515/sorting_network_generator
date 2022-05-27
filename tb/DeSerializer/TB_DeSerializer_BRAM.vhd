@@ -103,7 +103,7 @@ begin
       SER_OUTPUT => inter_i
     );
 
-  DESERIALIZER_SR_1 : entity work.deserializer_sr
+  DESERIALIZER_SR_1 : entity work.deserializer_bram
     generic map (
       N => N,
       W => W
@@ -121,9 +121,13 @@ begin
   begin
 
     wait for 1 ps;
+    wait for CKTIME / 2;
     rst <= '1';
     e_i <= '0';
-    wait for CKTIME / 2;
+    load_i <= '0';
+    store_i <= '0';
+    input_i <= (others => (others => '0'));
+    wait for CKTIME;
     e_i <= '1';
     rst <= '0';
     load_and_store (
@@ -140,6 +144,7 @@ begin
   begin
     wait for 1 ps;
     wait for 3*CKTIME/2;
+    wait for CKTIME;
     wait for CKTIME * (W);
     assert_equivalence (
       N      => N,

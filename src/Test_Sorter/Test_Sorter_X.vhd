@@ -146,7 +146,8 @@ begin
 
   ENABLEDELAY_2 : entity work.delay_timer
     generic map (
-      DELAY => W + DEPTH + 1
+      -- Delay: serialization cost + network depth + store delay.
+      DELAY => W + DEPTH + 2
     )
     port map (
       CLK       => CLK,

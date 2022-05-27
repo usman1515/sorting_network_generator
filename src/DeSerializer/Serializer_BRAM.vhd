@@ -23,7 +23,9 @@ entity SERIALIZER_BRAM is
     -- Width of parallel input/ word.
     N : integer;
     -- Width of parallel input/ word.
-    W : integer := 8
+    W : integer := 8;
+    -- Subword length;
+    SW : integer := 1
   );
   port (
     -- System Clock
@@ -43,13 +45,6 @@ end entity SERIALIZER_BRAM;
 
 architecture BEHAVIORAL of SERIALIZER_BRAM is
 
-  function add_modulo (a : integer; b : integer; max : integer) return integer is
-  begin
-
-    return (a + b) mod (max + 1);
-
-  end function add_modulo;
-  
   constant RADDR_WIDTH     : integer := integer(ceil(log2(real(W))));
   signal raddr             : integer range 0 to W - 1;
   signal slv_raddr         : std_logic_vector(RADDR_WIDTH - 1 downto 0);
@@ -81,11 +76,11 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1' or LOAD = '1') then
-        raddr <= W -3;
+        raddr <= (W + SW - 1)/SW - 3;
       else
         if (E = '1') then
           if (raddr = 0) then
-            raddr <= W - 1;
+            raddr <= (W + SW - 1)/SW - 1;
           else
             raddr <= raddr - 1;
           end if;
@@ -99,7 +94,8 @@ begin
 
     Load_Shift_Register_BRAM_1: entity work.Load_Shift_Register_BRAM
       generic map (
-        W  => W)
+        W  => W,
+        SW => 1)
       port map (
         CLK        => CLK,
         RST        => RST,
