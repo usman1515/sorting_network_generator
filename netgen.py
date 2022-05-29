@@ -111,7 +111,7 @@ class Interface:
         elif "bitonic" == network_type.lower():
             logp = int(math.ceil(math.log2(N)))
             self.generator = Bitonic()
-            self.network = self.generator.create(2**logp)
+            self.network = self.generator.create(N)
             self.network = self.generator.reduce(self.network, N)
         elif "blank" == network_type.lower():
             logp = int(math.ceil(math.log2(N)))
@@ -202,7 +202,15 @@ class Interface:
     def write_report(self, path=""):
         if not path:
             path = "build/report.csv"
+        if not self.template and self.network:
+            self.reporter.add(self.network)
         self.reporter.write_report(path)
+        return self
+
+    def report_net(self, path=""):
+        report = Report(self.network)
+        for key, value in report.content.items():
+            print(key, value)
         return self
 
 

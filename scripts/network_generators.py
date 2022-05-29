@@ -159,16 +159,20 @@ class Generator:
     def reduce(self, network, N):
         """Reduces size connection matrix to N inputs."""
         # Nothing to do of target and actual size are the same.
+
         if N == network.get_N():
             return network
         for d in range(network.get_depth()):
             for i in range(N):
                 # Look for CS elements whose inputs are outside of the target
                 # size. Replace them with bypass elements.
-                if network[d][i][1] >= N:
-                    network[d][i] = ("+", i)
-            # Resize stage to target size.
-            network[d] = network[d][:N]
+                if network.con_net[d][i][1] >= N:
+                    network.con_net[d][i] = ("+", 0)
+        # Resize network to target size.
+        network.con_net = np.delete(network.con_net, range(N, network.get_N()), 1)
+        network.output_set = set(
+            [i for i, pair in enumerate(network[network.get_depth() - 1]) if pair[0]]
+        )
         return network
 
     def prune(self, network, output_set=set()):
