@@ -38,7 +38,7 @@ end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 1 downto 0);
+  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0');
 
 begin
 

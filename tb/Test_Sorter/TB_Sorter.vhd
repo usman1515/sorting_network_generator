@@ -24,7 +24,7 @@ architecture TB of TB_SORTER is
   constant CKTIME  : time := 10 ns;
   signal   clk     : std_logic;
 
-  constant W       : integer := 8;
+  constant W       : integer := 64;
   signal   rst_i   : std_logic; -- Debounced reset signal.
   signal   e_i     : std_logic; -- Debounced enable signal.
   signal   valid_i : std_logic;

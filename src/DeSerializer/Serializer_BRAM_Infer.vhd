@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Serializer_BRAM - Behavioral
+-- Module Name: Serializer_BRAM_Infer - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Serializer Component using an array to infer BRAM.
@@ -18,7 +18,7 @@ library IEEE;
 library work;
   use work.CustomTypes.all;
 
-entity SERIALIZER_BRAM is
+entity Serializer_BRAM_Infer is
   generic (
     -- Number of values serialized in parallel.
     N : integer;
@@ -39,9 +39,9 @@ entity SERIALIZER_BRAM is
     -- bit-serial output
     SER_OUTPUT            : out   std_logic_vector(0 to N - 1)
   );
-end entity SERIALIZER_BRAM;
+end entity Serializer_BRAM_Infer;
 
-architecture BEHAVIORAL of SERIALIZER_BRAM is
+architecture BEHAVIORAL of Serializer_BRAM_Infer is
 
   function sub_hold (a : integer; b : integer) return integer is
   begin
