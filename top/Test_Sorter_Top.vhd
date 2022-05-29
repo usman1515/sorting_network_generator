@@ -19,7 +19,7 @@ library work;
 
 entity TEST_SORTER_TOP is
   port (
-    GCLK : in    std_logic;
+    SYSCLK : in    std_logic;
     SW   : in    std_logic_vector(0 downto 0);
     BTNC : in    std_logic;
     LD   : out   std_logic_vector(0 downto 0)
@@ -40,7 +40,7 @@ begin
       TIMEOUT_CYCLES => 50
     )
     port map (
-      CLK    => GCLK,
+      CLK    => SYSCLK,
       RST    => '0',
       INPUT  => BTNC,
       OUTPUT => r_i
@@ -51,7 +51,7 @@ begin
       TIMEOUT_CYCLES => 50
     )
     port map (
-      CLK    => GCLK,
+      CLK    => SYSCLK,
       RST    => '0',
       INPUT  => SW(0),
       OUTPUT => e_i
@@ -62,7 +62,7 @@ begin
       W => W
     )
     port map (
-      CLK   => GCLK,
+      CLK   => SYSCLK,
       RST   => r_i,
       E     => e_i,
       VALID => LD(0)

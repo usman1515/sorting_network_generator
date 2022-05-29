@@ -40,8 +40,8 @@ architecture STRUCTURAL of TEST_SORTER_X is
 
   constant N             : integer := 4;
   constant DEPTH         : integer := 3;
-  constant POLY_BASE     : integer := 654;
-  constant SEED_BASE     : integer := 58;
+  constant POLY_BASE     : integer := 54654;
+  constant SEED_BASE     : integer := 88858;
 
   signal e_delayed_i     : std_logic_vector(1 downto 0) := (others => '0');
   -- Output of LFSRs
@@ -98,7 +98,7 @@ begin
         CLK    => CLK,
         E      => E,
         RST    => RST,
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W/2**W,W)),
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W,W)),
         OUTPUT => rand_data_i(N/W)
       );
 
