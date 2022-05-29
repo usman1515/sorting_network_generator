@@ -19,7 +19,7 @@ library work;
 
 entity TEST_SORTER_TOP is
   port (
-    SYSCLK : in    std_logic;
+    GCLK : in    std_logic;
     SW   : in    std_logic_vector(0 downto 0);
     BTNC : in    std_logic;
     LD   : out   std_logic_vector(0 downto 0)
@@ -28,41 +28,46 @@ end entity TEST_SORTER_TOP;
 
 architecture STRUCTURAL of TEST_SORTER_TOP is
 
-  constant W : integer := 8;
-
-  signal r_i : std_logic; -- Debounced reset signal.
-  signal e_i : std_logic; -- Debounced enable signal.
+  constant W      : integer := 64;
+  signal   sysclk : std_logic;
+  signal   r_i    : std_logic; -- Debounced reset signal.
+  signal   e_i    : std_logic; -- Debounced enable signal.
 
 begin
 
-  RESETDEBOUNCER : entity work.DEBOUNCER
+  CLOCK : process(GCLK) is
+  begin
+    sysclk <= GCLK;
+  end process CLOCK;
+
+  RESETDEBOUNCER : entity work.debouncer
     generic map (
       TIMEOUT_CYCLES => 50
     )
     port map (
-      CLK    => SYSCLK,
+      CLK    => sysclk,
       RST    => '0',
       INPUT  => BTNC,
       OUTPUT => r_i
     );
 
-  ENABLEDEBOUNCER : entity work.DEBOUNCER
+  ENABLEDEBOUNCER : entity work.debouncer
     generic map (
       TIMEOUT_CYCLES => 50
     )
     port map (
-      CLK    => SYSCLK,
+      CLK    => sysclk,
       RST    => '0',
       INPUT  => SW(0),
       OUTPUT => e_i
     );
 
-  TEST_SORTER_X_1 : entity work.test_sorter_X
+  TEST_SORTER_X_1 : entity work.test_sorter_x
     generic map (
       W => W
     )
     port map (
-      CLK   => SYSCLK,
+      CLK   => sysclk,
       RST   => r_i,
       E     => e_i,
       VALID => LD(0)

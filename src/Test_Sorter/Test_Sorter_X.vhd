@@ -21,7 +21,9 @@ library work;
 entity TEST_SORTER_X is
   generic (
     -- Bit-Width of input values.
-    W : integer := 8
+    W : integer := 8;
+    -- Number of available BRAMs
+    NUM_BRAM : integer := 4318
   );
   port (
     -- Clock signal
@@ -38,8 +40,8 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 4;
-  constant DEPTH         : integer := 3;
+  constant N             : integer := 64;
+  constant DEPTH         : integer := 21;
   constant POLY_BASE     : integer := 54654;
   constant SEED_BASE     : integer := 88858;
 
@@ -68,7 +70,7 @@ begin
         E   => E,
         RST => RST,
         -- Same reason as with assignment of POLY.
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W ,W)),
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i ,W)),
         OUTPUT => rand_data_i(i)
       );
 
@@ -134,7 +136,8 @@ begin
     generic map (
       W => W,
       N => N,
-      M => N
+      M => N,
+      NUM_BRAM => NUM_BRAM
     )
     port map (
       CLK        => CLK,

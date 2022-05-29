@@ -81,7 +81,7 @@
 # Frequency: 100 MHz
 # ---------------------------------------------------------------------------- 
 set_property PACKAGE_PIN Y9 [get_ports {GCLK}];  # "GCLK"
-create_clock -name SYSCLK -period 10.00 [get_ports {GCLK}]
+create_clock -name SYSCLK -period 10.00 [get_ports {GCLK}];
 
 # ----------------------------------------------------------------------------
 # JA Pmod - Bank 13 

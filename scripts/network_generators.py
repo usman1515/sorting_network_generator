@@ -110,7 +110,7 @@ class Generator:
             network.rows_per_signal.append(max_fanout)
             # We need to calculate the incurred delay by the
             # signal distributor
-            num_sig = network.get_N() // max_fanout
+            num_sig = math.ceil(network.get_N() / max_fanout)
             print(num_sig)
             if not num_sig:
                 num_sig = 1
@@ -135,7 +135,6 @@ class Generator:
                         network.control_layers[-1][y][x] = ("+", 0)
                     else:
                         network.control_layers[-1][y][x] = (" ", 0)
-
             # If not enough delay stages are present, extend all layers
             # with delay stages to the required amount.
             if data_delay < dist_depth:

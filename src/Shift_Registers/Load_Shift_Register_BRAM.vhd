@@ -74,7 +74,7 @@ architecture BEHAVIORAL of LOAD_SHIFT_REGISTER_BRAM is
   -- Width of the read address of input.
   constant IN_RADDR_WIDTH         : integer := integer(ceil(log2(real(W))));
   -- Width of the actual read address for BRAM.
-  constant RADDR_WIDTH            : integer := integer(log2(real(18*1024 / SW)));
+  constant RADDR_WIDTH            : integer := integer(log2(real(18 * 1024 / SW)));
   -- Read address for BRAM.
   signal slv_raddr                : std_logic_vector(RADDR_WIDTH - 1 downto 0);
 
@@ -89,7 +89,8 @@ architecture BEHAVIORAL of LOAD_SHIFT_REGISTER_BRAM is
   signal sel                      : integer range 0 to NUM_BRAM - 1;
   -- Combined output vector of BRAMS.
   signal ser_output_i             : std_logic_vector(NUM_BRAM * SW - 1 downto 0);
-
+  -- Combined output vector of BRAMS.
+  signal par_input_i              : std_logic_vector(NUM_BRAM * 32 - 1 downto 0);
   -- Signals to handle the write to read delays.
   -- Keeps the second sub-word buffered.
   signal buffer_i                 : std_logic_vector(SW - 1 downto 0);
@@ -133,6 +134,7 @@ begin
 
   SET_MSB_BUFFER : process (CLK) is
   begin
+
     -- Synchonously set buffer and load_delayed.
     if (rising_edge(CLK)) then
       load_delayed <= LOAD;
@@ -141,30 +143,39 @@ begin
 
   end process SET_MSB_BUFFER;
 
---  BRAM_OUT : process (CLK) is
-BRAM_OUT : process (RST,LOAD,PAR_INPUT,load_delayed,buffer_i,ser_output_i) is
+  SET_PAR_INPUT : process (PAR_INPUT) is
   begin
 
- --   if (rising_edge(CLK)) then
-      if (RST ='1') then
-        -- Reset
-        SER_OUTPUT <= (others => '0');
+    par_input_i(W - 1 downto 0)             <= PAR_INPUT;
+    par_input_i(NUM_BRAM * 32 - 1 downto W) <= (others => '0');
+
+  end process SET_PAR_INPUT;
+
+  --  BRAM_OUT : process (CLK) is
+  BRAM_OUT : process (RST, LOAD, PAR_INPUT, load_delayed, buffer_i, ser_output_i, sel) is
+  begin
+
+    --   if (rising_edge(CLK)) then
+    if (RST ='1') then
+      -- Reset
+      SER_OUTPUT <= (others => '0');
+    else
+      if (LOAD = '1') then
+        -- Output the first subword immediatly
+        SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
       else
-        if (LOAD = '1') then
-          -- Output the first subword immediatly
-          SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
+        if (load_delayed = '1') then
+          -- Output the buffered second subword.
+          SER_OUTPUT <= buffer_i;
         else
-          if (load_delayed = '1') then
-            -- Output the buffered second subword.
-            SER_OUTPUT <= buffer_i;
-          else
-            -- Only after two cycles, the output of the BRAM is valid.
-            -- Demultiplex output of BRAMS into SER_OUTPUT.
-            SER_OUTPUT <= ser_output_i((sel + 1) * SW - 1 downto sel * SW);
-          end if;
+          -- Only after two cycles, the output of the BRAM is valid.
+          -- Demultiplex output of BRAMS into SER_OUTPUT.
+          SER_OUTPUT <= ser_output_i((sel + 1) * SW - 1 downto sel * SW);
         end if;
       end if;
---    end if;
+    end if;
+
+    --    end if;
 
   end process BRAM_OUT;
 
@@ -184,18 +195,17 @@ BRAM_OUT : process (RST,LOAD,PAR_INPUT,load_delayed,buffer_i,ser_output_i) is
         SIM_COLLISION_CHECK => "ALL"
       )
       port map (
-        RDCLK               => CLK,
-        WRCLK               => CLK,
-        RST                 => RST,
-        DI(W - 1 downto 0)  => PAR_INPUT,
-        DI(32 - 1 downto W) => (others => '0'),
-        WRADDR              => SLV_WADDR,
-        WE                  => we_i,
-        WREN                => E,
-        DO                  => ser_output_i((i + 1)*SW - 1 downto i*SW),
-        RDADDR              => slv_raddr,
-        RDEN                => E,
-        REGCE               => '0'
+        RDCLK  => CLK,
+        WRCLK  => CLK,
+        RST    => RST,
+        DI     => par_input_i(32* (i + 1) - 1 downto 32*i),
+        WRADDR => SLV_WADDR,
+        WE     => we_i,
+        WREN   => E,
+        DO     => ser_output_i((i + 1)*SW - 1 downto i*SW),
+        RDADDR => slv_raddr,
+        RDEN   => E,
+        REGCE  => '0'
       );
 
   end generate BRAMS;

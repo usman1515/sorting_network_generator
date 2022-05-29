@@ -25,7 +25,7 @@ entity SORTER is
     -- Number of sorted ouput words.
     M     : integer := 4;
     -- Number of available BRAMs
-    NUM_BRAM : integer := 4
+    NUM_BRAM : integer := 4318
 
   );
   port (
@@ -145,7 +145,7 @@ begin
 
  end generate IO_SERIALIZERS_SR;
 
-  SORTING_NETWORK_1 : entity work.oddeven_4_to_4_max
+  SORTING_NETWORK_1 : entity work.oddeven_64_to_64_max
     generic map (
       W => W
     )
