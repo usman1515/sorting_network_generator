@@ -2,9 +2,7 @@
 set output_folder output
 
 # Step 2: create in-memory project and define target part
-create_project -in_memory -part xc7z020clg484-1
-set_property board_part_repo_paths {/home/spross/.Xilinx/Vivado/2021.2/xhub/board_store/xilinx_board_store} [current_project]
-set_property board_part avnet.com:zedboard:part0:1.4 [current_project]
+create_project -in_memory -part xcvu9p-flga2104-2L-e
 
 
 # Step 3: read design sources and IP files
@@ -37,10 +35,11 @@ read_vhdl -vhdl2008   src/MUX/RR_DMUX_NxW.vhd
 
 read_vhdl -vhdl2008   src/Test_Sorter/Test_Sorter_X.vhd
 
-read_vhdl -vhdl2008   top/Test_Sorter_Top.vhd
+read_vhdl -vhdl2008   top/Test_Sorter_Top_VCU118.vhd
 
 # Step 4: read synthesis constraints
-read_xdc constr/zedboard_master.xdc
+# read_xdc constr/zedboard_master.xdc
+read_xdc  constr/vcu118_rev2.0_12082017.xdc
 
 # Step 5: run synthesis, report utilization and timing estimates, write post-synthesis design checkpoint
 synth_design -top Test_Sorter_Top
