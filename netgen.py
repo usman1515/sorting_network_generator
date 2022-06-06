@@ -213,6 +213,58 @@ class Interface:
             print(key, value)
         return self
 
+    def show_ff(self):
+        layer = self.network.con_net
+        line = "|"
+        for i in range(len(layer[0])):
+            line += "{:<2}".format(i % 10)
+            # line += "__".format(i % 10)
+        line += "|"
+        print(line)
+        for i, stage in enumerate(layer):
+            line = "|"
+            for pair in stage:
+                if is_ff(pair):
+                    line += "+ "
+                else:
+                    line += "  "
+            line += "| {}".format(i)
+            print(line)
+
+    def pretty_print(self):
+        layer = self.network.con_net
+        for stage in layer:
+            print(" " + "--"*len(stage) + "")
+            for i, pair in enumerate(stage):
+                if i < pair[1]:
+                    end = pair[1]
+                    if pair[0] == "F":
+                        print(" " + "| "*(i) + "=="*(end - i -1) + "=>" + "| "*(len(stage) - end) +" ")
+                    elif pair[0] == "R":
+                        print(" " + "| "*(i) + "<="+ "=="*(end - i -1)  + "| "*(len(stage) - end) +" ")
+
+    def show_ff_asign(self):
+        layer = self.network.con_net
+        groups = self.ffreplacements[0]
+        line = "|"
+        for i in range(len(layer[0])):
+            line += "{:<2}".format(i % 10)
+        line += "|"
+        print(line)
+        for i in range(len(layer)):
+            line = "|"
+            for j in range(len(layer[i])):
+                if is_ff(layer[i][j]):
+                    elem = "+ "
+                    for k in range(len(groups)):
+                        for point in groups[k]:
+                            if np.all(np.equal(np.asarray((j, i)), point)):
+                                elem = "{} ".format(k)
+                                break
+                    line += elem
+                else:
+                    line += "  "
+            print(line)
 
 # a = Interface()
 # a.test()

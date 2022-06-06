@@ -51,6 +51,9 @@ class Report:
                 if network[i][j][1] > j and network[i][j][0] in ("F", "R"):
                     num_cs += 1
                     distance_hist[network[i][j][1] - j] += 1
+        for j in range(N):
+            i = 0
+            while i < depth:
                 # If flag at that point is "+" or "-", a FF is present at that point.
                 if network[i][j][0] in ["+", "-"]:
                     bypass_beg = i
@@ -62,8 +65,10 @@ class Report:
                     ]:
                         bypass_end += 1
                     bypass_end = bypass_end - 1
-                    num_ff += bypass_end - bypass_beg
+                    num_ff += bypass_end - bypass_beg + 1
                     FF_hist[bypass_end - bypass_beg] += 1
+                    i = bypass_end
+                i += 1
 
         content["num_cs"] = num_cs
         content["distance_hist"] = dict()

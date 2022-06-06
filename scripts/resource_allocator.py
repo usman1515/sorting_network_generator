@@ -367,10 +367,11 @@ def get_cost(group, point=None):
 
 
 def print_layer(layer):
-    line = "|"
+    line = "_"  # "|"
     for i in range(len(layer[0])):
-        line += "{:<2}".format(i % 10)
-    line += "|"
+        #  line += "{:<2}".format(i % 10)
+        line += "__".format(i % 10)
+    line += "_"
     print(line)
     for i, stage in enumerate(layer):
         line = "|"
@@ -413,8 +414,8 @@ if cond:
     gen = OddEven()
     # alloc = Simple_Allocator()
     alloc = Block_Allocator()
-    nw = gen.create(64)
-    nw = gen.distribute_signals(nw, {"START": 10})
+    nw = gen.create(32)
+    # nw = gen.distribute_signals(nw, {"START": 10})
     print("Network Top Level:")
     print_layer(nw.con_net)
     for i in range(len(nw.control_layers)):
@@ -422,7 +423,7 @@ if cond:
         print_layer(nw.control_layers[i])
 
     print("\nAfter assignment:")
-    target_ff = 48
+    target_ff = 15
     groups, sub_groups = alloc.allocate_ff_groups(nw, target_ff, [2])
     print_layer_with_ffgroups(nw.con_net, groups)
     print("---------------------------")

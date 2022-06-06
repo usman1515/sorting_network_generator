@@ -19,7 +19,7 @@ library IEEE;
 entity SubWordCS is
   generic(
     -- Size of subword to be compared at a time.
-    SW : integer := 2
+    SW : integer := 64
 );
   port (
     -- System Clock.
