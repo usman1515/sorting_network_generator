@@ -75,31 +75,47 @@ begin
   TEST_PROCESS : process is
   begin
 
+     wait for 1 * ps;
+    wait for CKTIME / 2;
     rst     <= '1';
+    e_i     <= '0';
+    wait for CKTIME * 2;
+    input_i <= (others => '0');
     load_i  <= "0";
     store_i <= "0";
     wait for CKTIME;
     rst     <= '0';
+    e_i     <= '1';
     input_i <= "11001011";
     load_i  <= "1";
-    e_i     <= '1';
 
-    for i in 0 to ((W+ SW -1) / SW) - 1 loop
+    for i in 0 to (W + SW - 1) / SW -3 loop
 
       wait for CKTIME;
       load_i <= "0";
 
     end loop;
 
+    e_i     <= '0';
+    wait for CKTIME * 2;
+    e_i     <= '1';
+    wait for CKTIME * 2;
+    store_i <= "1";
+    load_i  <= "1";
+    input_i <= "00101010";
+    wait for CKTIME;
+    store_i <= "0";
+    load_i  <= "0";
+    -- assert (input_i = output_i)
+    --   report "Mismatch:: " &
+    --          " input_i= " & integer'image(to_integer(unsigned(input_i))) &
+    --          " output_i= " & integer'image(to_integer(unsigned(output_i))) &
+    --          " Expectation= input_i=output_i";
+
+    wait for ((W + SW - 1) / SW - 1) * CKTIME;
     store_i <= "1";
     wait for CKTIME;
     store_i <= "0";
-    assert (input_i = output_i)
-      report "Mismatch:: " &
-             " input_i= " & integer'image(to_integer(unsigned(input_i))) &
-             " output_i= " & integer'image(to_integer(unsigned(output_i))) &
-             " Expectation= input_i=output_i";
-
     wait;
 
   end process TEST_PROCESS;

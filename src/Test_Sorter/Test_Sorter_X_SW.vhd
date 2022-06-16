@@ -23,7 +23,9 @@ entity TEST_SORTER_X_SW is
     -- Bit-Width of input values.
     W  : integer := 8;
     -- Length of subwords.
-    SW : integer := 1
+    SW : integer := 1;
+    -- Number of available BRAMs
+    NUM_BRAM : integer := 4318
   );
   port (
     -- Clock signal
@@ -45,6 +47,8 @@ architecture STRUCTURAL of TEST_SORTER_X_SW is
   constant POLY_BASE     : integer := 654;
   constant SEED_BASE     : integer := 58;
   constant ceilWSW       : integer := ((W + SW - 1) / SW);
+
+
   signal e_delayed_i     : std_logic_vector(1 downto 0);
   -- Output of LFSRs
   signal rand_data_i     : SLVArray(0 to N / ceilWSW)(W - 1 downto 0);
@@ -136,7 +140,8 @@ begin
       W => W,
       SW => SW,
       N => N,
-      M => N
+      M => N,
+      NUM_BRAM => NUM_BRAM
     )
     port map (
       CLK        => CLK,
@@ -148,7 +153,7 @@ begin
 
   ENABLEDELAY_2 : entity work.delay_timer
     generic map (
-      DELAY => ceilWSW + DEPTH + 1
+      DELAY => ceilWSW + DEPTH + 2
     )
     port map (
       CLK       => CLK,

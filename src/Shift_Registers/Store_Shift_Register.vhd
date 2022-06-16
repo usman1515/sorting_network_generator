@@ -41,7 +41,7 @@ architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
   -- Shift Register
   -- sreg must be two additional registers deep to keep timing in line with
   -- the BRAM variant.
-  signal sreg         : std_logic_vector(W + 2 - 1 downto 0);
+  signal sreg         : std_logic_vector(W + SW*2 - 1 downto 0);
   -- Delayed store signal required for the same reason as above.
   signal store_i      : std_logic_vector(2 - 1 downto 0);
 

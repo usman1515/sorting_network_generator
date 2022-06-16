@@ -18,7 +18,7 @@ library IEEE;
 entity STORE_SHIFT_REGISTER_SW is
   generic (
     -- Width of parallel input/ word.
-    W : integer := 8;
+    W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
   );
@@ -32,7 +32,7 @@ entity STORE_SHIFT_REGISTER_SW is
     -- Load signal
     STORE                   : in    std_logic;
     -- bit-serial input
-    SER_INPUT               : in    std_logic_vector(SW -1 downto 0);
+    SER_INPUT               : in    std_logic_vector(SW - 1 downto 0);
     -- w-bit parallel output
     PAR_OUTPUT              : out   std_logic_vector(W - 1 downto 0)
   );
@@ -41,9 +41,23 @@ end entity STORE_SHIFT_REGISTER_SW;
 architecture BEHAVIORAL of STORE_SHIFT_REGISTER_SW is
 
   -- Shift Register
-  signal sreg : std_logic_vector(W - 1 downto 0);
+  -- sreg must be two additional registers deep to keep timing in line with
+  -- the BRAM variant.
+  signal sreg         : std_logic_vector(W + SW*2 - 1 downto 0);
+  -- Delayed store signal required for the same reason as above.
+  signal store_i      : std_logic_vector(2 - 1 downto 0);
 
 begin
+
+  SET_LOAD_DELAYED : process (CLK) is
+  begin
+
+    if (rising_edge(CLK)) then
+      store_i(0)                                   <= STORE;
+      store_i(store_i'high downto store_i'low + 1) <= store_i(store_i'high - 1 downto store_i'low);
+    end if;
+
+  end process SET_LOAD_DELAYED;
 
   -- SHIFT_STORE----------------------------------------------------------------
   -- When enabled, shifts value from SER_INPUT into register and outputs
@@ -54,15 +68,15 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1') then
-        sreg <= (others => '0');
+        sreg       <= (others => '0');
         PAR_OUTPUT <= (others => '0');
       else
         if (E = '1') then
           sreg <= sreg(sreg'high - SW downto sreg'low) & SER_INPUT;
         end if;
 
-        if (STORE = '1') then
-          PAR_OUTPUT <= sreg;
+        if (store_i(store_i'high) = '1') then
+          PAR_OUTPUT <= sreg(sreg'high downto sreg'high - (W - 1));
         end if;
       end if;
     end if;
