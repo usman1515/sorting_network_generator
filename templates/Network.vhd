@@ -12,12 +12,15 @@
 library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
-
+library work;
+  use work.CustomTypes.all;
 
 entity {top_name} is
   generic (
     -- Bit-width of words
     W     : integer := {bit_width};
+    -- subword-width of serialization.
+    SW     : integer := {subword_width};
     -- Depth of network / number of stages.
     DEPTH : integer := {net_depth};
     -- Number of input words.
@@ -35,11 +38,11 @@ entity {top_name} is
     -- Start signal marking the beginning of a new word.
     START         : in    std_logic;
     -- Serial input of the N input words.
-    SER_INPUT     : in    std_logic_vector(0 to N - 1);
+    SER_INPUT     : in    SLVArray(0 to N - 1)(SW - 1 downto 0);
     -- Done signal, marking the end of sorting N words.
     DONE          : out   std_logic;
     -- Serial output of the M output words.
-    SER_OUTPUT    : out   std_logic_vector(0 to M - 1)
+    SER_OUTPUT    : out   SLVArray(0 to M - 1)(SW - 1 downto 0)
   );
 end entity {top_name};
 
@@ -47,7 +50,8 @@ architecture BEHAVIORAL of {top_name} is
 
   {control_signal_definition}
 
-  type wire_t is array (0 to N - 1) of std_logic_vector(0 to DEPTH);
+  type wire_subtype_t is array (0 to DEPTH) of std_logic_vector(SW -1 downto 0);
+  type wire_t is array (0 to N - 1) of wire_subtype_t;
   -- Wire grid with the dimensions of NxDepth
   signal wire     : wire_t := (others => (others => '0'));
 

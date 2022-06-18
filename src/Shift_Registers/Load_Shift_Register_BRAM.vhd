@@ -74,7 +74,7 @@ architecture BEHAVIORAL of LOAD_SHIFT_REGISTER_BRAM is
   -- Width of the read address of input.
   constant IN_RADDR_WIDTH         : integer := integer(ceil(log2(real(W))));
   -- Width of the actual read address for BRAM.
-  constant RADDR_WIDTH            : integer := integer(log2(real(18 * 1024 / SW)));
+  constant RADDR_WIDTH            : integer := integer(floor(log2(real(18 * 1024 / SW))));
   -- Read address for BRAM.
   signal slv_raddr                : std_logic_vector(RADDR_WIDTH - 1 downto 0);
 

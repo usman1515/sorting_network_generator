@@ -36,8 +36,8 @@ entity DESERIALIZER_BRAM is
     E                       : in    std_logic;
     -- Store signal
     STORE                   : in    std_logic;
-    -- w-bit parallel input
-    SER_INPUT               : in    std_logic_vector(0 to N - 1);
+    -- sub word parallel or bit serial input
+    SER_INPUT               : in    SLVArray(0 to N - 1)(SW -1 downto 0);
     -- bit-serial output
     PAR_OUTPUT              : out   SLVArray(0 to N - 1)(W - 1 downto 0)
   );
@@ -86,7 +86,8 @@ begin
 
     STORE_SHIFT_REGISTER_1 : entity work.store_shift_register_BRAM
       generic map (
-        W => W
+        W => W,
+        SW => SW
       )
       port map (
         CLK        => CLK,
@@ -94,7 +95,7 @@ begin
         E          => E,
         STORE      => STORE,
         WADDR      => slv_waddr,
-        SER_INPUT  => SER_INPUT(i to i),
+        SER_INPUT  => SER_INPUT(i),
         PAR_OUTPUT => PAR_OUTPUT(i)
       );
 

@@ -25,7 +25,7 @@ architecture TB of TB_IO_SHIFT_REGISTERS_BRAM is
 
   constant CKTIME              : time := 10 ns;
   constant W                   : integer := 8;
-  constant SW                  : integer := 1;
+  constant SW                  : integer := 2;
   signal   clk                 : std_logic;
   signal   rst                 : std_logic;
   signal   e_i                 : std_logic;
@@ -76,7 +76,11 @@ begin
 
     if (rising_edge(clk)) then
       if (rst = '1' or load_i = "1") then
-        raddr <= (W + SW - 1)/SW - 3;
+        if (W + SW -1)/SW < 3 then
+          raddr <= 0;
+        else
+          raddr <= (W + SW - 1)/SW - 3;
+        end if;
       else
         if (e_i = '1') then
           if (raddr = 0) then

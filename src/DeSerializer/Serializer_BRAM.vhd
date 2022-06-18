@@ -21,9 +21,9 @@ library work;
 entity SERIALIZER_BRAM is
   generic (
     -- Width of parallel input/ word.
-    N : integer;
+    N  : integer;
     -- Width of parallel input/ word.
-    W : integer := 8;
+    W  : integer := 8;
     -- Subword length;
     SW : integer := 1
   );
@@ -39,35 +39,38 @@ entity SERIALIZER_BRAM is
     -- w-bit parallel input
     PAR_INPUT             : in    SLVArray(0 to N - 1)(W - 1 downto 0);
     -- bit-serial output
-    SER_OUTPUT            : out   std_logic_vector(0 to N - 1)
+    SER_OUTPUT            : out   SLVArray(0 to N - 1)(SW - 1 downto 0)
   );
 end entity SERIALIZER_BRAM;
 
 architecture BEHAVIORAL of SERIALIZER_BRAM is
 
-  constant RADDR_WIDTH     : integer := integer(ceil(log2(real(W))));
-  signal raddr             : integer range 0 to W - 1;
-  signal slv_raddr         : std_logic_vector(RADDR_WIDTH - 1 downto 0);
-    
-  signal ser_output_i      : SLVArray(0 to N -1)(0 downto 0);
-    
+  constant RADDR_WIDTH       : integer := integer(ceil(log2(real(W))));
+  signal   raddr             : integer range 0 to W - 1;
+  signal   slv_raddr         : std_logic_vector(RADDR_WIDTH - 1 downto 0);
+
+  signal ser_output_i        : SLVArray(0 to N - 1)(0 downto 0);
+
 begin
 
-  SET_SLV_RADDR : process(raddr) is
+  SET_SLV_RADDR : process (raddr) is
   begin
-  
+
     slv_raddr <= std_logic_vector(to_unsigned(raddr, RADDR_WIDTH));
-  
+
   end process SET_SLV_RADDR;
-  
-  SET_SER_OUTPUT: process(ser_output_i) is
+
+  SET_SER_OUTPUT : process (ser_output_i) is
   begin
-  
-    for i in 0 to N -1 loop
-        SER_OUTPUT(i) <= ser_output_i(i)(0);
+
+    for i in 0 to N - 1 loop
+
+      SER_OUTPUT(i) <= ser_output_i(i)(0);
+
     end loop;
-    
+
   end process SET_SER_OUTPUT;
+
   -- COUNTER----------------------------------------------------------------------
   -- Generic counter with reset and enable for address generation.
   --------------------------------------------------------------------------------
@@ -76,11 +79,15 @@ begin
 
     if (rising_edge(CLK)) then
       if (RST = '1' or LOAD = '1') then
-        raddr <= (W + SW - 1)/SW - 3;
+        if ((W + SW - 1) / SW > 3) then
+          raddr <= (W + SW - 1) / SW - 3;
+        else
+          raddr <= 0;
+        end if;
       else
         if (E = '1') then
           if (raddr = 0) then
-            raddr <= (W + SW - 1)/SW - 1;
+            raddr <= (W + SW - 1) / SW - 1;
           else
             raddr <= raddr - 1;
           end if;
@@ -92,10 +99,11 @@ begin
 
   LOADSHIFTREGISTERS : for i in 0 to N - 1 generate
 
-    Load_Shift_Register_BRAM_1: entity work.Load_Shift_Register_BRAM
+    LOAD_SHIFT_REGISTER_BRAM_1 : entity work.load_shift_register_bram
       generic map (
         W  => W,
-        SW => 1)
+        SW => SW
+      )
       port map (
         CLK        => CLK,
         RST        => RST,
@@ -103,7 +111,9 @@ begin
         LOAD       => LOAD,
         RADDR      => slv_raddr,
         PAR_INPUT  => PAR_INPUT(i),
-        SER_OUTPUT => ser_output_i(i));
+        SER_OUTPUT => ser_output_i(i)
+      );
 
   end generate LOADSHIFTREGISTERS;
+
 end architecture BEHAVIORAL;

@@ -22,7 +22,9 @@ entity SERIALIZER_SR is
     -- Number of values serialized in parallel.
     N : integer;
     -- Width of parallel input/ word.
-    W : integer := 8
+    W : integer := 8;
+    -- Length of subwords to be output at a time.
+    SW : integer := 1
   );
   port (
     -- System Clock
@@ -36,7 +38,7 @@ entity SERIALIZER_SR is
     -- w-bit parallel input
     PAR_INPUT             : in    SLVArray(0 to N - 1)(W - 1 downto 0);
     -- bit-serial output
-    SER_OUTPUT            : out   std_logic_vector(0 to N - 1)
+    SER_OUTPUT            : out   SLVArray(0 to N - 1)(SW - 1 downto 0)
   );
 end entity SERIALIZER_SR;
 
@@ -48,7 +50,8 @@ begin
 
     LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register
       generic map (
-        W => W
+        W => W,
+        SW => SW
       )
       port map (
         CLK        => CLK,
