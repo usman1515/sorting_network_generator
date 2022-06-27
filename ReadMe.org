@@ -30,9 +30,9 @@ By appending a specific component name, all generics and ports will be listed.
 For generating a network, run netgen with generate.
 Example:
 #+begin_src bash
-python netgen.py generate evenodd -input LoadShiftRegister -output StoreShiftRegister -cs BitCS_Sync -template SortNetSync.vhd - N 2
+python netgen.py generate evenodd --N=10 - shape --shape_type=median --num_outputs= 2 - fill_template --template_name=Network.vhd --cs=BITCS_SYNC - write_template
 #+end_src
-This will generate a 2-input Odd-Even network with Load- and StoreShiftRegisters as IO, Synchronous BitCS as CS and SortNetSync.vhd as template.
+This will generate a 10-input Odd-Even network with the middle two values as output.
 
 Alternatively run
 #+begin_src bash
