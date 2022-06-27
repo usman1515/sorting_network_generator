@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: SubWordCS - Behavioral
+-- Module Name: SERIALCS - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Compare Swap wich compares subwords of size SW sequentially to
@@ -16,7 +16,7 @@ library IEEE;
   use IEEE.STD_LOGIC_1164.all;
   use IEEE.NUMERIC_STD.all;
 
-entity SubWordCS is
+entity SERIALCS is
   generic(
     -- Size of subword to be compared at a time.
     SW : integer := 1
@@ -35,9 +35,9 @@ entity SubWordCS is
     -- Start signal marking start of new word. Acts similary to a reset.
     START : in    std_logic
   );
-end entity SubWordCS;
+end entity SERIALCS;
 
-architecture BEHAVIORAL of SubWordCS is
+architecture BEHAVIORAL of SERIALCS is
 
   -- The only known way to ensure encoding while allowing access to encoding bits.
   constant EQUAL         : std_logic_vector(1 downto 0)  := "00";

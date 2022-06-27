@@ -6,7 +6,7 @@
 -- Module Name: LOAD_SHIFT_REGISTER - Behavioral
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
--- Description: Shift register of w-width with parallel load, a w-bit serializer.
+-- Description: Shift register of with parallel load, a subword serializer.
 --
 --
 ----------------------------------------------------------------------------------
@@ -18,7 +18,9 @@ library IEEE;
 entity LOAD_SHIFT_REGISTER is
   generic (
     -- Width of parallel input/ word.
-    W : integer := 8
+    W  : integer := 8;
+    -- Length of subwords to be output at a time.
+    SW : integer := 1
   );
   port (
     -- System Clock
@@ -31,14 +33,14 @@ entity LOAD_SHIFT_REGISTER is
     LOAD                  : in    std_logic;
     -- w-bit parallel input
     PAR_INPUT             : in    std_logic_vector(W - 1 downto 0);
-    -- bit-serial output
-    SER_OUTPUT            : out   std_logic
+    -- subword parallel to bit-serial output
+    SER_OUTPUT            : out   std_logic_vector(SW - 1 downto 0)
   );
 end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0');
+  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0'); --( SW * (W / SW) - 1 downto 0); -- Shift register.
 
 begin
 
@@ -55,10 +57,15 @@ begin
       else
         if (E = '1') then
           if (LOAD = '0') then
-            sreg(sreg'high downto sreg'low + 1) <= sreg(sreg'high - 1 downto sreg'low);
+            sreg(sreg'high downto sreg'low + SW) <= sreg(sreg'high - SW downto sreg'low);
           else
-            sreg(sreg'high downto sreg'low + 1)<= PAR_INPUT(PAR_INPUT'high -1 downto PAR_INPUT'low);
-            sreg(sreg'low) <= '1';
+            if (W mod SW /= 0) then
+              sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
+                PAR_INPUT(PAR_INPUT'high - (W mod SW)  downto PAR_INPUT'low);
+            else
+              sreg(sreg'high downto sreg'low + SW) <=
+                PAR_INPUT(PAR_INPUT'high - SW downto PAR_INPUT'low);
+            end if;
           end if;
         end if;
       end if;
@@ -74,9 +81,14 @@ begin
   begin
 
     if (LOAD = '1') then
-      SER_OUTPUT <= PAR_INPUT(PAR_INPUT'high);
+      if (W mod SW > 0) then
+        SER_OUTPUT(SW - 1 downto W mod SW) <= (others => '0');
+        SER_OUTPUT(W mod SW - 1 downto 0)  <= PAR_INPUT(PAR_INPUT'high downto SW * (W / SW));
+      else
+        SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
+      end if;
     else
-      SER_OUTPUT <= sreg(sreg'high);
+      SER_OUTPUT <= sreg(sreg'high downto sreg'high - (SW - 1));
     end if;
 
   end process ASYNC_OUTPUT;

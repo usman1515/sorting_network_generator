@@ -1,4 +1,4 @@
-----------------------------------------------------------------------------------
+-------------------------------------------------------------------
 -- Author: Stephan Proß
 --
 -- Create Date: 03/08/2022 02:46:11 PM
@@ -21,7 +21,9 @@ library work;
 entity TEST_SORTER_X is
   generic (
     -- Bit-Width of input values.
-    W : integer := 8;
+    W  : integer := 8;
+    -- Length of subwords.
+    SW : integer := 1;
     -- Number of available BRAMs
     NUM_BRAM : integer := 4318
   );
@@ -40,24 +42,26 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 64;
-  constant DEPTH         : integer := 21;
-  constant POLY_BASE     : integer := 54654;
-  constant SEED_BASE     : integer := 88858;
+  constant N             : integer := 4;
+  constant DEPTH         : integer := 1;
+  constant POLY_BASE     : integer := 654;
+  constant SEED_BASE     : integer := 58;
+  constant ceilWSW       : integer := ((W + SW - 1) / SW);
 
-  signal e_delayed_i     : std_logic_vector(1 downto 0) := (others => '0');
+
+  signal e_delayed_i     : std_logic_vector(1 downto 0);
   -- Output of LFSRs
-  signal rand_data_i     : SLVArray(0 to N / W)(W - 1 downto 0) := (others => (others => '0'));
+  signal rand_data_i     : SLVArray(0 to N / ceilWSW)(W - 1 downto 0);
   -- Output of Round-Robin DMUXs
-  signal unsorted_data_i : SLVArray(0 to N - 1)(W - 1 downto 0) := (others => (others => '0'));
+  signal unsorted_data_i : SLVArray(0 to N - 1)(W - 1 downto 0);
   -- Output of Sorting Network
-  signal sorted_data_i   : SLVArray(0 to N - 1)(W - 1 downto 0) := (others => (others => '0'));
+  signal sorted_data_i   : SLVArray(0 to N - 1)(W - 1 downto 0);
   -- Since open outputs are disallowed...
   signal unused_i        : SLVArray(0 to W - 1 - N rem W)(W - 1 downto 0);
 
 begin
 
-  INPUT : for i in 0 to N / W - 1 generate
+  INPUT : for i in 0 to N / ceilWSW - 1 generate
 
     LFSR_1 : entity work.lfsr
       generic map (
@@ -70,26 +74,26 @@ begin
         E   => E,
         RST => RST,
         -- Same reason as with assignment of POLY.
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i ,W)),
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W ,W)),
         OUTPUT => rand_data_i(i)
       );
 
     RR_DMUX_NXW_REM : entity work.rr_dmux_nxw
       generic map (
         W => W,
-        N => W
+        N => ceilWSW
       )
       port map (
         CLK    => CLK,
         E      => E,
         RST    => RST,
         INPUT  => rand_data_i(i),
-        OUTPUT => unsorted_data_i(i*W to (i + 1)*W - 1)
+        OUTPUT => unsorted_data_i(i*ceilWSW to (i + 1)*ceilWSW - 1)
       );
 
   end generate INPUT;
 
-  INPUT_REM : if (N rem W /= 0) generate
+  INPUT_REM : if (N rem ceilWSW /= 0) generate
 
     LFSR_REM : entity work.lfsr
       generic map (
@@ -100,29 +104,28 @@ begin
         CLK    => CLK,
         E      => E,
         RST    => RST,
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W,W)),
-        OUTPUT => rand_data_i(N/W)
+        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W/W,W)),
+        OUTPUT => rand_data_i(N/ceilWSW)
       );
 
     RR_DMUX_NXW_REM : entity work.rr_dmux_nxw
       generic map (
         W => W,
-        N => W
+        N => N mod ceilWSW
       )
       port map (
         CLK                      => CLK,
         E                        => E,
         RST                      => RST,
-        INPUT                    => rand_data_i(N/W),
-        OUTPUT(0 to N rem W - 1) => unsorted_data_i((N/W)*W to N - 1),
-        OUTPUT(N rem W to W - 1) => unused_i(0 to W - 1 - N rem W)
+        INPUT                    => rand_data_i(N/ceilWSW),
+        OUTPUT => unsorted_data_i(N - N mod ceilWSW to N -1)
       );
 
   end generate INPUT_REM;
 
   ENABLEDELAY_1 : entity work.delay_timer
     generic map (
-      DELAY => W - 1
+      DELAY => ceilWSW - 1
     )
     port map (
       CLK       => CLK,
@@ -135,6 +138,7 @@ begin
   SORTER_1 : entity work.sorter
     generic map (
       W => W,
+      SW => SW,
       N => N,
       M => N,
       NUM_BRAM => NUM_BRAM
@@ -149,8 +153,7 @@ begin
 
   ENABLEDELAY_2 : entity work.delay_timer
     generic map (
-      -- Delay: serialization cost + network depth + store delay.
-      DELAY => W + DEPTH + 2
+      DELAY => ceilWSW + DEPTH + 2
     )
     port map (
       CLK       => CLK,

@@ -22,7 +22,7 @@ entity DESERIALIZER_SR is
     -- Number of values serialized in parallel.
     N : integer;
     -- Width of parallel input/ word.
-    W : integer := 8
+    W : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
   );

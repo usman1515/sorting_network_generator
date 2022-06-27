@@ -1,4 +1,4 @@
-----------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 -- Author: Stephan Proß
 --
 -- Create Date: 03/08/2022 02:46:11 PM
@@ -18,7 +18,9 @@ library IEEE;
 entity STORE_SHIFT_REGISTER is
   generic (
     -- Width of parallel input/ word.
-    W : integer := 8
+    W  : integer := 8;
+    -- Length of subwords to be output at a time.
+    SW : integer := 1
   );
   port (
     -- System Clock
@@ -30,7 +32,7 @@ entity STORE_SHIFT_REGISTER is
     -- Load signal
     STORE                   : in    std_logic;
     -- bit-serial input
-    SER_INPUT               : in    std_logic;
+    SER_INPUT               : in    std_logic_vector(SW - 1 downto 0);
     -- w-bit parallel output
     PAR_OUTPUT              : out   std_logic_vector(W - 1 downto 0)
   );
@@ -70,7 +72,7 @@ begin
         PAR_OUTPUT <= (others => '0');
       else
         if (E = '1') then
-          sreg <= sreg(sreg'high - 1 downto sreg'low) & SER_INPUT;
+          sreg <= sreg(sreg'high - SW downto sreg'low) & SER_INPUT;
         end if;
 
         if (store_i(store_i'high) = '1') then

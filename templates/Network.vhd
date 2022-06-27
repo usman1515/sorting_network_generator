@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Sorting Network Template
+-- Module Name: Sorting Network SW Template
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 --
@@ -19,13 +19,11 @@ entity {top_name} is
   generic (
     -- Bit-width of words
     W     : integer := {bit_width};
-    -- subword-width of serialization.
+   -- subword-width of serialization.
     SW     : integer := {subword_width};
-    -- Depth of network / number of stages.
-    DEPTH : integer := {net_depth};
-    -- Number of input words.
+   -- Number of input words.
     N     : integer := {num_inputs};
-    -- Number of sorted ouput words.
+   -- Number of sorted ouput words.
     M     : integer := {num_outputs}
   );
   port (
@@ -47,14 +45,15 @@ entity {top_name} is
 end entity {top_name};
 
 architecture BEHAVIORAL of {top_name} is
+   -- Depth of network / number of stages.
+   constant DEPTH : integer := {net_depth};
 
   {control_signal_definition}
 
   type wire_subtype_t is array (0 to DEPTH) of std_logic_vector(SW -1 downto 0);
   type wire_t is array (0 to N - 1) of wire_subtype_t;
   -- Wire grid with the dimensions of NxDepth
-  signal wire     : wire_t := (others => (others => '0'));
-
+  signal wire     : wire_t;
 
 begin
 

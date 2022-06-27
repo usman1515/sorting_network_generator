@@ -57,7 +57,7 @@ architecture BEHAVIORAL of STORE_SHIFT_REGISTER_BRAM is
   constant IN_WADDR_WIDTH                       : integer := integer(ceil(log2(real(W))));
 
   -- Width of the actual write address for BRAM.
-  constant WADDR_WIDTH                          : integer := integer(floor(log2(real(18 * 1024 / SW))));                 -- get_addr_width(W, 1);
+  constant WADDR_WIDTH                          : integer := integer(floor(log2(real(18 * 1024 / SW))))s.pross@stud.uni-heidelberg.de;                 -- get_addr_width(W, 1);
   signal   slv_waddr                            : std_logic_vector(WADDR_WIDTH - 1 downto 0);
 
   -- Read address for BRAM.
