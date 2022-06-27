@@ -234,16 +234,30 @@ class Interface:
     def pretty_print(self):
         layer = self.network.con_net
         for stage in layer:
-            print(" " + "--"*len(stage) + "")
+            print(" " + "--" * len(stage) + "")
             for i, pair in enumerate(stage):
                 if i < pair[1]:
                     end = pair[1]
                     if pair[0] == "F":
-                        print(" " + "| "*(i) + "=="*(end - i -1) + "=>" + "| "*(len(stage) - end) +" ")
+                        print(
+                            " "
+                            + "| " * (i)
+                            + "==" * (end - i - 1)
+                            + "=>"
+                            + "| " * (len(stage) - end)
+                            + " "
+                        )
                     elif pair[0] == "R":
-                        print(" " + "| "*(i) + "<="+ "=="*(end - i -1)  + "| "*(len(stage) - end) +" ")
+                        print(
+                            " "
+                            + "| " * (i)
+                            + "<="
+                            + "==" * (end - i - 1)
+                            + "| " * (len(stage) - end)
+                            + " "
+                        )
 
-    def show_ff_asign(self):
+    def show_ff_assign(self):
         layer = self.network.con_net
         groups = self.ffreplacements[0]
         line = "|"
@@ -265,6 +279,7 @@ class Interface:
                 else:
                     line += "  "
             print(line)
+
 
 # a = Interface()
 # a.test()
