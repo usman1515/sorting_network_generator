@@ -49,7 +49,7 @@ class Entity:
                 key = keys[i]
                 if key in genassign.keys():
                     a += "   {} => {}".format(key, genassign[key])
-                    if i + 1 < len(genassign):
+                    if i + 1 < len(self.generics):
                         a += ","
                 a += "\n"
             a += ")\n"
@@ -77,7 +77,7 @@ class Entity:
                 key = keys[i]
                 if key in genassign.keys():
                     a += "   {} => {}".format(key, genassign[key])
-                    if i + 1 < len(genassign):
+                    if i + 1 < len(self.generics):
                         a += ","
                 a += "\n"
             a += ")\n"

@@ -106,6 +106,8 @@ class Generator:
 
     def distribute_signals(self, network, sigdict=dict()):
         for name, max_fanout in sigdict.items():
+            if network.get_N() < max_fanout:
+                break
             network.add_layer(name)
             network.rows_per_signal.append(max_fanout)
             # We need to calculate the incurred delay by the

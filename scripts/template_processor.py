@@ -13,39 +13,40 @@ class Template_Processor:
   signal {}_i   : std_logic_vector(DEPTH downto 0) := (others => '0');\n
 """
         self.signal_dist = """
-  -- {0}DELAY------------------------------------------------------------------\n
-  -- Generates a shift register for delaying the {0} signal for each sorter\n
-  -- stage.\n
-  -------------------------------------------------------------------------------\n
-  {0}DELAY : process(CLK) is\n
-  begin\n
-\n
-    if (rising_edge(CLK)) then\n
-      if (RST = '1') then\n
-        {0}_i({0}_i'high downto {0}_i'low + 1) <= (others => '0');\n
-      else\n
-        {0}_i({0}_i'high downto {0}_i'low + 1) <= {0}_i({0}_i'high - 1 downto {0}_i'low);\n
-        end if;\n
-    end if;\n
-\n
-  end process {0}DELAY;\ņ
+  -- {0}DELAY------------------------------------------------------------------
+  -- Generates a shift register for delaying the {0} signal for each sorter
+  -- stage.
+  -------------------------------------------------------------------------------
+  {0}DELAY : process(CLK) is
+  begin
+
+    if (rising_edge(CLK)) then
+      if (RST = '1') then
+        {0}_i({0}_i'high downto {0}_i'low + 1) <= (others => '0');
+      else
+        {0}_i({0}_i'high downto {0}_i'low + 1) <= {0}_i({0}_i'high - 1 downto {0}_i'low);
+        end if;
+    end if;
+
+  end process {0}DELAY;
+  {0}_i(0) <= {0};
 """
         self.replic_def = """
-  type {0}_replicated_t is array (DEPTH downto 0) of std_logic_vector(0 to {1} -1);\n
-  signal {0}_i   : {0}_replicated_t := (others => (others => '0'));\n
+  type {0}_replicated_t is array (DEPTH downto 0) of std_logic_vector(0 to {1} -1);
+  signal {0}_i   : {0}_replicated_t := (others => (others => '0'));
 """
         self.replic_dist = """
-  {0}_DISTRIBUTOR_1: entity work.SIGNAL_DISTRIBUTOR\n
-    generic map (\n
-      NUM_SIGNALS => {1},\n
-      MAX_FANOUT  => {2})\n
-    port map (\n
-      CLK    => CLK,\n
-      RST    => RST,\n
-      E      => E,\n
-      SOURCE => {0},\n
-      REPLIC => {0}_i({3})\n
-      );\n
+  {0}_DISTRIBUTOR_1: entity work.SIGNAL_DISTRIBUTOR
+    generic map (
+      NUM_SIGNALS => {1},
+      MAX_FANOUT  => {2})
+    port map (
+      CLK    => CLK,
+      RST    => RST,
+      E      => E,
+      SOURCE => {0},
+      REPLIC => {0}_i({3})
+      );
 """
 
     def process_shift_registers(self, network, ff_replacements, replicated_signals):
@@ -297,7 +298,7 @@ class Template_Processor:
             control_signal_definition,
             control_signal_distribution,
         ) = self.__make_control_signals(network, signals, replicated_signals)
-
+        print(control_signal_definition, control_signal_distribution)
         instances = ""
 
         instances += self.__make_cs(network, cs, generics, ports, replicated_signals)
