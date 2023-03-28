@@ -48,21 +48,18 @@ class Report:
         for i in range(depth):
             for j in range(N):
                 # Each out of order value constitutes a cs.
-                if network[i][j][1] > j and network[i][j][0] in ("F", "R"):
+                if network[i][j] > j:
                     num_cs += 1
-                    distance_hist[network[i][j][1] - j] += 1
+                    distance_hist[network[i][j] - j] += 1
         for j in range(N):
             i = 0
             while i < depth:
                 # If flag at that point is "+" or "-", a FF is present at that point.
-                if network[i][j][0] in ["+", "-"]:
+                if network.ff_layers[0][i][j]:
                     bypass_beg = i
                     bypass_end = i
                     # How long does the FF-chain (shift register) go ?
-                    while bypass_end < depth and network[bypass_end][j][0] in [
-                        "+",
-                        "-",
-                    ]:
+                    while bypass_end < depth and network.ff_layers[0][bypass_end][j]:
                         bypass_end += 1
                     bypass_end = bypass_end - 1
                     num_ff += bypass_end - bypass_beg + 1
