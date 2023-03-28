@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
-from network_generators import OddEven, Network
+from scripts.network_generators import OddEven, Network
 
 
 def is_ff(value):
@@ -20,17 +20,15 @@ def in_bounds(nw, point):
 
 
 class FF_Replacement:
-    def __init__(self, entity, groups, sub_groups, sub_groups_sig, ff_per_entity):
+    def __init__(self, entity, groups, ff_per_entity):
         self.entity = entity
-        self.ff_per_entity = ff_per_entity
         self.groups = groups
-        self.sub_groups = sub_groups
-        self.sub_group_sig = sub_groups_sig
+        self.ff_per_entity = ff_per_entity
 
 
 class Resource_Allocator:
-    def allocate_ff_groups(self, network, max_ff_per_group):
-        pass
+    def allocate_ff_groups(self, network : Network, max_ff_per_group : int) -> list[list[tuple[int,int,int]]]:
+        return None
 
     def reallocate_ff(
         self, network, entity, max_entities, ff_per_entity, ff_per_entity_layer
@@ -39,10 +37,10 @@ class Resource_Allocator:
         ff_groups = ff_groups[:max_entities]
         for group in ff_groups:
             for point in group:
-                x, y = point
-                network[y][x] = False
+                x, y, z = point
+                network.ff_layers[z,y,x] = False
 
-        return FF_Replacement(entity, ff_groups, network.signame, ff_per_entity)
+        return FF_Replacement(entity, ff_groups, ff_per_entity)
 
 
 class Simple_Allocator(Resource_Allocator):
@@ -87,8 +85,23 @@ class Block_Allocator(Resource_Allocator):
         self.sub_groups = []
 
     def distribute_to_groups(self, network, rect, total_ff, num_groups):
-        """Takes a rectangle and a division index and attempts to distribute ffs
-        evenly between blocks respecting some degree of locality.
+        """Takes network and rectangle and attempts to distribute ffs
+        evenly into groups respecting some degree of locality.
+
+        Parameters:
+            network : Network
+                Network object containing 3d matrix ff_layers.
+            rect : tuple[tuple[int,int], tuple[int,int]]
+                Rectangle within the network with ff within to
+                be distributed
+            total_ff : int
+                Total number of FF to be distributed into groups.
+            num_groups : int
+                Number of groups to be created.
+         Returns:
+            groups : list[list[tuple[int,int,int]]]
+                List of groups themself consisting of a list of coordinate tuples.
+                Mirrored in the attribute groups.
         """
         a, b = rect
         start_x, start_y = a
@@ -106,7 +119,7 @@ class Block_Allocator(Resource_Allocator):
         group_index = 0
         num_layers = network.ff_layers.shape[0]
         print(network.ff_layers.shape)
-        if end_y - start_y < end_x - start_x:
+        if end_y - start_y > end_x - start_x:
             # Iterate other all points in rectangle.
             for y in range(start_y, end_y):
                 for x in range(start_x, end_x):
@@ -114,8 +127,7 @@ class Block_Allocator(Resource_Allocator):
                         # If we have a FF ...
                         for z in range(num_layers):
                             if network.ff_layers[z][y][x]:
-                                # ...add ff to group and delete flag.
-                                network.ff_layers[z][y][x] = False
+                                # ...add ff to group.
                                 groups[group_index].append((x, y, z))
                                 if len(groups[group_index]) >= target_nff[group_index]:
                                     # if the group is full increment index.
@@ -123,19 +135,19 @@ class Block_Allocator(Resource_Allocator):
 
         else:
             # Iterate other all points in rectangle.
-            for y in range(start_y, end_y):
-                for x in range(start_x, end_x):
+            for x in range(start_x, end_x):
+                for y in range(start_y, end_y):
                     if self.ff_matrix[y][x] > 0:
                         # If we have a FF ...
                         for z in range(num_layers):
                             if network.ff_layers[z][y][x]:
-                                # ...add ff to group and delete flag.
-                                network.ff_layers[z][y][x] = False
+                                # ...add ff to group.
                                 groups[group_index].append((x, y, z))
                                 if len(groups[group_index]) >= target_nff[group_index]:
                                     # if the group is full increment index.
                                     group_index += 1
         self.groups += groups
+        return groups
 
     def divide_block(self, network, rect, max_ff_per_group):
         """Recursively divides the rectangle on the long edge depending on
@@ -373,26 +385,25 @@ def print_layer(layer):
         print(line)
 
 
-def print_layer_with_ffgroups(layer, groups):
-    line = "|"
-    for i in range(len(layer[0])):
-        line += "{:<2}".format(i % 10)
-    line += "|"
-    print(line)
-    for i in range(len(layer)):
-        line = "|"
-        for j in range(len(layer[i])):
-            if is_ff(layer[i][j]):
-                elem = "+ "
-                for k in range(len(groups)):
-                    for point in groups[k]:
-                        if np.all(np.equal(np.asarray((j, i)), point)):
-                            elem = "{} ".format(k)
-                            break
+def print_layers_with_ffgroups(network, groups):
+    for z,layer in enumerate(network.ff_layers):
+        print("Layer {}: {}".format(z, network.layer_names[z]))
+        for y in range(len(layer)):
+            line = "|"
+            # Get the number of blanks required for the largest integer in
+            # string representation
+            len_blanks = len(str(len(groups)))
+            for x in range(len(layer[y])):
+                elem = " " + " "*len_blanks
+                if layer[y][x]:
+                    elem = "+" + " "*len_blanks
+                for i, group in enumerate(groups):
+                    if (x,y,z) in group:
+                        elem = " {:" + str(len_blanks) +"}"
+                        elem = elem.format(i)
                 line += elem
-            else:
-                line += "  "
-        print(line)
+            line += "|"
+            print(line)
 
 
 # Elpy shenanigans
@@ -404,7 +415,7 @@ if cond:
     # alloc = Simple_Allocator()
     alloc = Block_Allocator()
     nw = gen.create(16)
-    # nw = gen.distribute_signals(nw, {"START": 10})
+    nw = gen.distribute_signals(nw, {"START": 10})
     print("Network Top Level:")
     for i in range(len(nw.ff_layers)):
         print("Layer {}: {}".format(i, nw.layer_names[i]))
@@ -414,7 +425,7 @@ if cond:
     target_ff = 5
     groups = alloc.allocate_ff_groups(nw, target_ff)
     print(groups)
-    print_layer_with_ffgroups(nw.ff_layers[0], groups)
+    print_layers_with_ffgroups(nw, groups)
     # print("---------------------------")
     # for i, layer in enumerate(nw.ff_layers):
     #     print_layer_with_ffgroups(layer, sub_groups[i])
