@@ -188,9 +188,10 @@ class Generator:
                 if not isInOrder(i, perm)
             ]
         )
-
-        for i in range(len(network.ff_layers)):
-            network.ff_layers[i] = np.delete(network.ff_layers[i], range(N, old_N), 1)
+        num_layers = network.ff_layers.shape[0]
+        network.ff_layers = np.resize(network.ff_layers, (num_layers,network.get_depth(), N))
+        # for i in range(len(network.ff_layers)):
+        #     network.ff_layers[i] = np.delete(network.ff_layers[i], range(N, old_N), 1)
         return network
 
     def prune(self, network, new_output_set: set = set()):

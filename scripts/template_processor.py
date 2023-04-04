@@ -2,6 +2,7 @@
 import math
 from datetime import datetime
 from pathlib import Path
+import numpy as np
 from scripts.vhdl_container import *
 from scripts.network_generators import *
 from scripts.resource_allocator import FF_Replacement
@@ -49,54 +50,36 @@ class Template_Processor:
       );
 """
 
-    def __process_shift_registers(self, network, ff_replacements, replicated_signals):
+    def __process_shift_registers(
+        self,
+        network: Network,
+        ff_replacements: list[FF_Replacement],
+        replicated_signals,
+    ):
         num_layers = len(network.ff_layers)
         instances = ""
-
+        # Begin by applying the ff replacements to the template.
         for num_repl in range(len(ff_replacements)):
             repl = ff_replacements[num_repl]
-            print(repl.sub_groups)
 
             ports = {"CLK": "CLK", "E": "'1'", "RST": "RST"}
 
             # Create instances of CS elements forming the network.
-            for i in range(len(repl.groups)):
-                group = repl.groups[i]
-
-                specific = dict()
-                for j in range(len(group)):
-                    x, y = group[j]
-                    specific["REG_INPUT({})".format(j)] = "wire({})({})".format(x, y)
-                    specific["REG_OUTPUT({})".format(j)] = "wire({})({})".format(
-                        x, y + 1
+            for group in repl.groups:
+                # Implementation parameter dictionary.
+                impl = dict()
+                for i, point in enumerate(group):
+                    x, y, z = point
+                    impl["REG_INPUT({})".format(i)] = "wire({})({})({})".format(z, x, y)
+                    impl["REG_OUTPUT({})".format(i)] = "wire({})({})({})".format(
+                        z, x, y + 1
                     )
-                start_index = len(group)
-
-                for k in range(num_layers):
-                    sub_group = repl.sub_groups[k][i]
-                    signame = repl.sub_group_sig[k]
-                    replic_fanout = replicated_signals[signame][1]
-                    signame = "{}_i".format(signame)
-
-                    for j in range(len(sub_group)):
-                        x, y = sub_group[j]
-                        x = x // replic_fanout
-                        specific[
-                            "REG_INPUT({})".format(start_index + j)
-                        ] = "{}({})({})".format(signame, y, x)
-                        specific[
-                            "REG_OUTPUT({})".format(start_index + j)
-                        ] = "{}({})({})".format(signame, y + 1, x)
-                    start_index += len(sub_group)
-
                 generics = {
-                    "NUM_INPUT": start_index,
+                    "NUM_INPUT": len(group),
                 }
 
-                items = list(specific.items())
-                items.sort(key=lambda kv: kv[0])
-
-                items = list(ports.items()) + items
+                # VHDL does not allow assignment of vector indices out of order.
+                items = list(impl.items()) + list(ports.items())
 
                 a = "port map(\n"
 
@@ -111,46 +94,33 @@ class Template_Processor:
                 instances += repl.entity.as_instance_portmanual(
                     "FF_REPLACEMENT_{}_GRP{}".format(num_repl, i), generics, a
                 )
-        N = network.get_N()
-        depth = network.get_depth()
-        # Fill bypasses with delay elements.
-        bypasses = ""
-        for j in range(N):
+
+        # Proceed by handling FF not replaced by other means.
+        # Find chains of continouus FF to be turned into shift-registers.
+        sr_chain = ""
+        for j in range(network.get_N()):
             i = 0
-            while i < depth:
+            while i < network.get_depth():
                 # If flag at that point is True a FF is present at that point.
                 if network.ff_layers[0][i][j]:
-                    bypass_beg = i
-                    bypass_end = i
-                    # How long does the FF-chain (shift register) go ?
-                    while bypass_end < depth and network.ff_layers[0][bypass_end][j]:
-                        bypass_end += 1
-                    bypass_end = bypass_end - 1
-                    i = bypass_end
-
-                    bypasses += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
-                        row=j, end=bypass_end, beg=bypass_beg
+                    sr_chain_beg = i
+                    sr_chain_end = i
+                    # How long does the SR-chain go ?
+                    while (
+                        sr_chain_end < network.get_depth()
+                        and network.ff_layers[0][sr_chain_end][j]
+                    ):
+                        sr_chain_end += 1
+                    sr_chain_end = sr_chain_end - 1
+                    i = sr_chain_end
+                    sr_chain += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
+                        row=j, end=sr_chain_end, beg=sr_chain_beg
                     )
                 i += 1
-        # for k, layer in enumerate(network.ff_layers):
-        #     signame = network.signame[k]
-        #     signame = "{}_i".format(signame)
-        #     for i in range(depth):
-        #         for j in range(N):
-        #             if layer[i][j][0] == "+":
-        #                 bypass_beg = i
-        #                 bypass_end = i
-        #                 while bypass_end < depth and layer[bypass_end][j][0] == "+":
-        #                     layer[bypass_end][j] = ("-", j)
-        #                     bypass_end += 1
-        #                 # TODO Fix control signal shifting if not enough DSP are available.
-        #                 bypasses += "{signame}({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
-        #                     signame=signame, row=j, end=bypass_end, beg=bypass_beg
-        #                 )
-        # Enclose bypassed wires in synchronous process.
-        if bypasses:
+
+        if sr_chain:
             instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
-                bypasses
+                sr_chain
             )
 
         return instances
@@ -168,16 +138,16 @@ class Template_Processor:
                     # A CS is present, if the pair references a later index.
                     a = j
                     b = network[i][j]
-                    specific = dict()
-                    specific["A0"] = "wire({})({})".format(a, i)
-                    specific["B0"] = "wire({})({})".format(b, i)
-                    # We swap the outputs if sorting direction is not *F*orward
+                    impl = dict()
+                    impl["A0"] = "wire(0)({})({})".format(a, i)
+                    impl["B0"] = "wire(0)({})({})".format(b, i)
+                    # We swap the outputs if sorting direction (indicated by sign) is not forward
                     if network[i][j] > 0:
-                        specific["A1"] = "wire({})({})".format(a, i + 1)
-                        specific["B1"] = "wire({})({})".format(b, i + 1)
+                        impl["A1"] = "wire(0)({})({})".format(a, i + 1)
+                        impl["B1"] = "wire(0)({})({})".format(b, i + 1)
                     else:
-                        specific["A1"] = "wire({})({})".format(b, i + 1)
-                        specific["B1"] = "wire({})({})".format(a, i + 1)
+                        impl["A1"] = "wire(0)({})({})".format(b, i + 1)
+                        impl["B1"] = "wire(0)({})({})".format(a, i + 1)
 
                     # Assign control signals to CS, differentiating between
                     # replicated ones.
@@ -188,18 +158,18 @@ class Template_Processor:
                             ) // replicated_signals[signal][1]
                             # Replicated signals can be found in 2D signal
                             # arrays.
-                            specific[signal] = "{}_i({})({})".format(
+                            impl[signal] = "{}_i({})({})".format(
                                 signal, i, associated_replication
                             )
-                        elif signal not in (ports | specific).keys():
+                        elif signal not in (ports | impl).keys():
                             # Non replicated signals are present in simple
                             # std_logic_vectors.
-                            specific[signal] = "{}_i({})".format(signal, i)
+                            impl[signal] = "{}_i({})".format(signal, i)
                     # Fill out CS generics and ports and add it to instances.
                     instances += cs.as_instance(
                         "CS_D{}_A{}_B{}".format(i, a, b),
                         generics,
-                        ports | specific,
+                        ports | impl,
                     )
         return instances
 
@@ -250,7 +220,15 @@ class Template_Processor:
                 signal_dist += "{0}_i(0)(0) <= {0};\n".format(signal)
         return signal_def, signal_dist
 
-    def fill_main_file(self, template, cs, network, ff_replacements, W=8, SW=1):
+    def fill_main_file(
+        self,
+        template,
+        cs,
+        network,
+        ff_replacements: list[FF_Replacement] = [],
+        W=8,
+        SW=1,
+    ):
         """Takes kwargs and returns template object with generated network."""
 
         N = network.get_N()
@@ -274,11 +252,11 @@ class Template_Processor:
         max_replicated_delay = 0
         replicated_signals = dict()
 
-        for i in range(1, len(network.ff_layers)):
+        for i in range(1, network.ff_layers.shape[0]):
             # Ignore the first layer as its the FF layer tied to the CS elements.
             layer = network.ff_layers[i]
             # Each FF in the first stage correspond to a signal replication.
-            replic_count = sum([1 for ff in layer[-1] if ff])
+            replic_count = np.sum(layer[0]) or 1
             signal_name = network.layer_names[i]
 
             replic_fanout = network.rows_per_signal[i]
@@ -325,7 +303,6 @@ class Template_Processor:
             control_signal_definition,
             control_signal_distribution,
         ) = self.__make_control_signals(signals, replicated_signals)
-        print(control_signal_definition, control_signal_distribution)
         instances = ""
 
         instances += self.__make_cs(network, cs, generics, ports, replicated_signals)
@@ -336,7 +313,7 @@ class Template_Processor:
 
         # Add connections to serial input.
         for i in range(N):
-            connection = "wire({0})(0) <= SER_INPUT({0});\n".format(i)
+            connection = "wire(0)({0})(0) <= SER_INPUT({0});\n".format(i)
             instances = connection + instances
 
         # Add connections to serial output.
@@ -346,7 +323,7 @@ class Template_Processor:
             output_list.reverse()
         j = 0
         for i in range(num_outputs):
-            connection = "SER_OUTPUT({}) <= wire({})({});\n".format(
+            connection = "SER_OUTPUT({}) <= wire(0)({})({});\n".format(
                 j, output_list[i], depth
             )
             instances = instances + connection
@@ -355,6 +332,7 @@ class Template_Processor:
         tokens = {
             "top_name": top_name,
             "net_depth": depth,
+            "num_layers": len(network.ff_layers),
             "num_inputs": N,
             "num_outputs": num_outputs,
             "bit_width": bit_width,
@@ -369,33 +347,3 @@ class Template_Processor:
         template.tokens = tokens
         template.name = top_name
         return template
-
-
-# Elpy shenanigans
-cond = __name__ == "__main__"
-if cond:
-    from vhdl_parser import *
-
-    template = parse_template_vhdl(Path("../templates/Network_SW.vhd"))
-    cs = parse_entity_vhdl(Path("../src/CS/SubWordCS.vhd"))
-
-    gen = OddEven()
-    gen.create_connection_matrix(16)
-    gen.reduce_connection_matrix(10)
-
-    tempproc = Template_Processor()
-    template = tempproc.fill_main_file(template, cs, gen.nw)
-    print(template.as_template())
-
-    output_set = set()
-    output_set.add(0)
-    output_set.add(1)
-    output_set.add(2)
-    print(output_set)
-    network = gen.prune_connection_matrix(network, output_set.copy())
-    output_list = list(output_set)
-    output_list.sort()
-    print(output_list)
-    for layer in network:
-        print(layer)
-    print()
