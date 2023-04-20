@@ -27,8 +27,8 @@ entity LOAD_SHIFT_REGISTER is
     CLK_I    : in  std_logic;
     -- Synchonous Reset
     RST_I    : in  std_logic;
-    -- Enable
-    ENABLE_I : in  std_logic;
+    -- Run signal progressing serialization.
+    RUN_I : in  std_logic;
     -- Load signal
     LOAD_I   : in  std_logic;
     -- w-bit parallel input
@@ -55,17 +55,17 @@ begin
       if (RST_I = '1') then
         sreg <= (others => '0');
       else
-        if (ENABLE_I = '1') then
-          if (LOAD_I = '0') then
-            sreg(sreg'high downto sreg'low + SW) <= sreg(sreg'high - SW downto sreg'low);
+        if (LOAD_I = '1') then
+          if (W mod SW /= 0) then
+            sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
+              DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
           else
-            if (W mod SW /= 0) then
-              sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
-                DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
-            else
-              sreg(sreg'high downto sreg'low + SW) <=
-                DATA_I(DATA_I'high - SW downto DATA_I'low);
-            end if;
+            sreg(sreg'high downto sreg'low + SW) <=
+              DATA_I(DATA_I'high - SW downto DATA_I'low);
+          end if;
+        else
+          if (RUN_I = '1') then
+            sreg(sreg'high downto sreg'low + SW) <= sreg(sreg'high - SW downto sreg'low);
           end if;
         end if;
       end if;

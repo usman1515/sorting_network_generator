@@ -93,21 +93,20 @@ begin
       START_O  => start
       );
 
-  SERIALIZER : entity work.serializersw_sr
+  SERIALIZER: entity work.SERIALIZERSW_SR
     generic map (
       N  => N,
       W  => W,
-      SW => SW
-      )
+      SW => SW)
     port map (
-      CLK_I      => CLK_I,
-      RST_I      => RST_I,
-      ENABLE_I   => enable_feedback,
-      LOAD       => start_feedback,
-      DATA_I     => DATA_I,
-      SER_OUTPUT => stream_unsorted
-      );
-
+      CLK_I    => CLK_I,
+      RST_I    => RST_I,
+      ENABLE_I => enable_feedback,
+      START_I  => start_feedback,
+      VALID_I  => DATA_IN_VALID_I,
+      READY_O  => DATA_IN_READY_O,
+      DATA_I   => DATA_I,
+      STREAM_O => stream_unsorted);
 
   ODDEVEN_8X8_1 : entity work.ODDEVEN_8X8
     port map (
