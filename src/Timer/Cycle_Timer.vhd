@@ -12,47 +12,46 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 entity CYCLE_TIMER is
   generic (
     -- Width of input bits
-    W  : integer := 8;
+    W     : integer := 8;
     -- Length of subwords to be output at a time.
-    SW : integer := 1;
-    -- Delay after overflow until START is set to high.
-    DELAY: integer := 0
-  );
+    SW    : integer := 1
+    );
   port (
-    CLK     : in    std_logic;
-    RST     : in    std_logic;                -- Synchronous reset
-    E       : in    std_logic;                -- Enable signal, halts operation if unset
-    START   : out   std_logic                 -- Sorting start signal
-  );
+    CLK_I    : in  std_logic;
+    RST_I    : in  std_logic;   -- Synchronous reset
+    ENABLE_I : in  std_logic;   -- Enable signal, halts operation if unset
+    START_O  : out std_logic    -- Sorting start_O signal
+    );
 end entity CYCLE_TIMER;
 
 architecture BEHAVIORAL of CYCLE_TIMER is
-
+  -- limit = ceil(W/SW)
+  constant limit : integer := ((W + SW - 1) / SW);
   signal count : integer range 0 to ((W + SW - 1) / SW) - 1;
 
 begin
 
   -- COUNTER----------------------------------------------------------------------
-  -- Generic counter with reset and enable. Sets START at beginning.
+  -- Generic counter with reset and enable.
   --------------------------------------------------------------------------------
-  COUNTER : process (CLK) is
+  COUNTER : process (CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
         count <= 0;
       else
-        if (E = '1') then
-          if (count = ((W + SW - 1) / SW) - 1) then
-            count <= 0;
+        if (ENABLE_I = '1') then
+          if (count = 0) then
+            count <= limit - 1;
           else
-            count <= count + 1;
+            count <= count - 1;
           end if;
         end if;
       end if;
@@ -61,20 +60,20 @@ begin
   end process COUNTER;
 
   -- SETSTART---------------------------------------------------------------------
-  -- Asynchronous process setting start if counter is zero so long as the
+  -- Asynchronous process setting start_O if counter is zero so long as the
   -- counter is not reset and enabled.
   --------------------------------------------------------------------------------
-  SETSTART : process (count, RST, E) is
+  SETSTART : process (count, RST_I, ENABLE_I) is
   begin
 
-    if (RST = '0' and E = '1') then
-      if (count = DELAY) then
-        START <= '1';
+    if (RST_I = '0' and ENABLE_I = '1') then
+      if (count = 0) then
+        START_O <= '1';
       else
-        START <= '0';
+        START_O <= '0';
       end if;
     else
-      START <= '0';
+      START_O <= '0';
     end if;
 
   end process SETSTART;

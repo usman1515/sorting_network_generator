@@ -12,8 +12,8 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 entity STORE_SHIFT_REGISTER is
   generic (
@@ -21,21 +21,21 @@ entity STORE_SHIFT_REGISTER is
     W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
-  );
+    );
   port (
     -- System Clock
-    CLK                     : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Synchonous Reset
-    RST                     : in    std_logic;
+    RST_I    : in  std_logic;
     -- Enable
-    E                       : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Load signal
-    STORE                   : in    std_logic;
+    STORE_I  : in  std_logic;
     -- bit-serial input
-    SER_INPUT               : in    std_logic_vector(SW - 1 downto 0);
+    STREAM_I : in  std_logic_vector(SW - 1 downto 0);
     -- w-bit parallel output
-    PAR_OUTPUT              : out   std_logic_vector(W - 1 downto 0)
-  );
+    DATA_O   : out std_logic_vector(W - 1 downto 0)
+    );
 end entity STORE_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
@@ -43,40 +43,40 @@ architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
   -- Shift Register
   -- sreg must be two additional registers deep to keep timing in line with
   -- the BRAM variant.
-  signal sreg         : std_logic_vector(W + SW*2 - 1 downto 0);
-  -- Delayed store signal required for the same reason as above.
-  signal store_i      : std_logic_vector(2 - 1 downto 0);
+  signal sreg  : std_logic_vector(W + SW*2 - 1 downto 0);
+  -- Delayed store_I signal required for the same reason as above.
+  signal store : std_logic_vector(2 - 1 downto 0);
 
 begin
 
-  SET_LOAD_DELAYED : process (CLK) is
+  SET_LOAD_DELAYED : process (CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
-      store_i(0)                                   <= STORE;
-      store_i(store_i'high downto store_i'low + 1) <= store_i(store_i'high - 1 downto store_i'low);
+    if (rising_edge(CLK_I)) then
+      store(0)                               <= STORE_I;
+      store(store'high downto store'low + 1) <= store(store'high - 1 downto store'low);
     end if;
 
   end process SET_LOAD_DELAYED;
 
   -- SHIFT_STORE----------------------------------------------------------------
-  -- When enabled, shifts value from SER_INPUT into register and outputs
-  -- content of sreg when STORE is set.
+  -- When enabled, shifts value from STREAM_I into register and outputs
+  -- content of sreg when STORE_I is set.
   ------------------------------------------------------------------------------
-  SHIFT_STORE : process (CLK) is
+  SHIFT_STORE : process (CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
-        sreg       <= (others => '0');
-        PAR_OUTPUT <= (others => '0');
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
+        sreg   <= (others => '0');
+        DATA_O <= (others => '0');
       else
-        if (E = '1') then
-          sreg <= sreg(sreg'high - SW downto sreg'low) & SER_INPUT;
+        if (ENABLE_I = '1') then
+          sreg <= sreg(sreg'high - SW downto sreg'low) & STREAM_I;
         end if;
 
-        if (store_i(store_i'high) = '1') then
-          PAR_OUTPUT <= sreg(sreg'high downto sreg'high - (W - 1));
+        if (store(store'high) = '1') then
+          DATA_O <= sreg(sreg'high downto sreg'high - (W - 1));
         end if;
       end if;
     end if;

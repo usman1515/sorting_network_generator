@@ -11,35 +11,35 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 library work;
-  use work.CustomTypes.all;
+use work.CustomTypes.all;
 
 entity SERIALIZERSW_SR is
   generic (
     -- Number of values serialized in parallel.
-    N : integer;
+    N  : integer;
     -- Width of parallel input/ word.
-    W : integer := 8;
+    W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
-  );
+    );
   port (
     -- System Clock
-    CLK                   : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Synchonous Reset
-    RST                   : in    std_logic;
+    RST_I    : in  std_logic;
     -- Enable
-    E                     : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Load signal
-    LOAD                  : in    std_logic;
+    LOAD_I   : in  std_logic;
     -- w-bit parallel input
-    PAR_INPUT             : in    SLVArray(0 to N - 1)(W - 1 downto 0);
+    DATA_I   : in  SLVArray(0 to N - 1)(W - 1 downto 0);
     -- bit-serial output
-    SER_OUTPUT            : out   SLVArray(0 to N - 1)(SW - 1 downto 0)
-  );
+    STREAM_O : out SLVArray(0 to N - 1)(SW - 1 downto 0)
+    );
 end entity SERIALIZERSW_SR;
 
 architecture STRUCTURAL of SERIALIZERSW_SR is
@@ -48,19 +48,19 @@ begin
 
   LOADSHIFTREGISTERS : for i in 0 to N - 1 generate
 
-    LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register_sw
+    LOAD_SHIFT_REGISTER_1 : entity work.load_shift_register
       generic map (
-        W => W,
+        W  => W,
         SW => SW
-      )
+        )
       port map (
-        CLK        => CLK,
-        RST        => RST,
-        E          => E,
-        LOAD       => LOAD,
-        PAR_INPUT  => PAR_INPUT(i),
-        SER_OUTPUT => SER_OUTPUT(i)
-      );
+        CLK_I    => CLK_I,
+        RST_I    => RST_I,
+        ENABLE_I => ENABLE_I,
+        LOAD_I   => LOAD_I,
+        DATA_I   => DATA_I(i),
+        STREAM_O => STREAM_O(i)
+        );
 
   end generate LOADSHIFTREGISTERS;
 

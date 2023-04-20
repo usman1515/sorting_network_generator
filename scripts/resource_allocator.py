@@ -94,7 +94,7 @@ class Block_Allocator(Resource_Allocator):
                 if z == 0:
                     # First layer is the permutation layer of variable data
                     # width
-                    ff_at_point = network.signals["DATA"].bit_width
+                    ff_at_point = network.signals["STREAM"].bit_width
 
                 # Find the current number of FF assigned to the group.
                 cur_group_ff = sum([ff_r[1] - ff_r[0] for p, ff_r in groups[grp_i]])
@@ -230,7 +230,7 @@ class Block_Allocator(Resource_Allocator):
 
         self.groups = []
         self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
-        self.ff_matrix += network.ff_layers[0] * network.signals["DATA"].bit_width
+        self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
 
         # print(self.ff_matrix)
         N = network.get_N()

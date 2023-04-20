@@ -11,35 +11,35 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 library work;
-  use work.CustomTypes.all;
+use work.CustomTypes.all;
 
 entity DESERIALIZERSW_SR is
   generic (
     -- Number of values serialized in parallel.
-    N : integer;
+    N  : integer;
     -- Width of parallel input/ word.
-    W : integer := 8;
+    W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
-  );
+    );
   port (
     -- System Clock
-    CLK                     : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Synchonous Reset
-    RST                     : in    std_logic;
+    RST_I    : in  std_logic;
     -- Enable
-    E                       : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Store signal
-    STORE                   : in    std_logic;
+    STORE_I  : in  std_logic;
     -- sub word parallel or bit serial input
-    SER_INPUT               : in    SLVArray(0 to N - 1)(SW -1 downto 0);
+    STREAM_I : in  SLVArray(0 to N - 1)(SW -1 downto 0);
     -- w-bit parallel output
-    PAR_OUTPUT              : out   SLVArray(0 to N - 1)(W - 1 downto 0)
-  );
+    DATA_O   : out SLVArray(0 to N - 1)(W - 1 downto 0)
+    );
 end entity DESERIALIZERSW_SR;
 
 architecture STRUCTURAL of DESERIALIZERSW_SR is
@@ -48,19 +48,19 @@ begin
 
   STORESHIFTREGISTERS : for i in 0 to N - 1 generate
 
-    STORE_SHIFT_REGISTER_1 : entity work.store_shift_register_sw
+    STORE_SHIFT_REGISTER_1 : entity work.store_shift_register
       generic map (
-        W => W,
+        W  => W,
         SW => SW
         )
       port map (
-        CLK        => CLK,
-        RST        => RST,
-        E          => E,
-        STORE      => STORE,
-        SER_INPUT  => SER_INPUT(i),
-        PAR_OUTPUT => PAR_OUTPUT(i)
-      );
+        CLK_I    => CLK_I,
+        RST_I    => RST_I,
+        ENABLE_I => ENABLE_I,
+        STORE_I  => STORE_I,
+        STREAM_I => STREAM_I(i),
+        DATA_O   => DATA_O(i)
+        );
 
   end generate STORESHIFTREGISTERS;
 

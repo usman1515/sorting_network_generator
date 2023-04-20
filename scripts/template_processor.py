@@ -258,7 +258,6 @@ class VHDLTemplateProcessor:
             if signal.distribution == DistributionType.PER_STAGE:
                 x, y, z = source_point
                 x = x // signal.max_fanout
-                print(signal.name, point, source_point, x, y)
                 return "{s_name}_array({x})({y})".format(
                     s_name=signal.name.lower(), x=x, y=y
                 )
@@ -295,9 +294,9 @@ class VHDLTemplateProcessor:
   -- Generator scripts array is indexed using (z,y,x) = (Layer, Stage, N)
   -- but here perm_arr is indexed with (z,x,y) = (N,Stage,Subword) to allow
   -- compact shift register definition.
-  type data_array_t is array (0 to N-1) of SLVArray(0 to DEPTH-1)(SW-1 downto 0);
+  type stream_array_t is array (0 to N-1) of SLVArray(0 to DEPTH-1)(SW-1 downto 0);
   -- Wire grid with the dimensions of NxDepthxSubword
-  signal data_array     : data_array_t;
+  signal stream_array     : stream_array_t;
 
 """
         # return sdef.format_map(fmap)
@@ -309,7 +308,7 @@ class VHDLTemplateProcessor:
         """
         def_str = ""
         for signal in network.signals.values():
-            if signal.name == "DATA":
+            if signal.name == "STREAM":
                 # Data array creation is handled in another function.
                 continue
             if signal.distribution == DistributionType.GLOBAL:
@@ -350,10 +349,10 @@ class VHDLTemplateProcessor:
         # Handle data io from an to the permutation layer first
         inputs = "\n"
         for i in range(network.get_N()):
-            inputs += "data_array({n})(0) <= DATA_I({n});\n".format(n=i)
+            inputs += "stream_array({n})(0) <= STREAM_I({n});\n".format(n=i)
         outputs = "\n"
         for entry in network.output_set:
-            outputs += "DATA_O({m}) <= data_array({depth})({m});\n".format(
+            outputs += "STREAM_O({m}) <= stream_array({depth})({m});\n".format(
                 m=entry, depth=network.get_depth() - 1
             )
 
@@ -469,16 +468,16 @@ class VHDLTemplateProcessor:
         }
 
         ports = {}
-        ports["A_I"] = "data_array({})({})".format(x, y)
-        ports["B_I"] = "data_array({})({})".format(stage[x], y)
+        ports["A_I"] = "stream_array({})({})".format(x, y)
+        ports["B_I"] = "stream_array({})({})".format(stage[x], y)
 
         # Swap and Compare direction is indicated by the sign.
         if stage[x] > 0:
-            ports["A_O"] = "data_array({})({})".format(x, y + 1)
-            ports["B_O"] = "data_array({})({})".format(stage[x], y + 1)
+            ports["A_O"] = "stream_array({})({})".format(x, y + 1)
+            ports["B_O"] = "stream_array({})({})".format(stage[x], y + 1)
         else:
-            ports["A_O"] = "data_array({})({})".format(stage[x], y + 1)
-            ports["B_O"] = "data_array({})({})".format(x, y + 1)
+            ports["A_O"] = "stream_array({})({})".format(stage[x], y + 1)
+            ports["B_O"] = "stream_array({})({})".format(x, y + 1)
 
         # Start signal is usally replicated and distributed in another layer.
         # Assign each CS its appropriate source register for that signal.
@@ -527,7 +526,7 @@ class VHDLTemplateProcessor:
         self,
         network: Network,
         template: VHDLTemplate,
-        data_layer_ff: np.ndarray,
+        stream_layer_ff: np.ndarray,
         ff_replacements: list[FF_Replacement],
     ) -> np.ndarray:
         """Replaces points in the network which normally contain FF resources
@@ -569,12 +568,12 @@ class VHDLTemplateProcessor:
                         for i in range(start, end):
                             reg_ports_in[
                                 "REG_I({})".format(reg_index)
-                            ] = "data_array({x})({y})({i})".format(x=x, y=y, i=i)
+                            ] = "stream_array({x})({y})({i})".format(x=x, y=y, i=i)
                             reg_ports_out[
                                 "REG_O({})".format(reg_index)
-                            ] = "data_array({x})({y})({i})".format(x=x, y=y + 1, i=i)
-                        data_layer_ff[y][x] -= end - start
-                        if data_layer_ff[y][x] == 0:
+                            ] = "stream_array({x})({y})({i})".format(x=x, y=y + 1, i=i)
+                        stream_layer_ff[y][x] -= end - start
+                        if stream_layer_ff[y][x] == 0:
                             network.ff_layers[z, y, x] = False
                     else:
                         signal = None
@@ -634,12 +633,12 @@ class VHDLTemplateProcessor:
                 )
         self.writer.write_end_comment()
 
-        return data_layer_ff
+        return stream_layer_ff
 
     def __process_reg_chains(
         self,
         network: Network,
-        data_layer_ff: np.ndarray,
+        stream_layer_ff: np.ndarray,
         ff_chains: list[list[tuple[int, int, int]]],
     ):
         reg_assign = "{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
@@ -647,16 +646,16 @@ class VHDLTemplateProcessor:
 
         for z, group in enumerate(ff_chains):
             if z == 0:
-                sw = network.signals["DATA"].bit_width
+                sw = network.signals["STREAM"].bit_width
                 for x, start, end in group:
                     for y in range(start, end):
                         self.writer.write_incremental(
                             reg_assign_sw.format(
-                                signal_name="data",
+                                signal_name="stream",
                                 x=x,
                                 y_s=y,
                                 y_e=y + 1,
-                                sw_s=data_layer_ff[y][x] - 1,
+                                sw_s=stream_layer_ff[y][x] - 1,
                                 sw_e=sw - 1,
                             )
                         )
@@ -685,7 +684,7 @@ class VHDLTemplateProcessor:
     def __make_registers(
         self,
         network: Network,
-        data_layer_ff: np.ndarray,
+        stream_layer_ff: np.ndarray,
         entities: dict[str, VHDLEntity],
     ):
         self.writer.write_start_comment("Generated FF")
@@ -711,7 +710,7 @@ begin
                     elif start < end:
                         ff_chains[z].append((x, start, end))
                         start = end
-        self.__process_reg_chains(network, data_layer_ff, ff_chains)
+        self.__process_reg_chains(network, stream_layer_ff, ff_chains)
         self.writer.write_incremental("\nend process;\n")
         self.writer.write_end_comment()
 
@@ -726,13 +725,13 @@ begin
         # the only layer which contains potentially more than one FF.
         # Since the only information provided by the ff_layers is whether
         # any FF are present at a point, a new matrix has to be created.
-        data_layer_ff = np.zeros(network.ff_layers[0].shape, dtype=int)
-        data_layer_ff = network.signals["DATA"].bit_width * network.ff_layers[0]
+        stream_layer_ff = np.zeros(network.ff_layers[0].shape, dtype=int)
+        stream_layer_ff = network.signals["STREAM"].bit_width * network.ff_layers[0]
         if "ff_replacements" in kwargs:
-            data_layer_ff = self.__instantiate_ff_replacements(
-                network, template, data_layer_ff, kwargs["ff_replacements"]
+            stream_layer_ff = self.__instantiate_ff_replacements(
+                network, template, stream_layer_ff, kwargs["ff_replacements"]
             )
-        self.__make_registers(network, data_layer_ff, entities)
+        self.__make_registers(network, stream_layer_ff, entities)
 
     def process_template(
         self,
@@ -752,7 +751,7 @@ begin
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))
         tokens["word_width"] = str(kwargs.get("W")) or str(8)
-        tokens["subword_width"] = str(network.signals["DATA"].bit_width)
+        tokens["subword_width"] = str(network.signals["STREAM"].bit_width)
 
         for signal in network.signals.values():
             tokens["num_" + signal.name.lower()] = str(signal.num_replications)

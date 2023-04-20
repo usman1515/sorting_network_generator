@@ -26,7 +26,7 @@ entity {top_name} is
     -- Start signal marking the beginning of a new word.
     START_I          : in    std_logic;
     -- Serial input of the N input words.
-    DATA_I           : in    SLVArray(0 to {num_inputs} - 1)({subword_width} - 1 downto 0);
+    STREAM_I         : in    SLVArray(0 to {num_inputs} - 1)({subword_width} - 1 downto 0);
     -- Start output, marking the end of sorting N words.
     START_O          : out   std_logic_vector(0 to {num_start}-1);
     -- Feedback signal to indicate replication delay for START.
@@ -36,7 +36,7 @@ entity {top_name} is
     -- Feedback signal to indicate replication delay for ENABLE.
     ENABLE_FEEDBACK_O: out   std_logic;
     -- Serial output of the M output words.
-    DATA_O           : out   SLVArray(0 to {num_outputs} - 1)({subword_width} - 1 downto 0)
+    STREAM_O         : out   SLVArray(0 to {num_outputs} - 1)({subword_width} - 1 downto 0)
   );
 end entity {top_name};
 
@@ -47,8 +47,6 @@ architecture BEHAVIORAL of {top_name} is
   constant DEPTH      : integer := {net_depth};
   -- Number of sorted ouput words.
   constant M          : integer := {num_outputs};
-   -- Width of words in bits
-  constant W          : integer := {word_width};
   -- subword-width of serialization.
   constant SW         : integer := {subword_width};
 

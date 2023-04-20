@@ -60,8 +60,8 @@ class Network:
         self.output_set = set(range(0, N))
         # Add the first layer containing delay FF
         self.ff_layers = np.ones([1, depth, N], dtype=np.bool_)
-        self.signals["DATA"] = NetworkSignal(
-            name="DATA",
+        self.signals["STREAM"] = NetworkSignal(
+            name="STREAM",
             layer_index=0,
             distribution=DistributionType.ONE_TO_ONE,
             bit_width=SW,
@@ -235,8 +235,6 @@ class Generator:
         if not index:
             index = network.add_layer(signal_name)
 
-        print(signal_name, max_fanout)
-        print(network.signals[signal_name])
         # We need to calculate the incurred delay by the
         # signal distributor
         num_sig = math.ceil(network.get_N() / max_fanout)

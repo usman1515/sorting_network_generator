@@ -12,8 +12,8 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 entity LOAD_SHIFT_REGISTER is
   generic (
@@ -21,50 +21,50 @@ entity LOAD_SHIFT_REGISTER is
     W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
-  );
+    );
   port (
     -- System Clock
-    CLK                   : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Synchonous Reset
-    RST                   : in    std_logic;
+    RST_I    : in  std_logic;
     -- Enable
-    E                     : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Load signal
-    LOAD                  : in    std_logic;
+    LOAD_I   : in  std_logic;
     -- w-bit parallel input
-    PAR_INPUT             : in    std_logic_vector(W - 1 downto 0);
+    DATA_I   : in  std_logic_vector(W - 1 downto 0);
     -- subword parallel to bit-serial output
-    SER_OUTPUT            : out   std_logic_vector(SW - 1 downto 0)
-  );
+    STREAM_O : out std_logic_vector(SW - 1 downto 0)
+    );
 end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0'); --( SW * (W / SW) - 1 downto 0); -- Shift register.
+  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0');  --( SW * (W / SW) - 1 downto 0); -- Shift register.
 
 begin
 
   -- SHIFT-CONTENT----------------------------------------------------------------
-  -- Synchronously loads value from PAR_INPUT into sreg or shifts out content of
+  -- Synchronously loads value from DATA_I into sreg or shifts out content of
   -- sreg to the left.
   --------------------------------------------------------------------------------
-  SHIFT_CONTENT : process (CLK) is
+  SHIFT_CONTENT : process (CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
         sreg <= (others => '0');
       else
-        if (E = '1') then
-          if (LOAD = '0') then
+        if (ENABLE_I = '1') then
+          if (LOAD_I = '0') then
             sreg(sreg'high downto sreg'low + SW) <= sreg(sreg'high - SW downto sreg'low);
           else
             if (W mod SW /= 0) then
               sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
-                PAR_INPUT(PAR_INPUT'high - (W mod SW)  downto PAR_INPUT'low);
+                DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
             else
               sreg(sreg'high downto sreg'low + SW) <=
-                PAR_INPUT(PAR_INPUT'high - SW downto PAR_INPUT'low);
+                DATA_I(DATA_I'high - SW downto DATA_I'low);
             end if;
           end if;
         end if;
@@ -74,21 +74,21 @@ begin
   end process SHIFT_CONTENT;
 
   -- ASYNC_OUTPUT---------------------------------------------------------------
-  -- Asynchronously outputs either the MSB of sreg or the MSB of PAR_INPUT
-  -- depeding on LOAD.
+  -- Asynchronously outputs either the MSB of sreg or the MSB of DATA_I
+  -- depeding on LOAD_I.
   -----------------------------------------------------------------------------
-  ASYNC_OUTPUT : process (LOAD, sreg, PAR_INPUT) is
+  ASYNC_OUTPUT : process (LOAD_I, sreg, DATA_I) is
   begin
 
-    if (LOAD = '1') then
+    if (LOAD_I = '1') then
       if (W mod SW > 0) then
-        SER_OUTPUT(SW - 1 downto W mod SW) <= (others => '0');
-        SER_OUTPUT(W mod SW - 1 downto 0)  <= PAR_INPUT(PAR_INPUT'high downto SW * (W / SW));
+        STREAM_O(SW - 1 downto W mod SW) <= (others => '0');
+        STREAM_O(W mod SW - 1 downto 0)  <= DATA_I(DATA_I'high downto SW * (W / SW));
       else
-        SER_OUTPUT <= PAR_INPUT(W - 1 downto W - SW);
+        STREAM_O <= DATA_I(W - 1 downto W - SW);
       end if;
     else
-      SER_OUTPUT <= sreg(sreg'high downto sreg'high - (SW - 1));
+      STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
     end if;
 
   end process ASYNC_OUTPUT;
