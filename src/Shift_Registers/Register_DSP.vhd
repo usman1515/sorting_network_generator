@@ -24,28 +24,28 @@ library UNIMACRO;
 entity REGISTER_DSP is
   generic (
     -- Number of registers used
-    NUM_INPUT : integer := 48;
+    NUM_INPUTS     : integer := 48;
     -- Number of registers per input
-    REG_PER_INPUT : integer := 1
+    REG_PER_INPUT  : integer := 1
   );
   port (
     -- System Clock
-    CLK        : in    std_logic;
+    CLK_I    : in    std_logic;
     -- Reset
-    RST        : in    std_logic;
+    RST_I    : in    std_logic;
     -- Enable
-    E          : in    std_logic;
+    ENABLE_I : in    std_logic;
     -- bit serial input
-    REG_INPUT  : in    std_logic_vector(NUM_INPUT - 1 downto 0);
+    REG_I    : in    std_logic_vector(NUM_INPUT - 1 downto 0);
     -- bit-serial output
-    REG_OUTPUT : out   std_logic_vector(NUM_INPUT - 1 downto 0)
+    REG_O    : out   std_logic_vector(NUM_INPUT - 1 downto 0)
   );
 end entity REGISTER_DSP;
 
 architecture BEHAVIORAL of REGISTER_DSP is
 
-  signal open_carryout : std_logic;
-  constant zero_b        : std_logic_vector(NUM_INPUT - 1 downto 0) := (others => '0');
+  signal   open_carryout : std_logic;
+  constant ZERO_B        : std_logic_vector(NUM_INPUT - 1 downto 0) := (others => '0');
 
 begin
 
@@ -66,21 +66,21 @@ begin
       -- 1-bit carry-out output signal
       CARRYOUT => open_carryout,
       -- Add/sub result output, width defined by WIDTH generic
-      RESULT => REG_OUTPUT,
+      RESULT => REG_O,
       -- Input A bus, width defined by WIDTH generic
-      A => REG_INPUT,
+      A => REG_I,
       -- 1-bit add/sub input, high selects add, low selects subtract
       ADD_SUB => '1',
       -- Input B bus, width defined by WIDTH generic
-      B => zero_b,
+      B => ZERO_B,
       -- 1-bit carry-in input
       CARRYIN => '0',
       -- 1-bit clock enable input
       CE => '1',
       -- 1-bit clock input
-      CLK => CLK,
+      CLK_I => CLK_I,
       -- 1-bit active high synchronous reset
-      RST => RST
+      RST_I => RST_I
     );
 
   -- End of ADDSUB_MACRO_inst instantiation

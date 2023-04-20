@@ -44,16 +44,16 @@ class VHDLEntity:
         a += "end component {};".format(self.name)
         return a
 
-    def as_instance(self, instance_name="", generics=dict(), ports=dict()):
+    def as_instance(self, instance_name="", genassign=dict(), portassign=dict()):
         a = "{} : entity work.{}\n".format(instance_name, self.name)
 
-        if bool(self.generics) and bool(generics):
+        if bool(self.generics) and bool(genassign):
             a += "generic map(\n"
             keys = list(self.generics.keys())
             for i in range(0, len(self.generics)):
                 key = keys[i]
-                if key in generics.keys():
-                    a += "   {} => {}".format(key, generics[key])
+                if key in genassign.keys():
+                    a += "   {} => {}".format(key, genassign[key])
                     if i + 1 < len(self.generics):
                         a += ","
                 a += "\n"
@@ -63,7 +63,7 @@ class VHDLEntity:
             keys = list(self.ports.keys())
             for i in range(0, len(self.ports)):
                 key = keys[i]
-                a += "   {} => {}".format(key, ports[key])
+                a += "   {} => {}".format(key, portassign[key])
                 if i + 1 < len(self.ports):
                     a += ","
                 a += "\n"
@@ -86,7 +86,7 @@ class VHDLEntity:
             inst += "generic map(\n"
             for i, key in enumerate(generics.keys()):
                 inst += "   {} => {}".format(key, generics[key])
-                if i + 1 < len(self.generics):
+                if i + 1 < len(generics):
                     inst += ","
                 inst += "\n"
             inst += ")\n"
@@ -94,7 +94,7 @@ class VHDLEntity:
             inst += "port map(\n"
             for i, key in enumerate(ports.keys()):
                 inst += "   {} => {}".format(key, ports[key])
-                if i + 1 < len(self.ports):
+                if i + 1 < len(ports):
                     inst += ","
                 inst += "\n"
             inst += ");\n"
@@ -108,19 +108,19 @@ class VHDLTemplate(VHDLEntity):
     def __init__(
         self,
         name: str,
-        template_file: str,
+        template_string: str,
         generics: dict[str, str] = {},
         ports: dict[str, str] = {},
         tokens: dict[str, str] = {},
     ):
         super().__init__(name, generics, ports)
-        self.template_file = template_file
+        self.template_string = template_string
         self.tokens = tokens
 
     def as_template(self):
         # for key, value in self.tokens.items():
         #     print(key, value)
-        return self.template_file.format_map(self.tokens)
+        return self.template_string.format_map(self.tokens)
 
 
 def parseVHDLEntity(path=Path()):
@@ -191,9 +191,14 @@ def parseVHDLTemplate(path=Path()):
     # Create dictionary of tokens replaceable by string.format
     tokens = dict()
     for token in regex.findall(r"\{(.*?)\}", content, regex.S | regex.M):
-        tokens[token] = ""
+        tokens[token] = "{" + token + "}"
     # VHDLTemplates are normal vhdl Entities without the tokens.
     entity = parseVHDLEntity(path)
     if entity:
         return VHDLTemplate(entity.name, content, entity.ports, entity.generics, tokens)
     return None
+
+
+cond = __name__ == "__main__"
+if cond:
+    print(parseVHDLTemplate("../templates/Network.vhd").tokens)

@@ -92,7 +92,7 @@ begin
       SER_OUTPUT => ser_unsorted_i
     );
 
-  SORTING_NETWORK_1 : entity work.oddeven_4_to_4_max
+  SORTING_NETWORK_1 : entity work.oddeven_8X8
     generic map (
       -- Bit-width of words
       W => W

@@ -16,60 +16,46 @@ library work;
   use work.CustomTypes.all;
 
 entity {top_name} is
-  generic (
-    -- Bit-width of words
-    W     : integer := {bit_width};
-   -- subword-width of serialization.
-    SW     : integer := {subword_width};
-   -- Number of input words.
-    N     : integer := {num_inputs};
-   -- Number of sorted ouput words.
-    M     : integer := {num_outputs}
-  );
   port (
     -- System clock
-    CLK           : in    std_logic;
+    CLK_I            : in    std_logic;
     -- Synchronous reset.
-    RST           : in    std_logic;
+    RST_I            : in    std_logic;
     -- Enable Signal
-    E             : in    std_logic;
+    ENABLE_I         : in    std_logic;
     -- Start signal marking the beginning of a new word.
-    START         : in    std_logic;
+    START_I          : in    std_logic;
     -- Serial input of the N input words.
-    SER_INPUT     : in    SLVArray(0 to N - 1)(SW - 1 downto 0);
-    -- Done signal, marking the end of sorting N words.
-    DONE          : out   std_logic;
+    DATA_I           : in    SLVArray(0 to {num_inputs} - 1)({subword_width} - 1 downto 0);
+    -- Start output, marking the end of sorting N words.
+    START_O          : out   std_logic_vector(0 to {num_start}-1);
+    -- Feedback signal to indicate replication delay for START.
+    START_FEEDBACK_O : out   std_logic;
+    -- Enable output to indicate whether data output is valid
+    ENABLE_O         : out   std_logic_vector(0 to {num_enable}-1);
+    -- Feedback signal to indicate replication delay for ENABLE.
+    ENABLE_FEEDBACK_O: out   std_logic;
     -- Serial output of the M output words.
-    SER_OUTPUT    : out   SLVArray(0 to M - 1)(SW - 1 downto 0)
+    DATA_O           : out   SLVArray(0 to {num_outputs} - 1)({subword_width} - 1 downto 0)
   );
 end entity {top_name};
 
 architecture BEHAVIORAL of {top_name} is
-   -- Depth of network / number of stages.
-   constant DEPTH : integer := {net_depth};
+  -- Number of input words.
+  constant N          : integer := {num_inputs};
+  -- Depth of network / number of stages.
+  constant DEPTH      : integer := {net_depth};
+  -- Number of sorted ouput words.
+  constant M          : integer := {num_outputs};
+   -- Width of words in bits
+  constant W          : integer := {word_width};
+  -- subword-width of serialization.
+  constant SW         : integer := {subword_width};
 
-  {control_signal_definition}
-
-  type wire_subtype_t is array (0 to DEPTH) of std_logic_vector(SW -1 downto 0);
-  type wire_t is array (0 to N - 1) of wire_subtype_t;
-  -- Wire grid with the dimensions of NxDepth
-  signal wire     : wire_t;
+{signal_definitions}
 
 begin
 
-  SHIFT_REGISTER_DONE: entity work.SHIFT_REGISTER
-    generic map (
-      W => W + DEPTH)
-    port map (
-      CLK        => CLK,
-      RST        => RST,
-      E          => E,
-      SER_INPUT  => START,
-      SER_OUTPUT => DONE);
-
-  {control_signal_distribution}
-
-
-  {instances}
+{body}
 
 end architecture BEHAVIORAL;

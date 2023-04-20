@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+
 from scripts.network_generators import OddEven, Network
+from scripts.vhdl import VHDLEntity
 
 
 def is_ff(value):
@@ -11,7 +15,7 @@ def is_ff(value):
     return value
 
 
-def in_bounds(nw, point):
+def is_inbounds(nw, point):
     x, y = point
     if 0 <= y and y < nw.get_depth():
         if 0 <= x and x < nw.get_N():
@@ -19,80 +23,92 @@ def in_bounds(nw, point):
     return False
 
 
+@dataclass
+class FF_Assignment:
+    point: tuple[int, int, int]
+    ff_range: tuple[int, int]
+
+
+@dataclass
 class FF_Replacement:
-    def __init__(self, entity, groups, ff_per_entity):
-        self.entity = entity
-        self.groups = groups
-        self.ff_per_entity = ff_per_entity
+    entity: VHDLEntity
+    ff_per_entity: int
+    groups: list[list[FF_Assignment]]
 
 
-class Resource_Allocator:
+class Resource_Allocator(ABC):
+    @abstractmethod
     def allocate_ff_groups(
         self, network: Network, max_ff_per_group: int, max_entities: int
-    ) -> list[list[tuple[int, int, int]]]:
-        return []
+    ) -> list[list[FF_Assignment]]:
+        pass
 
-    def reallocate_ff(
-        self, network, entity, max_entities, ff_per_entity, ff_per_entity_layer
-    ):
+    def reallocate_ff(self, network, entity, max_entities, ff_per_entity):
         ff_groups = self.allocate_ff_groups(network, ff_per_entity, max_entities)
-        for group in ff_groups:
-            for point in group:
-                x, y, z = point
-                network.ff_layers[z, y, x] = False
-
-        return FF_Replacement(entity, ff_groups, ff_per_entity)
+        return FF_Replacement(entity, ff_per_entity, ff_groups)
 
 
-class Simple_Allocator(Resource_Allocator):
-    def allocate_row(self, network, start_point, num_ff):
-        ff = 0
-        ff_points = []
+# class Simple_Allocator(Resource_Allocator):
+#     def allocate_row(self, network, start_point, num_ff):
+#         ff = 0
+#         ff_points = []
 
-        N = network.get_N()
-        depth = network.get_depth()
-        x, y = start_point
-        i = x + y * N
-        while i < N * depth:
-            x = i % N
-            y = i // N
-            if is_ff(network.at((x, y))):
-                ff_points.append((x, y))
-                ff += 1
-                if ff >= num_ff:
-                    break
-            i += 1
-        return ff_points, np.asarray(((i + 1) % N, (i + 1) // N))
+#         N = network.get_N()
+#         depth = network.get_depth()
+#         x, y = start_point
+#         i = x + y * N
+#         while i < N * depth:
+#             x = i % N
+#             y = i // N
+#             if is_ff(network.at((x, y))):
+#                 ff_points.append((x, y))
+#                 ff += 1
+#                 if ff >= num_ff:
+#                     break
+#             i += 1
+#         return ff_points, np.asarray(((i + 1) % N, (i + 1) // N))
 
-    def allocate_ff_groups(self, network, max_ff_per_group, max_entities):
-        ff_groups = []
-        next_start = np.array(2, 0)
-        while in_bounds(network, next_start):
-            ff_points, next_start = self.allocate_row(
-                network, next_start, max_ff_per_group
-            )
-            ff_groups.append(ff_points)
-        return ff_groups
+#     def allocate_ff_groups(self, network, max_ff_per_group, max_entities):
+#         ff_groups = []
+#         next_start = np.array(2, 0)
+#         while is_inbounds(network, next_start):
+#             ff_points, next_start = self.allocate_row(
+#                 network, next_start, max_ff_per_group
+#             )
+#             ff_groups.append(ff_points)
+#         return ff_groups
 
 
 class Block_Allocator(Resource_Allocator):
     def __init__(self):
         self.ff_matrix = None
-        self.groups = []
-        self.sub_groups = []
+        self.groups: list[list[FF_Assignment]] = []
 
-    def __add_ff_to_group(self, network, groups, target_nff, group_index, x, y):
-        num_layers = network.ff_layers.shape[0]
-        if self.ff_matrix[y][x] > 0:
-            for z in range(num_layers):
-                # If we have a FF ...
-                if network.ff_layers[z][y][x]:
-                    # ...add that ff to group.
-                    groups[group_index].append((x, y, z))
-                    if len(groups[group_index]) >= target_nff[group_index]:
-                        # if the group is full increment index.
-                        group_index += 1
-        return group_index
+    def __add_ff_to_group(self, network, groups, grp_i, target_nff, x, y):
+        for z in range(network.ff_layers.shape[0]):
+            point = (x, y, z)
+            ff_start = 0
+            ff_end = 0
+            while ff_end < network.ff_layers[z, y, x]:
+                ff_at_point = 1
+                if z == 0:
+                    # First layer is the permutation layer of variable data
+                    # width
+                    ff_at_point = network.signals["DATA"].bit_width
+
+                # Find the current number of FF assigned to the group.
+                cur_group_ff = sum([ff_r[1] - ff_r[0] for p, ff_r in groups[grp_i]])
+                # The new endpoint of the range is either the full amount of FF
+                # at that point or at least all FF that still fit into the group.
+                # Since we need the old value of ff_end, make a copy.
+                ff_end_prev = ff_end
+                ff_end = min(ff_at_point, target_nff[grp_i] - cur_group_ff)
+                groups[grp_i].append((point, (ff_start, ff_end)))
+                ff_start = ff_end_prev
+                if cur_group_ff + ff_end >= target_nff[grp_i]:
+                    # if the group is full increment grp_i.
+                    grp_i += 1
+        return grp_i
 
     def distribute_to_groups(self, network, rect, total_ff, max_ff_per_group):
         """Takes network and rectangle and attempts to distribute ffs
@@ -113,33 +129,32 @@ class Block_Allocator(Resource_Allocator):
                 List of groups themself consisting of a list of coordinate tuples.
                 Mirrored in the attribute groups.
         """
-        a, b = rect
-        start_x, start_y = a
-        end_x, end_y = b
+        start_x, start_y = rect[0]
+        end_x, end_y = rect[1]
         num_groups = math.ceil(total_ff / max_ff_per_group)
-        groups = [[] for i in range(num_groups)]
 
         # Number of ff for each group
         target_nff = [total_ff // (num_groups) for i in range(num_groups)]
+        groups = [[] for i in range(num_groups)]
+        index = 0
         # Distribute remainder among groups
         for i in range(total_ff % num_groups):
             target_nff[i] += 1
 
-        group_index = 0
         if end_y - start_y < end_x - start_x:
             for y in range(start_y, end_y):
                 for x in range(start_x, end_x):
-                    group_index = self.__add_ff_to_group(
-                        network, groups, target_nff, group_index, x, y
+                    index = self.__add_ff_to_group(
+                        network, groups, index, target_nff, x, y
                     )
         else:
             for x in range(start_x, end_x):
                 for y in range(start_y, end_y):
-                    group_index = self.__add_ff_to_group(
-                        network, groups, target_nff, group_index, x, y
+                    index = self.__add_ff_to_group(
+                        network, groups, index, target_nff, x, y
                     )
         self.groups += groups
-        return groups
+        return self.groups
 
     def divide_block(self, network, rect, max_ff_per_group, max_entities):
         """Recursively divides the rectangle on the long edge depending on
@@ -203,7 +218,7 @@ class Block_Allocator(Resource_Allocator):
 
     def allocate_ff_groups(
         self, network: Network, num_ff_per_group: int, max_entities: int
-    ) -> list[list[tuple[int]]]:
+    ) -> list[list[FF_Assignment]]:
         """Allocate FF present in the entire network (delay and replicated
         signals) to groups later replaced by other means.
         Parameters: network : Network object
@@ -214,12 +229,16 @@ class Block_Allocator(Resource_Allocator):
         """
 
         self.groups = []
-        self.ff_matrix = np.sum(network.ff_layers, axis=0, dtype=np.int32)
+        self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
+        self.ff_matrix += network.ff_layers[0] * network.signals["DATA"].bit_width
+
         # print(self.ff_matrix)
         N = network.get_N()
         depth = network.get_depth()
 
         self.divide_block(network, ((0, 0), (N, depth)), num_ff_per_group, max_entities)
+        if len(self.groups) > max_entities:
+            self.groups = self.groups[:max_entities]
         # print(self.groups)
         # self.allocate_control_ff(network)
         # print(self.sub_groups)
@@ -244,7 +263,7 @@ def get_distscore_rect(nw, rect):
     max_y = start_y
     for y in range(start_y, end_y + 1):
         for x in range(start_x, end_x + 1):
-            if in_bounds(nw, (x, y)) and is_ff((x, y)):
+            if is_inbounds(nw, (x, y)) and is_ff((x, y)):
                 if x < min_x:
                     min_x = x
                 if x > max_x:
@@ -319,7 +338,7 @@ def print_layer(layer):
 
 def print_layers_with_ffgroups(network, groups):
     for z, layer in enumerate(network.ff_layers):
-        print("Layer {}: {}".format(z, network.layer_names[z]))
+        print("Layer {}: {}".format(z, network.layer_attr[z].signal_name))
         for y in range(len(layer)):
             line = "|"
             # Get the number of blanks required for the largest integer in

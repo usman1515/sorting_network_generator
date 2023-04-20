@@ -1,349 +1,772 @@
 #!/usr/bin/env python3
-import math
 from datetime import datetime
 from pathlib import Path
 import numpy as np
-from scripts.vhdl_container import *
-from scripts.network_generators import *
-from scripts.resource_allocator import FF_Replacement
+import math
+
+from scripts.vhdl import VHDLEntity, VHDLTemplate, parseVHDLEntity
+from scripts.network_generators import Network, NetworkSignal, DistributionType
+from scripts.resource_allocator import FF_Replacement, FF_Assignment
 
 
-class Template_Processor:
-    def __init__(self):
-        self.signal_def = """
-  signal {}_i   : std_logic_vector(DEPTH downto 0) := (others => '0');\n
-"""
-        self.signal_dist = """
-  -- {0}DELAY------------------------------------------------------------------
-  -- Generates a shift register for delaying the {0} signal for each sorter
-  -- stage.
-  -------------------------------------------------------------------------------
-  {0}DELAY : process(CLK) is
-  begin
+class VHDLTemplateWriter:
+    """Class encapsulating writing the template to a file in an incremental
+    fashion"""
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
-        {0}_i({0}_i'high downto {0}_i'low + 1) <= (others => '0');
-      else
-        {0}_i({0}_i'high downto {0}_i'low + 1) <= {0}_i({0}_i'high - 1 downto {0}_i'low);
-        end if;
-    end if;
+    def __init__(self, template: VHDLTemplate, output_file: Path):
+        self.template = template
+        self.output_file = output_file
+        self.output_fd = None
+        self.preamble_written = False
+        self.body_written = False
+        self.footer = ""
+        self.footer_written = False
+        self.len_line = 80
 
-  end process {0}DELAY;
-  {0}_i(0) <= {0};
-"""
-        self.replic_def = """
-  type {0}_replicated_t is array (DEPTH downto 0) of std_logic_vector(0 to {1} -1);
-  signal {0}_i   : {0}_replicated_t := (others => (others => '0'));
-"""
-        self.replic_dist = """
-  {0}_DISTRIBUTOR_1: entity work.SIGNAL_DISTRIBUTOR
-    generic map (
-      NUM_SIGNALS => {1},
-      MAX_FANOUT  => {2})
-    port map (
-      CLK    => CLK,
-      RST    => RST,
-      E      => E,
-      SOURCE => {0},
-      REPLIC => {0}_i({3})
-      );
-"""
+    def __del__(self):
+        if self.output_fd:
+            self.output_fd.close()
 
-    def __process_shift_registers(
+    def write_preamble(self, tokens: dict[str, str]) -> bool:
+        """Write template preamble consisting of the tokens for generics and other
+        parameters as well as the signal definitions.
+
+        Parameters:
+            tokens : dict[str:str]
+                Dict of tokens and values from which generics and parameters in
+                the template are filled out.
+        Returns:
+            preamble_written : Bool
+                True if writing was successful.
+        """
+        self.template.tokens = tokens
+        template_string = self.template.as_template()
+        preamble, self.footer = template_string.split("{body}")
+        with self.output_file.open("w") as file:
+            num_char = file.write(preamble)
+            if num_char != len(preamble):
+                return False
+        self.preamble_written = True
+        return self.preamble_written
+
+    def write_start_comment(self, block_title: str):
+        len_title = 4 + len(block_title)
+        self.write_incremental("-" * self.len_line + "\n")
+        self.write_incremental(
+            "-- " + block_title + " " + "-" * (len_title - self.len_line) + "\n"
+        )
+        self.write_incremental("-" * self.len_line + "\n")
+
+    def write_end_comment(self):
+        self.write_incremental("-" * self.len_line + "\n\n")
+
+    def write_incremental(self, vhdl_block: str) -> bool:
+        """Write a block of vhdl code to the output file at the position of
+        the "{body}" token.
+
+        Parameters:
+            vhdl_block: str
+                Piece of vhdl_code to be written.
+        Returns
+            write_success: Bool
+                Signifies write success. Fails if preamble hasn't been written.
+        """
+        if self.preamble_written:
+            if not self.output_fd:
+                self.output_fd = self.output_file.open("a")
+            num_char = self.output_fd.write(vhdl_block)
+            if num_char == len(vhdl_block):
+                return True
+        return False
+
+    def write_footer(self) -> bool:
+        """Writes footer to file and returns success."""
+        if self.output_fd:
+            num_char = self.output_fd.write(self.footer)
+            if num_char == len(self.footer):
+                self.footer_written = True
+                return True
+        return False
+
+
+def __list_points_in_distance(
+    start_point: tuple[int, int], dist=int, bounds=tuple[int, int]
+) -> list[tuple[int, int]]:
+    """Returns a list of 2D points around the start_point with the distance
+    given. Will return an empty list of no points exist in bounds.
+
+    Diagonals are treated as equidistand.
+    """
+    if dist == 0:
+        return [
+            start_point,
+        ]
+    s_x, s_y = start_point
+    points = []
+    for i in range(0, 2 * dist - 1):
+        x = s_x - dist + i
+        y = s_y - dist
+        if x > 0 and x < bounds[0]:
+            if y > 0 and y < bounds[1]:
+                points.append((x, y))
+    for i in range(0, 2 * dist - 1):
+        x = s_x + dist - 1
+        y = s_y - dist + i
+        if x > 0 and x < bounds[0]:
+            if y > 0 and y < bounds[1]:
+                points.append((x, y))
+    for i in range(2 * dist - 1, 0, -1):
+        x = s_x - dist + i
+        y = s_y + dist - 1
+        if x > 0 and x < bounds[0]:
+            if y > 0 and y < bounds[1]:
+                points.append((x, y))
+    for i in range(2 * dist - 1, 0, -1):
+        x = s_x - dist
+        y = s_y - dist + i
+        if x > 0 and x < bounds[0]:
+            if y > 0 and y < bounds[1]:
+                points.append((x, y))
+    return points
+
+
+class VHDLTemplateProcessor:
+    """Handles intepretation and code generation of sorting networks and writes
+    generated code into file whose path is provided in init.
+    """
+
+    def __init__(self, output_file: Path):
+        self.output_file = output_file
+        self.writer: VHDLTemplateWriter
+
+    def __get_signal_source(
+        self, network: Network, signal_name: str, point: tuple[int, int]
+    ) -> tuple[bool, tuple[int, int, int]]:
+        bounds = list(network.ff_layers.shape)
+        bounds.reverse()
+        for coord, bound in zip(point, bounds):
+            if coord < 0 or coord >= bound:
+                return False, (-1, -1, -1)
+        x, y = point
+
+        z = -1
+        assoc_signal = None
+        if signal_name.upper() in network.signals:
+            if network.signals[signal_name].layer_index >= 0:
+                assoc_signal = network.signals[signal_name]
+                z = network.signals[signal_name].layer_index
+            else:
+                return False, (-1, -1, -1)
+        source_point = (x, y, z)
+
+        if assoc_signal.distribution == DistributionType.GLOBAL:
+            # Signal source is global and either provided through ports
+            # or generated locally to entity. Should be caught earlier,
+            # hence an invalid point is returned.
+            return False, (-1, -1, -1)
+        if assoc_signal.distribution == DistributionType.ONE_TO_ONE:
+            # Signal source must come from the same point in the network.
+            if network.ff_layers[z, y, x]:
+                return True, source_point
+            return False, source_point
+        if assoc_signal.distribution == DistributionType.PER_STAGE:
+            # Find the closest source in the same stage.
+            if network.ff_layers[z, y, x]:
+                # Found source at point given. Nothing to do.
+                return True, source_point
+            # Otherwise, search in the x-axis for a source, increasing
+            # distance searched.
+            dist = 1
+            while x - dist >= 0 or x + dist < network.ff_layers.shape[2]:
+                if x + dist < network.ff_layers.shape[2]:
+                    # print(x + dist, network.ff_layers[z, y, x + dist])
+                    if network.ff_layers[z, y, x + dist]:
+                        return True, (x + dist, y, z)
+                if x - dist >= 0:
+                    # print(x - dist, network.ff_layers[z, y, x - dist])
+                    if network.ff_layers[z, y, x - dist]:
+                        return True, (x - dist, y, z)
+                dist += 1
+            return False, (-1, -1, -1)
+
+        if assoc_signal.distribution == DistributionType.PER_LINE:
+            if network.ff_layers[z, y, x]:
+                # Found source at point given. Nothing to do.
+                return True, source_point
+            # Find the closest source in the same line.
+            dist = 1
+            while y - dist >= 0 or y + dist < network.ff_layers.shape[2]:
+                if y + dist < network.ff_layers.shape[2]:
+                    # print(x + dist, network.ff_layers[z, y, x + dist])
+                    if network.ff_layers[z, y + dist, x]:
+                        return True, (x, y + dist, z)
+                if y - dist >= 0:
+                    # print(x - dist, network.ff_layers[z, y, x - dist])
+                    if network.ff_layers[z, y - dist, x]:
+                        return True, (x, y - dist, z)
+                dist += 1
+            return False, (-1, -1, -1)
+
+        if assoc_signal.distribution == DistributionType.PER_AREA:
+            # Search for valid sources in a growing square around the point.
+            # Should no valid source be found as the distance becomes greater than
+            # the layer bounds, return false.
+            distance = 0
+            points = __list_points_in_distance((x, y), distance, bounds[:1])
+            while points:
+                for p in points:
+                    if network.ff_layers[z, p[1], p[0]]:
+                        return True, source_point
+                distance += 1
+                points = __list_points_in_distance((x, y), distance, bounds[:1])
+        return False, source_point
+
+    def __map_signal(
         self,
         network: Network,
-        ff_replacements: list[FF_Replacement],
-        replicated_signals,
-    ):
-        num_layers = len(network.ff_layers)
-        instances = ""
-        # Begin by applying the ff replacements to the template.
-        for num_repl in range(len(ff_replacements)):
-            repl = ff_replacements[num_repl]
+        template: VHDLTemplate,
+        signal_name: str,
+        point: tuple[int, int],
+    ) -> str:
+        normalized_name = signal_name.split("_")[0].upper()
+        if normalized_name not in network.signals:
+            print("Signal '{name}' not found in network signals", normalized_name)
+            return "open"
+        signal = network.signals[normalized_name]
+        if signal.distribution == DistributionType.GLOBAL:
+            return "{s_name}_global".format(
+                name=signal_name, s_name=normalized_name.lower()
+            )
+        if signal.distribution == DistributionType.UNCONNECTED:
+            print("UNCONNECTED")
+            return "open"
 
-            ports = {"CLK": "CLK", "E": "'1'", "RST": "RST"}
+        # Signal exists in the network and is neither global nor unconnected
+        is_mapped, source_point = self.__get_signal_source(
+            network, normalized_name, point
+        )
+        if not is_mapped or any(c < 0 for c in source_point):
+            print(
+                "Signal '{}' at {} not mapped or source invalid".format(
+                    normalized_name, point
+                )
+            )
+            return "open"
+        if signal.is_replicated:
+            # While all signals are defined inside fully sized matrices,
+            # definitions in the template may be smaller in dimensions.
+            if signal.distribution == DistributionType.PER_STAGE:
+                x, y, z = source_point
+                x = x // signal.max_fanout
+                print(signal.name, point, source_point, x, y)
+                return "{s_name}_array({x})({y})".format(
+                    s_name=signal.name.lower(), x=x, y=y
+                )
+            if signal.distribution == DistributionType.PER_LINE:
+                x, y, z = source_point
+                y = y // signal.max_fanout
+                print(signal.name, source_point, x, y)
+                return "{s_name}_array({x})({y})".format(
+                    s_name=signal.name.lower(), x=x, y=y
+                )
+            # The remaining options for distribution are PER_AREA or
+            # ONE_TO_ONE.
+            x, y, z = source_point
+            return "{s_name}_array({x})({y})".format(
+                s_name=signal.name.lower(), x=x, y=y
+            )
+        return "open"
 
-            # Create instances of CS elements forming the network.
-            for group in repl.groups:
-                # Implementation parameter dictionary.
-                impl = dict()
-                for i, point in enumerate(group):
-                    x, y, z = point
-                    impl["REG_INPUT({})".format(i)] = "wire({})({})({})".format(z, x, y)
-                    impl["REG_OUTPUT({})".format(i)] = "wire({})({})({})".format(
-                        z, x, y + 1
-                    )
-                generics = {
-                    "NUM_INPUT": len(group),
+    def __get_permutation_layer_definitions(self, network: Network, **kwargs) -> str:
+        """Generates code containing signal definition for the signal array
+        based on which the sorting network is created.
+        """
+        # Constants defined in the beginning of the entity architecture are used
+        # instead of variables from the script. Function therfore returns a constant
+        # string.
+
+        # fmap = {
+        #     "SW": kwargs.get("SW") or 1,
+        #     "N": network.get_N(),
+        #     "depth": network.get_depth(),
+        # }
+        sdef = """
+
+  -- Generator scripts array is indexed using (z,y,x) = (Layer, Stage, N)
+  -- but here perm_arr is indexed with (z,x,y) = (N,Stage,Subword) to allow
+  -- compact shift register definition.
+  type data_array_t is array (0 to N-1) of SLVArray(0 to DEPTH-1)(SW-1 downto 0);
+  -- Wire grid with the dimensions of NxDepthxSubword
+  signal data_array     : data_array_t;
+
+"""
+        # return sdef.format_map(fmap)
+        return sdef
+
+    def __get_control_layer_definitions(self, network: Network, **kwargs) -> str:
+        """Generates code for the control signal definition as an array of
+        (replicated) an delayed registers.
+        """
+        def_str = ""
+        for signal in network.signals.values():
+            if signal.name == "DATA":
+                # Data array creation is handled in another function.
+                continue
+            if signal.distribution == DistributionType.GLOBAL:
+                def_str += "signal {}_global : std_logic;\n".format(signal.name.lower())
+            else:
+                fmap = {
+                    "signal_name": signal.name.lower(),
+                    "depth": str(network.get_depth()),
+                    "N": signal.num_replications,
                 }
+                def_str += "signal {signal_name}_array : SLVArray(0 to {N}-1)(0 to {depth}-1);\n".format_map(
+                    fmap
+                )
+        return def_str
 
-                # VHDL does not allow assignment of vector indices out of order.
-                items = list(impl.items()) + list(ports.items())
+    def __get_signal_definitions(
+        self, network: Network, entities: dict[str, VHDLEntity], **kwargs
+    ) -> str:
+        """Build signal definitions string from supplied paramters
 
-                a = "port map(\n"
+        Parameters:
+            network : Network
+                Sorting Network object.
+            entities : dict[str, VHDLEntity]
+                Dictionary of string tokens and entity objects.
+        Returns:
+            signal_definitions : str
+                VHDL code containing all relevant signal definitions.
+        """
+        signal_definitions = self.__get_permutation_layer_definitions(network, **kwargs)
+        signal_definitions += self.__get_control_layer_definitions(network, **kwargs)
+        return signal_definitions
 
-                for j in range(0, len(items)):
-                    key, value = items[j]
-                    a += "   {} => {}".format(key, value)
-                    if j + 1 < len(items):
-                        a += ","
-                    a += "\n"
-                a += ");\n"
+    def __make_io_assignments(self, network, template):
+        """Generates code connecting module inputs and outputs to
+        appropriate internal signals.
+        """
+        # Handle data io from an to the permutation layer first
+        inputs = "\n"
+        for i in range(network.get_N()):
+            inputs += "data_array({n})(0) <= DATA_I({n});\n".format(n=i)
+        outputs = "\n"
+        for entry in network.output_set:
+            outputs += "DATA_O({m}) <= data_array({depth})({m});\n".format(
+                m=entry, depth=network.get_depth() - 1
+            )
 
-                instances += repl.entity.as_instance_portmanual(
-                    "FF_REPLACEMENT_{}_GRP{}".format(num_repl, i), generics, a
+        # Handle output of control signals
+        for signal in network.signals.values():
+            input_ports = [
+                port.split("_")[0]
+                for port in template.ports
+                if port.split("_")[1] == "I"
+            ]
+            if signal.name.upper() in input_ports:
+                if signal.distribution == DistributionType.GLOBAL:
+                    # Other types of signals should be handled in
+                    # make_signal_replicators.
+                    for i in range(signal.num_replications):
+                        inputs += "{sname}_global <= {pname}_I;\n".format(
+                            sname=signal.name.lower(), pname=signal.name.upper()
+                        )
+            output_ports = [
+                port.split("_")[0]
+                for port in template.ports
+                if port.split("_")[1] == "O"
+            ]
+            if signal.name.upper() in output_ports:
+                for i in range(signal.num_replications):
+                    outputs += "{pname}_O <= {name}_array({i})({depth});\n".format(
+                        pname=signal.name.upper(),
+                        name=signal.name.lower(),
+                        i=i,
+                        depth=network.get_depth() - 1,
+                    )
+        self.writer.write_start_comment("Generated I/O Assignments")
+        self.writer.write_incremental(inputs + outputs)
+        self.writer.write_end_comment()
+
+    def __instantiate_signal_distributors(
+        self, network: Network, template: VHDLTemplate, entities: dict[str, VHDLEntity]
+    ):
+        """Generates code instantiating signal distributor modules and connects
+        them to designated control signal inputs and control signal arrays.
+        """
+        entity = entities["Signal_Distributor"]
+        self.writer.write_start_comment("Generated Signal Distribution")
+        for signal in network.signals.values():
+            if signal.is_replicated:
+                if signal.num_replications > 1:
+                    ports = {}
+                    for port in entity.ports:
+                        ports[port] = ""
+                    ports.pop("REPLIC_O")
+                    generics = {
+                        "NUM_SIGNALS": str(signal.num_replications),
+                        "MAX_FANOUT": str(signal.max_fanout),
+                    }
+                    ports["SOURCE_I"] = signal.name.upper() + "_I"
+                    ports["FEEDBACK_O"] = signal.name.upper() + "_FEEDBACK_O"
+                    for j in range(signal.num_replications):
+                        ports[
+                            "REPLIC({})".format(j)
+                        ] = "{signal_name}_array({j})(0)".format(
+                            j=j, signal_name=signal.name.lower()
+                        )
+                    for port in ports:
+                        if not ports[port]:
+                            ports[port] = self.__map_signal(
+                                network, template, port, (0, 0)
+                            )
+                    self.writer.write_incremental(
+                        entity.as_instance_manual(
+                            signal.name + "_repl", generics, ports
+                        )
+                    )
+                else:
+                    self.writer.write_incremental(
+                        signal.name.lower()
+                        + "_array(0)(0) <="
+                        + signal.name.upper()
+                        + "_I;\n"
+                    )
+                    self.writer.write_incremental(
+                        signal.name.upper()
+                        + "_FEEDBACK_O <="
+                        + signal.name.upper()
+                        + "_I;\n"
+                    )
+        self.writer.write_end_comment()
+
+    def __make_cs(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        tokens: dict[str, str],
+        x: int,
+        y: int,
+    ):
+        """Creates CS instance in the network at the point provided. Specific
+        CS implementation is provided through the entities dict with port
+        mapping and generics derived from the network and the tokens dictionary
+        respectively. Instantiation string is written to file through the
+        writer object.
+        """
+        stage = network.pmatrix[y]
+        instance_name = "CS_STAGE{stage}_{a}_TO_{b}".format(
+            stage=y, a=x, b=abs(stage[x])
+        )
+        if stage[x] < 0:
+            instance_name += "_REVERSE"
+
+        generics = {
+            "W": tokens["word_width"],
+            "SW": tokens["subword_width"],
+        }
+
+        ports = {}
+        ports["A_I"] = "data_array({})({})".format(x, y)
+        ports["B_I"] = "data_array({})({})".format(stage[x], y)
+
+        # Swap and Compare direction is indicated by the sign.
+        if stage[x] > 0:
+            ports["A_O"] = "data_array({})({})".format(x, y + 1)
+            ports["B_O"] = "data_array({})({})".format(stage[x], y + 1)
+        else:
+            ports["A_O"] = "data_array({})({})".format(stage[x], y + 1)
+            ports["B_O"] = "data_array({})({})".format(x, y + 1)
+
+        # Start signal is usally replicated and distributed in another layer.
+        # Assign each CS its appropriate source register for that signal.
+        cs = entities["CS"]
+        unconnected_ports = [port for port in cs.ports.keys() if port not in ports]
+        for port in unconnected_ports:
+            signal_name = port.split("_")[0].upper()
+            if signal_name in network.signals:
+                signal = network.signals[signal_name]
+                ports[port] = ""
+            if signal_name.upper() not in network.signals:
+                # Signal is not represented anywhere in the network,
+                # must be global, like f.e. CLK.
+                ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
+            else:
+                ports[port] = self.__map_signal(
+                    network, template, signal_name.upper(), (x, y)
                 )
 
-        # Proceed by handling FF not replaced by other means.
-        # Find chains of continouus FF to be turned into shift-registers.
-        sr_chain = ""
-        for j in range(network.get_N()):
-            i = 0
-            while i < network.get_depth():
-                # If flag at that point is True a FF is present at that point.
-                if network.ff_layers[0][i][j]:
-                    sr_chain_beg = i
-                    sr_chain_end = i
-                    # How long does the SR-chain go ?
-                    while (
-                        sr_chain_end < network.get_depth()
-                        and network.ff_layers[0][sr_chain_end][j]
-                    ):
-                        sr_chain_end += 1
-                    sr_chain_end = sr_chain_end - 1
-                    i = sr_chain_end
-                    sr_chain += "wire({row})({beg} + 1 to {end}) <= wire({row})({beg} to {end}-1);\n".format(
-                        row=j, end=sr_chain_end, beg=sr_chain_beg
-                    )
-                i += 1
+        self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
 
-        if sr_chain:
-            instances += "Delay : process(CLK) is \nbegin\nif (rising_edge(CLK)) then\n{}end if;\nend process;\n".format(
-                sr_chain
-            )
-
-        return instances
-
-    def __make_cs(self, network, cs, generics, ports, replicated_signals):
-        """Fills out ports and generics dicts of of all CS elements and returns
-        combined instance string."""
-        N = network.get_N()
-        depth = network.get_depth()
-        instances = ""
-        # Create instances of CS elements forming the network.
-        for i in range(depth):
-            for j in range(N):
-                if network[i][j] > j:
-                    # A CS is present, if the pair references a later index.
-                    a = j
-                    b = network[i][j]
-                    impl = dict()
-                    impl["A0"] = "wire(0)({})({})".format(a, i)
-                    impl["B0"] = "wire(0)({})({})".format(b, i)
-                    # We swap the outputs if sorting direction (indicated by sign) is not forward
-                    if network[i][j] > 0:
-                        impl["A1"] = "wire(0)({})({})".format(a, i + 1)
-                        impl["B1"] = "wire(0)({})({})".format(b, i + 1)
-                    else:
-                        impl["A1"] = "wire(0)({})({})".format(b, i + 1)
-                        impl["B1"] = "wire(0)({})({})".format(a, i + 1)
-
-                    # Assign control signals to CS, differentiating between
-                    # replicated ones.
-                    for signal in cs.ports.keys():
-                        if signal in replicated_signals.keys():
-                            associated_replication = (
-                                (a * 2) % N
-                            ) // replicated_signals[signal][1]
-                            # Replicated signals can be found in 2D signal
-                            # arrays.
-                            impl[signal] = "{}_i({})({})".format(
-                                signal, i, associated_replication
-                            )
-                        elif signal not in (ports | impl).keys():
-                            # Non replicated signals are present in simple
-                            # std_logic_vectors.
-                            impl[signal] = "{}_i({})".format(signal, i)
-                    # Fill out CS generics and ports and add it to instances.
-                    instances += cs.as_instance(
-                        "CS_D{}_A{}_B{}".format(i, a, b),
-                        generics,
-                        ports | impl,
-                    )
-        return instances
-
-    def __make_control_signals(self, signals, replicated_signals):
-        """Generate definitions for control signals in network.
-
-        Control signals passed to the function in the signals list will
-        inserted into the template via the signal_def and signal_dist strings.
-        For the replicated signals, a signal replicator from the replic_dist
-        string is inserted into the template with the appropriate signal
-        definition from replic_dist added as well.
-
-        Parameters
-        ----------
-        signals : list[str]
-            List of signal names.
-        replicated_signals : dict{ name : tuple(int,int,int)}
-            Dictionary with signal names as keys and a tuple of the number of
-            replicas (count), the maximum signal fanout (fanout) and the depth
-            of the signal distributor tree (depth).
-
-        Returns
-        -------
-        signal_def : str
-           Combined definitions of signals
-        signal_dist : str
-           Combined signal distribution patterns (shift-registers for normal
-           signals and signal distributor components for replicated signals).
-
-        """
-        signal_def = ""
-        signal_dist = ""
-        # First process non-replicated signals
-        for signal in signals:
-            signal_def += self.signal_def.format(signal)
-            signal_dist += self.signal_dist.format(signal)
-
-        for signal, param in replicated_signals.items():
-            count, fanout, depth = param
-            signal_def += self.replic_def.format(
-                signal,
-                count,
-                depth,
-            )
-            if count > 1:
-                signal_dist += self.replic_dist.format(signal, count, fanout, depth)
-            else:
-                signal_dist += "{0}_i(0)(0) <= {0};\n".format(signal)
-        return signal_def, signal_dist
-
-    def fill_main_file(
+    def __connect_cs_network(
         self,
-        template,
-        cs,
-        network,
-        ff_replacements: list[FF_Replacement] = [],
-        W=8,
-        SW=1,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        tokens: dict[str, str],
     ):
-        """Takes kwargs and returns template object with generated network."""
+        """Iterates over permutation matrix and calls __make_cs for each point
+        containing un-ordered index.
+        """
+        self.writer.write_start_comment("Generated CS Network")
+        for y in range(network.pmatrix.shape[0]):
+            stage = network.pmatrix[y]
+            for x in range(stage.shape[0]):
+                if abs(stage[x]) > x:
+                    # The value at each index in the stage represents the index
+                    # with which the current index has to be compared to.
+                    # A CS is only placed when index and value differ.
+                    # As a CS handles two indices, only place an element if
+                    # the value is greater than the index.
+                    self.__make_cs(network, template, entities, tokens, x, y)
+        self.writer.write_end_comment()
 
-        N = network.get_N()
-        shape = network.shape
-        output_set = network.get_output_set()
-        num_outputs = len(output_set)
-        depth = network.get_depth()
+    def __instantiate_ff_replacements(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        data_layer_ff: np.ndarray,
+        ff_replacements: list[FF_Replacement],
+    ) -> np.ndarray:
+        """Replaces points in the network which normally contain FF resources
+        with a functionally equivalent replacement of (ideally) another
+        resource like DSPs or BRAMs. Generates code containing instantiations
+        of those replacements.
+        """
+        self.writer.write_start_comment("Generated FF Replacements")
+        for repl in ff_replacements:
+            replacement_id = 0
+            # Each group represents one instance of the replacement.
+            for group in repl.groups:
+                ports = {}
+                for key in repl.entity.ports:
+                    ports[key] = ""
+                ports["ENABLE_I"] = "1"
+                ports.pop("REG_O")
+                ports.pop("REG_I")
+                reg_index = 0
+                # Group center coordinates used to determine mapping of
+                # control signals.
+                c_x, c_y = (-1, -1)
+                reg_ports_in = {}
+                reg_ports_out = {}
+                for point, ff_range in group:
+                    x, y, z = point
+                    if not c_x:
+                        c_x = x
+                    else:
+                        c_x += x
+                    if not c_y:
+                        c_y = y
+                    else:
+                        c_y += y
 
-        bit_width = W
-        subword_width = SW
+                    start, end = ff_range
+                    # Special handling of the first layer
+                    if z == 0:
+                        for i in range(start, end):
+                            reg_ports_in[
+                                "REG_I({})".format(reg_index)
+                            ] = "data_array({x})({y})({i})".format(x=x, y=y, i=i)
+                            reg_ports_out[
+                                "REG_O({})".format(reg_index)
+                            ] = "data_array({x})({y})({i})".format(x=x, y=y + 1, i=i)
+                        data_layer_ff[y][x] -= end - start
+                        if data_layer_ff[y][x] == 0:
+                            network.ff_layers[z, y, x] = False
+                    else:
+                        signal = None
+                        for s in network.signals.values():
+                            if s.layer_index == z:
+                                signal = s
+                                break
+                        if not signal:
+                            print(
+                                "Layer {} without associated NetworkSignal object!".format(
+                                    z
+                                )
+                            )
+                            continue
+                        mapped_x = x
+                        mapped_y = y
+                        if signal.distribution == DistributionType.PER_STAGE:
+                            if signal.max_fanout:
+                                mapped_x = x // signal.max_fanout
+                        if signal.distribution == DistributionType.PER_LINE:
+                            if signal.max_fanout:
+                                mapped_y = y // signal.max_fanout
 
-        # Process control signal layers from network as replicated signals
-        # 2 variables are generated:
-        # - max_replicated_delay: int
-        #   Since the signal replication incures a delay on startup, we need to
-        #   know the maximum delay present for the READY_DELAY counter.
-        # - replicated_signals: dict
-        #   For each signal name as key, a pair of the number of replications
-        #   and the fanout (rows per replication) is necessary. Both values
-        #   are reconstructed from the control signal layers of the network.
-        max_replicated_delay = 0
-        replicated_signals = dict()
+                        reg_ports_in[
+                            "REG_I({})".format(reg_index)
+                        ] = "{signal_name}_array({x})({y})".format(
+                            signal_name=signal.name.lower(),
+                            x=mapped_x,
+                            y=mapped_y,
+                        )
+                        reg_ports_out[
+                            "REG_O({})".format(reg_index)
+                        ] = "{signal_name}_array({x})({y})".format(
+                            signal_name=signal.name.lower(),
+                            x=mapped_x,
+                            y=mapped_y + 1,
+                        )
+                        network.ff_layers[z, y, x] = False
+                    reg_index += 1
+                # Done with assigning ports in this group.
+                c_x = c_x // len(group)
+                c_y = c_y // len(group)
+                for port, assign in ports.items():
+                    if not assign:
+                        signal_name = port.split("_")[0].upper()
+                        ports[port] = self.__map_signal(
+                            network, template, signal_name, (c_x, c_y)
+                        )
 
-        for i in range(1, network.ff_layers.shape[0]):
-            # Ignore the first layer as its the FF layer tied to the CS elements.
-            layer = network.ff_layers[i]
-            # Each FF in the first stage correspond to a signal replication.
-            replic_count = np.sum(layer[0]) or 1
-            signal_name = network.layer_names[i]
+                name = "REPL_" + str(replacement_id)
+                replacement_id += 1
+                generics = {"NUM_INPUTS": str(reg_index)}
+                self.writer.write_incremental(
+                    repl.entity.as_instance_manual(
+                        name, generics, ports | reg_ports_in | reg_ports_out
+                    )
+                )
+        self.writer.write_end_comment()
 
-            replic_fanout = network.rows_per_signal[i]
-            replic_depth = math.ceil(math.log(replic_count, replic_fanout))
+        return data_layer_ff
 
-            replicated_signals[signal_name] = (
-                replic_count,
-                replic_fanout,
-                replic_depth,
-            )
+    def __process_reg_chains(
+        self,
+        network: Network,
+        data_layer_ff: np.ndarray,
+        ff_chains: list[list[tuple[int, int, int]]],
+    ):
+        reg_assign = "{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
+        reg_assign_sw = "{signal_name}_array({x})({y_s})({sw_e} downto {sw_s}) <= {signal_name}_array({x})({y_e})({sw_e} downto {sw_s});\n"
 
-            # Each stage involves a delay.
-            if replic_depth > max_replicated_delay:
-                max_replicated_delay = replic_depth
+        for z, group in enumerate(ff_chains):
+            if z == 0:
+                sw = network.signals["DATA"].bit_width
+                for x, start, end in group:
+                    for y in range(start, end):
+                        self.writer.write_incremental(
+                            reg_assign_sw.format(
+                                signal_name="data",
+                                x=x,
+                                y_s=y,
+                                y_e=y + 1,
+                                sw_s=data_layer_ff[y][x] - 1,
+                                sw_e=sw - 1,
+                            )
+                        )
+            else:
+                for x, start, end in group:
+                    signal = None
+                    for s in network.signals.values():
+                        if s.layer_index == z:
+                            signal = s
+                            break
+                    if not signal:
+                        print("No signal associated with layer {z}!".format(z=z))
+                        continue
+                    signal_name = signal.name
+                    num_signals = signal.num_replications
+                    max_fan_out = signal.max_fanout
+                    self.writer.write_incremental(
+                        reg_assign.format(
+                            signal_name=signal_name.lower(),
+                            x=x // max_fan_out,
+                            y_s=start,
+                            y_e=end,
+                        )
+                    )
 
-        # Non-replicated signals are found as all control signals from CS
-        # without replicated signals.
-        exempt_sig = ["CLK", "A0", "A1", "B0", "B1"]
-        signals = [
-            signal
-            for signal in cs.ports.keys()
-            if signal not in network.layer_names and signal not in exempt_sig
-        ]
-
-        # Default shape of network is max.
-        if not shape.lower() in (
-            "max",
-            "min",
-            "median",
-            "mixed",
-        ):
-            shape = "max"
-        shape = shape.lower()
-
-        # Begin building content for placeholder tokens of template.
-        top_name = "{}_{}_TO_{}_{}".format(
-            network.typename.upper(), N, num_outputs, shape.upper()
+    def __make_registers(
+        self,
+        network: Network,
+        data_layer_ff: np.ndarray,
+        entities: dict[str, VHDLEntity],
+    ):
+        self.writer.write_start_comment("Generated FF")
+        ff_chains: list[list[tuple[int, int, int]]] = []
+        self.writer.write_incremental(
+            """
+DelayRegister: process (CLK_I) is
+begin
+"""
         )
+        for z, layer in enumerate(network.ff_layers):
+            # Iterate over the layer stage wise.
+            ff_chains.append([])
+            for x in range(layer.shape[1]):
+                start = 0
+                end = 0
+                # Find lateral register chains in the layer.
+                for y in range(layer.shape[0]):
+                    if layer[y, x]:
+                        if start == end:
+                            start = y
+                        end = y + 1
+                    elif start < end:
+                        ff_chains[z].append((x, start, end))
+                        start = end
+        self.__process_reg_chains(network, data_layer_ff, ff_chains)
+        self.writer.write_incremental("\nend process;\n")
+        self.writer.write_end_comment()
 
-        generics = {"W": bit_width, "SW": subword_width}
-        ports = {"CLK": "CLK", "E": "E", "RST": "RST"}
-
-        (
-            control_signal_definition,
-            control_signal_distribution,
-        ) = self.__make_control_signals(signals, replicated_signals)
-        instances = ""
-
-        instances += self.__make_cs(network, cs, generics, ports, replicated_signals)
-
-        instances += self.__process_shift_registers(
-            network, ff_replacements, replicated_signals
-        )
-
-        # Add connections to serial input.
-        for i in range(N):
-            connection = "wire(0)({0})(0) <= SER_INPUT({0});\n".format(i)
-            instances = connection + instances
-
-        # Add connections to serial output.
-        output_list = list(output_set)
-        output_list.sort()
-        if shape == "min":
-            output_list.reverse()
-        j = 0
-        for i in range(num_outputs):
-            connection = "SER_OUTPUT({}) <= wire(0)({})({});\n".format(
-                j, output_list[i], depth
+    def __handle_registers(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        **kwargs
+    ):
+        # We need to keep track fo the assigned FFs in the permutation layer,
+        # the only layer which contains potentially more than one FF.
+        # Since the only information provided by the ff_layers is whether
+        # any FF are present at a point, a new matrix has to be created.
+        data_layer_ff = np.zeros(network.ff_layers[0].shape, dtype=int)
+        data_layer_ff = network.signals["DATA"].bit_width * network.ff_layers[0]
+        if "ff_replacements" in kwargs:
+            data_layer_ff = self.__instantiate_ff_replacements(
+                network, template, data_layer_ff, kwargs["ff_replacements"]
             )
-            instances = instances + connection
-            j += 1
+        self.__make_registers(network, data_layer_ff, entities)
 
-        tokens = {
-            "top_name": top_name,
-            "net_depth": depth,
-            "num_layers": len(network.ff_layers),
-            "num_inputs": N,
-            "num_outputs": num_outputs,
-            "bit_width": bit_width,
-            "subword_width": subword_width,
-            "control_signal_definition": control_signal_definition,
-            "control_signal_distribution": control_signal_distribution,
-            "ready_delay": max_replicated_delay,
-            # "components": components,
-            "instances": instances,
-            "date": datetime.now(),
-        }
-        template.tokens = tokens
-        template.name = top_name
-        return template
+    def process_template(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        **kwargs
+    ):
+        self.writer = VHDLTemplateWriter(template, self.output_file)
+        tokens = template.tokens
+        tokens["top_name"] = "{}_{}X{}".format(
+            network.typename, network.get_N(), len(network.output_set)
+        )
+        if network.shape:
+            tokens["top_name"] += "_" + network.shape
+        tokens["num_inputs"] = str(network.get_N())
+        tokens["net_depth"] = str(network.get_depth())
+        tokens["num_outputs"] = str(len(network.output_set))
+        tokens["word_width"] = str(kwargs.get("W")) or str(8)
+        tokens["subword_width"] = str(network.signals["DATA"].bit_width)
+
+        for signal in network.signals.values():
+            tokens["num_" + signal.name.lower()] = str(signal.num_replications)
+
+        for key in tokens.keys():
+            if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
+                tokens[key] = str(1)
+
+        tokens["signal_definitions"] = self.__get_signal_definitions(
+            network, entities, **kwargs
+        )
+        self.writer.write_preamble(tokens)
+        self.__instantiate_signal_distributors(network, template, entities)
+        self.__make_io_assignments(network, template)
+        self.__connect_cs_network(network, template, entities, tokens)
+        self.__handle_registers(network, template, entities, **kwargs)
+        self.writer.write_footer()

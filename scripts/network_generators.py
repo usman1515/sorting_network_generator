@@ -1,22 +1,44 @@
 #!/usr/bin/env python3
 import math
 import numpy as np
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 
 
-def isInOrder(index: int, perm: int):
+def is_in_order(index: int, perm: int):
     """Helper function to check whether permutation at index is actually in order."""
     return index == abs(perm)
 
 
+class DistributionType(Enum):
+    GLOBAL = 1
+    ONE_TO_ONE = 2
+    PER_STAGE = 3
+    PER_LINE = 4
+    PER_AREA = 5
+    UNCONNECTED = 6
+
+
+@dataclass
+class NetworkSignal:
+    name: str
+    layer_index: int = -1
+    distribution: DistributionType = DistributionType.GLOBAL
+    bit_width: int = 1
+    is_replicated: bool = False
+    num_replications: int = 0
+    max_fanout: int = 1
+
+
 class Network:
-    def __init__(self, N: int = 0, depth: int = 0):
+    def __init__(self, N: int = 0, depth: int = 0, SW: int = 1):
         # Name of the network type
         self.typename = ""
         # Name of the network shape. may be left empty.
         self.shape = ""
         # Set of outputs containing valid items
-        self.output_set = set()
+        self.output_set: set[int] = set()
         # "Permutation matrix" describing the network
         # In actuality each row of the matrix is the one-line notation
         # of the conditional permutation performed. Sign of the number indicates
@@ -27,12 +49,10 @@ class Network:
         # Contains 2D np arrays
         self.ff_layers = np.zeros((1, 1), dtype=np.bool_)
         # Signal name associated with each layer
-        self.layer_names = list()
-        # Number of rows per signal \approx fanout
-        self.rows_per_signal = list()
-        self.setup(N, depth)
+        self.signals: dict[str, NetworkSignal] = {}
+        self.setup(N, depth, SW)
 
-    def setup(self, N: int, depth: int):
+    def setup(self, N: int, depth: int, SW: int = 1):
         self.pmatrix = np.empty([depth, N], dtype=np.int64)
         ident_perm = np.arange(0, N)
         for d in range(depth):
@@ -40,20 +60,79 @@ class Network:
         self.output_set = set(range(0, N))
         # Add the first layer containing delay FF
         self.ff_layers = np.ones([1, depth, N], dtype=np.bool_)
-        self.layer_names.append("Delay")
-        # Add information regarding the required number signal replication.
-        # As the FF are not replicated control signals, add one to indicate
-        # zero effect on signal replication.
-        self.rows_per_signal.append(1)
-
-    def add_layer(self, layer_name: str):
-        """Add an additional ff layer with specified purpose/usage through the layer name."""
-        N = self.get_N()
-        depth = self.get_depth()
-        self.layer_names.append(layer_name)
-        self.ff_layers = np.pad(
-            self.ff_layers, ((0, 1), (0, 0), (0, 0)), "constant", constant_values=True
+        self.signals["DATA"] = NetworkSignal(
+            name="DATA",
+            layer_index=0,
+            distribution=DistributionType.ONE_TO_ONE,
+            bit_width=SW,
         )
+        index = self.add_layer("START")
+        self.add_signal(
+            signal_name="START",
+            layer_index=index,
+            distribution=DistributionType.PER_STAGE,
+            is_replicated=True,
+            num_replications=1,
+            max_fanout=1,
+        )
+        for y in range(self.ff_layers[index].shape[0]):
+            self.ff_layers[index, y, 0] = True
+        index = self.add_layer("ENABLE")
+        self.add_signal(
+            signal_name="ENABLE",
+            layer_index=index,
+            distribution=DistributionType.PER_STAGE,
+            is_replicated=True,
+            num_replications=1,
+            max_fanout=1,
+        )
+        for y in range(self.ff_layers[index].shape[0]):
+            self.ff_layers[index, y, 0] = True
+
+        self.add_signal(
+            signal_name="CLK",
+            layer_index=-1,
+            distribution=DistributionType.GLOBAL,
+            is_replicated=False,
+            num_replications=0,
+            max_fanout=0,
+        )
+        self.add_signal(
+            signal_name="RST",
+            layer_index=-1,
+            distribution=DistributionType.GLOBAL,
+            is_replicated=False,
+            num_replications=0,
+            max_fanout=0,
+        )
+
+    def add_signal(
+        self,
+        signal_name,
+        layer_index: int = -1,
+        distribution: DistributionType = DistributionType.GLOBAL,
+        bit_width: int = 1,
+        is_replicated: bool = False,
+        num_replications: int = 0,
+        max_fanout: int = 0,
+    ):
+        self.signals[signal_name] = NetworkSignal(
+            name=signal_name,
+            layer_index=layer_index,
+            distribution=distribution,
+            bit_width=bit_width,
+            is_replicated=is_replicated,
+            num_replications=num_replications,
+            max_fanout=max_fanout,
+        )
+
+    def add_layer(self, layer_name: str) -> int:
+        """Add an additional ff layer with specified purpose/usage through the layer name."""
+        new_layer_index = self.ff_layers.shape[0]
+        self.ff_layers = np.pad(
+            self.ff_layers, ((0, 1), (0, 0), (0, 0)), "constant", constant_values=False
+        )
+        return new_layer_index
 
     def get_N(self) -> int:
         return np.shape(self.pmatrix)[1]
@@ -90,13 +169,32 @@ class Network:
         a += str(self.get_output_set())
         a += "\n"
 
-        for i in range(len(self.ff_layers)):
-            a += "{}. Control Layer for Signal '{}'\n".format(
-                i + 1, self.layer_names[i]
-            )
-            for stage in self.ff_layers[i]:
-                a += str(stage)
-                a += "\n"
+        for i in range(self.ff_layers.shape[0]):
+            layer = self.ff_layers[i]
+            signal = None
+            for s in self.signals.values():
+                if i == s.layer_index:
+                    signal = s
+            if not signal:
+                continue
+
+            a += "{}. Control Layer for Signal '{}'\n".format(i + 1, signal.name)
+            line = "_"  # "|"
+            for i in range(layer.shape[1]):
+                #  line += "{:<2}".format(i % 10)
+                line += "__"  # .format(i % 10)
+            line += "_"
+            a += line + "\n"
+            for i in range(layer.shape[0]):
+                stage = layer[i]
+                line = "|"
+                for point in stage:
+                    if point:
+                        line += "+ "
+                    else:
+                        line += "  "
+                line += "| {}".format(i)
+                a += line + "\n"
             a += "\n"
 
         return a
@@ -105,11 +203,9 @@ class Network:
 class Generator:
     def __init__(self):
         self.name = ""
-        self.keywords = dict()
+        self.keywords: dict[str:str] = {}
         self.optional = {
-            "W": "Width of operands",
-            "shape": "Shape of Network: min, max, median",
-            "num_outputs": "Number of output elements.",
+            "SW": "Width of operands",
         }
 
     def __str__(self):
@@ -122,55 +218,62 @@ class Generator:
         return ""
 
     def create(self, N):
+        network = Network()
+        self.distribute_signals(
+            network,
+        )
         return Network()
 
-    def distribute_signals(self, network, sigdict=dict()):
-        for name, max_fanout in sigdict.items():
-            network.add_layer(name)
-            network.rows_per_signal.append(max_fanout)
-            # We need to calculate the incurred delay by the
-            # signal distributor
-            num_sig = math.ceil(network.get_N() / max_fanout)
-            if not num_sig:
-                num_sig = 1
-            dist_depth = math.ceil(math.log(num_sig, max_fanout))
-            # We also need to know the number of stages already present
-            # in the network.
-            data_delay = 0
-            for y in range(network.get_depth()):
-                # A stage is a delay stage if all entries are FF
-                if all(network.ff_layers[0][y]):
-                    data_delay += 1
+    def distribute_signal(self, network: Network, signal_name: str, max_fanout: int):
+        index = -1
+        if signal_name in network.signals:
+            index = network.signals[signal_name].layer_index
+            if not index:
+                index = network.add_layer(signal_name)
+                network.signals[signal_name].layer_index = index
+
+        if not index:
+            index = network.add_layer(signal_name)
+
+        print(signal_name, max_fanout)
+        print(network.signals[signal_name])
+        # We need to calculate the incurred delay by the
+        # signal distributor
+        num_sig = math.ceil(network.get_N() / max_fanout)
+        if not num_sig:
+            num_sig = 1
+        # dist_depth = math.ceil(math.log(num_sig, max_fanout))
+        for y in range(network.get_depth()):
+            for x in range(network.get_N()):
+                if (x + (max_fanout + 1) // 2) % max_fanout != 0:
+                    network.ff_layers[index][y][x] = False
                 else:
-                    # We only count stages from the beginning. If a
-                    # stage with CS is present, all subsequent stages
-                    # do not count toward data_delay.
-                    break
-            for y in range(network.get_depth()):
-                for x in range(network.get_N()):
-                    if (x + (max_fanout + 1) // 2) % max_fanout != 0:
-                        network.ff_layers[-1][y][x] = False
-                # Deal with remainder
-                if network.get_N() % max_fanout:
-                    network.ff_layers[-1][y][-1] = True
-            # If not enough delay stages are present, extend all layers
-            # with delay stages to the required amount.
-            # if data_delay < dist_depth:
-            #     diff = dist_depth - data_delay
-            #     for j, layer in enumerate(network.ff_layers):
-            #         network.ff_layers[j] = np.pad(
-            #             network.ff_layers[j],
-            #             ((diff, 0)),
-            #             "constant",
-            #             constant_values=True,
-            #         )
+                    network.ff_layers[index][y][x] = True
+            # Deal with remainder
+            if network.get_N() % max_fanout:
+                network.ff_layers[index][y][-1] = True
+        network.signals[signal_name].distribution = DistributionType.PER_STAGE
+        network.signals[signal_name].is_replicated = True
+        network.signals[signal_name].num_replications = num_sig
+        network.signals[signal_name].max_fanout = max_fanout
+        # If not enough delay stages are present, extend all layers
+        # with delay stages to the required amount.
+        # if data_delay < dist_depth:
+        #     diff = dist_depth - data_delay
+        #     for j, layer in enumerate(network.ff_layers):
+        #         network.ff_layers[j] = np.pad(
+        #             network.ff_layers[j],
+        #             ((diff, 0)),
+        #             "constant",
+        #             constant_values=True,
+        #         )
+
         return network
 
     def reduce(self, network, N):
         """Reduces size connection matrix to N inputs."""
         # Nothing to do of target and actual size are the same.
 
-        old_N = network.get_N()
         if N == network.get_N():
             return network
         for d in range(network.get_depth()):
@@ -185,11 +288,13 @@ class Generator:
             [
                 i
                 for i, perm in enumerate(network[network.get_depth() - 1])
-                if not isInOrder(i, perm)
+                if not is_in_order(i, perm)
             ]
         )
         num_layers = network.ff_layers.shape[0]
-        network.ff_layers = np.resize(network.ff_layers, (num_layers,network.get_depth(), N))
+        network.ff_layers = np.resize(
+            network.ff_layers, (num_layers, network.get_depth(), N)
+        )
         # for i in range(len(network.ff_layers)):
         #     network.ff_layers[i] = np.delete(network.ff_layers[i], range(N, old_N), 1)
         return network
@@ -211,7 +316,7 @@ class Generator:
             for i in range(N):
                 # ... remove all CS elements not in output_set ...
                 if i in new_output_set:
-                    if not isInOrder(i, network[d][i]):
+                    if not is_in_order(i, network[d][i]):
                         new_output_set.add(network[d][i])
                     else:
                         network[d][i] = i
@@ -229,7 +334,7 @@ class Generator:
         network.pmatrix = [
             stage
             for stage in network.pmatrix
-            if any([not isInOrder(i, perm) for i, perm in enumerate(stage)])
+            if any([not is_in_order(i, perm) for i, perm in enumerate(stage)])
         ]
 
         return network
@@ -240,10 +345,6 @@ class OddEven(Generator):
         super().__init__()
         self.name = "ODDEVEN"
         self.keywords = {
-            # "input": "Name of input component",
-            # "output": "Name of output component",
-            "CS": "Name of compare swap element",
-            "template": "Name of template",
             "N": "Number of inputs.",
         }
 
@@ -278,10 +379,6 @@ class Bitonic(Generator):
         super().__init__()
         self.name = "BITONIC"
         self.keywords = {
-            # "input": "Name of input component",
-            # "output": "Name of output component",
-            "CS": "Name of compare swap element",
-            "template": "Name of template",
             "N": "Number of inputs.",
         }
 

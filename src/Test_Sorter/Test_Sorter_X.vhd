@@ -42,8 +42,8 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 4;
-  constant DEPTH         : integer := 1;
+  constant N             : integer := 8;
+  constant DEPTH         : integer := 6;
   constant POLY_BASE     : integer := 654;
   constant SEED_BASE     : integer := 58;
   constant ceilWSW       : integer := ((W + SW - 1) / SW);
@@ -165,8 +165,8 @@ begin
 
   VALIDATOR_1 : entity work.validator
     generic map (
-      W => W,
-      N => N
+      N => N,
+      SW => SW
     )
     port map (
       CLK   => CLK,

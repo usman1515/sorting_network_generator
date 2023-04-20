@@ -17,8 +17,8 @@ library IEEE;
 
 entity SHIFT_REGISTER is
   generic (
-    -- Width of parallel input/ word.
-    W : integer := 8
+    -- Length of the shift register.
+    LENGTH : integer := 8
   );
   port (
     -- System Clock
@@ -36,7 +36,7 @@ end entity SHIFT_REGISTER;
 
 architecture BEHAVIORAL of SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 1 downto 0);
+  signal sreg : std_logic_vector(LENGTH - 1 downto 0);
 
 begin
 

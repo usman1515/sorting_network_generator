@@ -12,40 +12,42 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
-  use IEEE.math_real.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
+use IEEE.math_real.all;
 
 entity SIGNAL_DISTRIBUTOR is
   generic (
     -- Size of subword to be compared at a time.
     NUM_SIGNALS : integer := 8;
     MAX_FANOUT  : integer := 2
-  );
+    );
   port (
     -- System Clock.
-    CLK       : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Synchronous reset
-    RST       : in    std_logic;
+    RST_I    : in  std_logic;
     -- Enable Signal
-    E         : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Signal input to replicate
-    SOURCE    : in    std_logic;
+    SOURCE_I : in  std_logic;
     -- Replicated output signals.
-    REPLIC    : out   std_logic_vector(0 to NUM_SIGNALS - 1)
-  );
+    REPLIC_O : out std_logic_vector(0 to NUM_SIGNALS - 1);
+    -- Feedback signal to allow signal source handling of imposed delay
+    FEEDBACK_O : out std_logic
+    );
 end entity SIGNAL_DISTRIBUTOR;
 
 architecture BEHAVIORAL of SIGNAL_DISTRIBUTOR is
 
-  constant X                  : integer := NUM_SIGNALS;
-  constant Y                  : integer := MAX_FANOUT;
+  constant X : integer := NUM_SIGNALS;
+  constant Y : integer := MAX_FANOUT;
 
   -- Number of stages in the tree.
-  constant S                  : integer := integer(CEIL(LOG(REAL(X), REAL(Y))));
+  constant S : integer := integer(CEIL(LOG(real(X), real(Y))));
 
   -- Represents the tree as a 1D array.
-  signal tree                 : std_logic_vector(0 to (Y **(S+1) - 1)/(Y - 1)  - 1);
+  signal tree : std_logic_vector(0 to (Y **(S+1) - 1)/(Y - 1) - 1);
 
 begin
 
@@ -54,16 +56,16 @@ begin
   -- DISTRIBUTE -------------------------------------------------------------------
   -- Performs the tree like signal distribution by interpreting A as tree.
   --------------------------------------------------------------------------------
-  DISTRIBUTE : process (CLK) is
+  DISTRIBUTE : process (CLK_I) is
 
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
         tree <= (others => '0');
       else
-        if (E = '1') then
-          tree(0) <= SOURCE;
+        if (ENABLE_I = '1') then
+          tree(0) <= SOURCE_I;
           for i in 1 to S loop
 
             for j in 0 to Y ** i - 1 loop
@@ -81,19 +83,23 @@ begin
   end process DISTRIBUTE;
 
   -- REPLIC_OUT -------------------------------------------------------------------
-  -- Sets replic to the last stage indices fo tree asyncronously.
+  -- Sets replic_O to the last stage indices fo tree asyncronously.
   --------------------------------------------------------------------------------
-  REPLIC_OUT : process (tree, RST) is
+  REPLIC_OUT : process (tree, RST_I) is
 
   begin
 
-    if (RST = '1') then
-      REPLIC <= (others => '0');
+    if (RST_I = '1') then
+      REPLIC_O <= (others => '0');
+      FEEDBACK_O <= '0';
     else
+
+      -- FEEDBACK value is taken from the first replicated output.
+      FEEDBACK_O <= tree((Y ** (S-1) - 1)/(Y - 1) + 1);
 
       for i in 0 to NUM_SIGNALS - 1 loop
 
-        REPLIC(i) <= tree((Y ** (S-1) - 1)/(Y - 1) + 1 + i);
+        REPLIC_O(i) <= tree((Y ** (S-1) - 1)/(Y - 1) + 1 + i);
 
       end loop;
 

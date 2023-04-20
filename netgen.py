@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
+import numpy as np
+import math
 import fire
-import csv
 
-from scripts.template_processor import *
-from scripts.reporter import *
-from scripts.vhdl_parser import *
-from scripts.vhdl_container import *
-from scripts.network_generators import *
-from scripts.resource_allocator import *
+from scripts import vhdl
+import scripts.network_generators as generators
+from scripts.reporter import Reporter, Report
+from scripts.template_processor import VHDLTemplateProcessor
+from scripts.resource_allocator import Block_Allocator, is_ff
 
 
 def get_sources(path=Path()):
     sources = dict()
     for source in path.glob("./**/*.vhd"):
-        entity = parse_entity_vhdl(source)
+        entity = vhdl.parseVHDLEntity(source)
         if entity:
             sources[entity.name] = entity
     return sources
@@ -24,7 +24,7 @@ def get_sources(path=Path()):
 def get_templates(path=Path()):
     templates = dict()
     for source in path.glob("./**/*.vhd"):
-        template = parse_template_vhdl(source)
+        template = vhdl.parseVHDLTemplate(source)
         if template:
             template.name = source.name
             templates[template.name] = template
@@ -99,40 +99,32 @@ class Interface:
                 print("\t" + template.name)
         return self
 
-    def generate(self, network_type, N, sig_per_row=0):
-        if not sig_per_row:
-            sig_per_row = N
-
-        if "oddeven" == network_type.lower():
+    def generate(self, ntype: str, N: int, SW: int = 1):
+        if "oddeven" == ntype.lower():
             logp = int(math.ceil(math.log2(N)))
-            self.generator = OddEven()
+            self.generator = generators.OddEven()
             self.network = self.generator.create(2**logp)
             self.network = self.generator.reduce(self.network, N)
-        elif "bitonic" == network_type.lower():
+        elif "bitonic" == ntype.lower():
             logp = int(math.ceil(math.log2(N)))
-            self.generator = Bitonic()
+            self.generator = generators.Bitonic()
             self.network = self.generator.create(N)
             self.network = self.generator.reduce(self.network, N)
-        elif "blank" == network_type.lower():
+        elif "blank" == ntype.lower():
             logp = int(math.ceil(math.log2(N)))
             depth = logp * (logp + 1) // 2
-            self.network = Network(N, depth)
-            self.network.depth = depth
-            for i in range(depth):
-                for j in range(N):
-                    self.network[i][j] = ("+", j)
-
+            self.network = generators.Network(N, depth)
         else:
             print("Options: oddeven, bitonic, blank")
         return self
 
-    def distribute_signal(self, name, max_fanout):
+    def distribute_signal(self, signal_name: str, max_fanout: int):
         """Distributes the signal with the given name so that
         only a number of rows less than max_fanout is driven by the signal.
         """
         if self.network:
-            self.network = self.generator.distribute_signals(
-                self.network, {name: max_fanout}
+            self.network = self.generator.distribute_signal(
+                self.network, signal_name, max_fanout
             )
         return self
 
@@ -170,32 +162,40 @@ class Interface:
             print("No template selected.")
         return self
 
-    def replace_ff(
-        self, entity_name, max_entities=1500, ff_per_entity=48, ff_per_entity_layer=[]
-    ):
-        entity = self.entities[entity_name]
+    def replace_ff(self, entity, limit=1500, entity_ff=48):
+        entity_obj = self.entities[entity]
         ralloc = Block_Allocator()
-        ffrepl = ralloc.reallocate_ff(
-            self.network, entity, max_entities, ff_per_entity, ff_per_entity_layer
-        )
+        ffrepl = ralloc.reallocate_ff(self.network, entity_obj, limit, entity_ff)
         self.ffreplacements.append(ffrepl)
         return self
 
-    def fill_template(self, template_name, cs, W=8, SW=1):
+    def write_template(
+        self,
+        template_name: str,
+        path: str = "",
+        cs: str = "SWCS",
+        W: int = 8,
+    ):
         self.template = self.templates[template_name]
         cs = self.entities[cs]
-        template_processor = Template_Processor()
-        self.template = template_processor.fill_main_file(
-            self.template, cs, self.network, self.ffreplacements, W, SW
+        if not path:
+            name = self.network.typename
+            name += "_" + str(self.network.get_N())
+            name += "X" + str(len(self.network.output_set))
+            if self.network.shape:
+                name += "_" + self.network.shape
+            path = "build/{}.vhd".format(name)
+
+        template_processor = VHDLTemplateProcessor(Path(path))
+        entities = {"CS": cs, "Signal_Distributor": self.entities["SIGNAL_DISTRIBUTOR"]}
+        kwargs = {"W": W, "ff_replacements": self.ffreplacements}
+        template_processor.process_template(
+            self.network,
+            self.template,
+            entities,
+            **kwargs,
         )
         self.reporter.add(self.network)
-        return self
-
-    def write_template(self, path=""):
-        if not path:
-            path = "build/{}.vhd".format(self.template.name)
-        with open(path, "w") as fd:
-            fd.write(self.template.as_template())
         print("Wrote {}".format(path))
         return self
 
