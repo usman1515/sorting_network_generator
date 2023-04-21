@@ -40,7 +40,8 @@ end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
 
-  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0');  --( SW * (W / SW) - 1 downto 0); -- Shift register.
+  signal sreg : std_logic_vector(W - 1 downto 0) := (others => '0');
+  --( SW * (W / SW) - 1 downto 0); -- Shift register.
 
 begin
 

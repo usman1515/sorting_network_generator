@@ -149,7 +149,7 @@ begin
       port map (
         CLK_I    => CLK_I,
         RST_I    => RST_I,
-        RUN_I => run,
+        RUN_I    => run,
         LOAD_I   => load,
         DATA_I   => DATA_I(i),
         STREAM_O => STREAM_O(i)

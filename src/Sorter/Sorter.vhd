@@ -65,26 +65,31 @@ architecture STRUCTURAL of SORTER is
   signal start_feedback : std_logic;
   -- Start signal after collective delays from the
   -- entire sorting network.
-  signal start_delayed  : std_logic_vector;
+  constant NUM_START    : integer := 2;
+  signal start_delayed  : std_logic_vector(0 to NUM_START -1);
 
   -- Enable signal after delay from replication.
   signal enable_feedback : std_logic;
   -- Enable signal after collective delays from the
   -- entire sorting network.
-  signal enable_delayed  : std_logic_vector;
+  constant NUM_ENABLE    : integer := 1;
+  signal enable_delayed  : std_logic_vector(0 to NUM_ENABLE -1);
 
   -- Serial unsorted data.
   signal stream_unsorted : SLVArray(0 to N - 1)(SW - 1 downto 0);
   -- Serial sorted data.
   signal stream_sorted   : SLVArray(0 to M - 1)(SW - 1 downto 0);
 
+  -- Stall signal indicating presence of backpressure at the sorter output.
+  -- There is currently no purpose for this signal.
+  signal stall : std_logic;
 begin
 
 
   CYCLE_TIMER_1 : entity work.cycle_timer
     generic map (
-      W     => W,
-      SW    => SW
+      W  => W,
+      SW => SW
       )
     port map (
       CLK_I    => CLK_I,
@@ -93,7 +98,7 @@ begin
       START_O  => start
       );
 
-  SERIALIZER: entity work.SERIALIZERSW_SR
+  SERIALIZER : entity work.SERIALIZERSW_SR
     generic map (
       N  => N,
       W  => W,
@@ -121,20 +126,21 @@ begin
       ENABLE_FEEDBACK_O => enable_feedback,
       STREAM_O          => stream_sorted);
 
-
-  DESERIALIZER : entity work.deserializersw_sr
+  DESERIALIZERSW_SR_1 : entity work.DESERIALIZERSW_SR
     generic map (
-      N  => M,
-      W  => W,
-      SW => SW
-      )
+      N          => N,
+      W          => W,
+      SW         => SW)
     port map (
       CLK_I    => CLK_I,
       RST_I    => RST_I,
-      ENABLE_I => enable_delayed,
-      STORE_I  => start_delayed,
+      ENABLE_I => enable_delayed(0),
+      START_I  => start_delayed(0),
       STREAM_I => stream_sorted,
-      DATA_O   => DATA_O
-      );
+      VALID_O  => DATA_OUT_VALID_O,
+      READY_I  => DATA_OUT_READY_I,
+      DATA_O   => DATA_O,
+      STALL_O  => stall);
+
 
 end architecture STRUCTURAL;

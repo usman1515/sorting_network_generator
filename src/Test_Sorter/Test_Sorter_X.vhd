@@ -12,84 +12,90 @@
 ----------------------------------------------------------------------------------
 
 library ieee;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 library work;
-  use work.CustomTypes.all;
+use work.CustomTypes.all;
 
 entity TEST_SORTER_X is
   generic (
     -- Bit-Width of input values.
-    W  : integer := 8;
+    W        : integer := 8;
     -- Length of subwords.
-    SW : integer := 1;
+    SW       : integer := 1;
     -- Number of available BRAMs
     NUM_BRAM : integer := 4318
-  );
+    );
   port (
     -- Clock signal
-    CLK     : in    std_logic;
+    CLK_I      : in  std_logic;
     -- Synchronous Reset
-    RST     : in    std_logic;
+    RST_I      : in  std_logic;
     -- Enable signal
-    E       : in    std_logic;
+    ENABLE_I   : in  std_logic;
     -- Bit indicating validity of received input sequence. '1' indicates total ordering of input
     -- sequence, '0' an order violation.
-    VALID   : out   std_logic
-  );
+    IN_ORDER_O : out std_logic
+    );
 end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N             : integer := 8;
-  constant DEPTH         : integer := 6;
-  constant POLY_BASE     : integer := 654;
-  constant SEED_BASE     : integer := 58;
-  constant ceilWSW       : integer := ((W + SW - 1) / SW);
+  constant N         : integer := 8;
+  constant DEPTH     : integer := 6;
+  constant POLY_BASE : integer := 654;
+  constant SEED_BASE : integer := 58;
+  constant ceilWSW   : integer := ((W + SW - 1) / SW);
 
 
-  signal e_delayed_i     : std_logic_vector(1 downto 0);
+  signal enable_delayed : std_logic_vector(1 downto 0);
   -- Output of LFSRs
-  signal rand_data_i     : SLVArray(0 to N / ceilWSW)(W - 1 downto 0);
+  signal data_random    : SLVArray(0 to N / ceilWSW)(W - 1 downto 0);
   -- Output of Round-Robin DMUXs
-  signal unsorted_data_i : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal data_unsorted  : SLVArray(0 to N - 1)(W - 1 downto 0);
   -- Output of Sorting Network
-  signal sorted_data_i   : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal data_sorted    : SLVArray(0 to N - 1)(W - 1 downto 0);
   -- Since open outputs are disallowed...
-  signal unused_i        : SLVArray(0 to W - 1 - N rem W)(W - 1 downto 0);
+  signal unused         : SLVArray(0 to W - 1 - N rem W)(W - 1 downto 0);
 
+  signal data_in_valid, data_in_ready : std_logic;
+  signal data_counter                 : integer range 0 to ceilWSW;
+  signal rng_enable                   : std_logic;
+
+  signal data_out_valid, data_out_ready : std_logic;
+  signal validator_enable               : std_logic;
 begin
 
   INPUT : for i in 0 to N / ceilWSW - 1 generate
 
     LFSR_1 : entity work.lfsr
       generic map (
-        W => W,
+        W    => W,
         -- Attempt to create unique LFSR configuration to prevent consolidation at synthesis.
-        POLY => std_logic_vector(to_unsigned(POLY_BASE + i,W))
-      )
+        POLY => std_logic_vector(to_unsigned(POLY_BASE + i, W))
+        )
       port map (
-        CLK => CLK,
-        E   => E,
-        RST => RST,
+        CLK_I    => CLK_I,
+        ENABLE_I => ENABLE_I,
+        RST_I    => RST_I,
         -- Same reason as with assignment of POLY.
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W ,W)),
-        OUTPUT => rand_data_i(i)
-      );
+        SEED_I   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W, W)),
+        DATA_O   => data_random(i)
+        );
 
-    RR_DMUX_NXW_REM : entity work.rr_dmux_nxw
+    ROUNDROBIN_DMUX_DIV : entity work.ROUNDROBIN_DMUX
       generic map (
         W => W,
         N => ceilWSW
-      )
+        )
       port map (
-        CLK    => CLK,
-        E      => E,
-        RST    => RST,
-        INPUT  => rand_data_i(i),
-        OUTPUT => unsorted_data_i(i*ceilWSW to (i + 1)*ceilWSW - 1)
-      );
+        CLK_I    => CLK_I,
+        ENABLE_I => ENABLE_I,
+        RST_I    => RST_I,
+        DATA_I   => data_random(i),
+        DATA_O   => data_unsorted(i*ceilWSW to (i + 1)*ceilWSW - 1)
+        );
 
   end generate INPUT;
 
@@ -98,82 +104,87 @@ begin
     LFSR_REM : entity work.lfsr
       generic map (
         W    => W,
-        POLY => std_logic_vector(to_unsigned(POLY_BASE + N/W,W))
-      )
+        POLY => std_logic_vector(to_unsigned(POLY_BASE + N/W, W))
+        )
       port map (
-        CLK    => CLK,
-        E      => E,
-        RST    => RST,
-        SEED   => std_logic_vector(to_unsigned(SEED_BASE + N/W/W,W)),
-        OUTPUT => rand_data_i(N/ceilWSW)
-      );
+        CLK_I    => CLK_I,
+        ENABLE_I => ENABLE_I,
+        RST_I    => RST_I,
+        SEED_I   => std_logic_vector(to_unsigned(SEED_BASE + N/W/W, W)),
+        DATA_O   => data_random(N/ceilWSW)
+        );
 
-    RR_DMUX_NXW_REM : entity work.rr_dmux_nxw
+    ROUNDROBIN_DMUX_REM : entity work.ROUNDROBIN_DMUX
       generic map (
         W => W,
         N => N mod ceilWSW
-      )
+        )
       port map (
-        CLK                      => CLK,
-        E                        => E,
-        RST                      => RST,
-        INPUT                    => rand_data_i(N/ceilWSW),
-        OUTPUT => unsorted_data_i(N - N mod ceilWSW to N -1)
-      );
+        CLK_I    => CLK_I,
+        ENABLE_I => ENABLE_I,
+        RST_I    => RST_I,
+        DATA_I   => data_random(N/ceilWSW),
+        DATA_O   => data_unsorted(N - N mod ceilWSW to N -1)
+        );
 
   end generate INPUT_REM;
 
-  ENABLEDELAY_1 : entity work.delay_timer
-    generic map (
-      DELAY => ceilWSW - 1
-    )
-    port map (
-      CLK       => CLK,
-      E         => not RST,
-      RST       => RST,
-      A         => E,
-      A_DELAYED => e_delayed_i(0)
-    );
 
-  SORTER_1 : entity work.sorter
-    generic map (
-      W => W,
-      SW => SW,
-      N => N,
-      M => N,
-      NUM_BRAM => NUM_BRAM
-    )
-    port map (
-      CLK        => CLK,
-      E          => E,
-      RST        => RST,
-      PAR_INPUT  => unsorted_data_i,
-      PAR_OUTPUT => sorted_data_i
-    );
 
-  ENABLEDELAY_2 : entity work.delay_timer
+  rng_timer : process (CLK_I) is
+  begin
+    if (RST_I = '1') then
+      data_counter  <= ceilWSW-1;
+      rng_enable    <= '0';
+      data_in_valid <= '0';
+    else
+      if (ENABLE_I = '1') then
+        rng_enable <= '1';
+        if (data_counter = 0) then
+          rng_enable    <= '0';
+          data_in_valid <= '1';
+          if(data_in_ready = '1') then
+            rng_enable   <= '1';
+            data_counter <= ceilWSW - 1;
+          end if;
+        else
+          data_counter <= data_counter - 1;
+        end if;
+      end if;
+    end if;
+  end process rng_timer;
+
+  SORTER_1 : entity work.SORTER
     generic map (
-      DELAY => ceilWSW + DEPTH + 2
-    )
+      W        => W,
+      SW       => SW,
+      N        => N,
+      M        => M,
+      NUM_BRAM => NUM_BRAM)
     port map (
-      CLK       => CLK,
-      E         => not RST,
-      RST       => RST,
-      A         => e_delayed_i(0),
-      A_DELAYED => e_delayed_i(1)
-    );
+      CLK_I            => CLK_I,
+      ENABLE_I         => ENABLE_I,
+      RST_I            => RST_I,
+      DATA_IN_READY_O  => data_in_ready,
+      DATA_IN_VALID_I  => data_in_valid,
+      DATA_I           => data_unsorted,
+      DATA_OUT_READY_I => '1',
+      DATA_OUT_VALID_O => data_out_valid,
+      DATA_O           => data_sorted);
+
+
 
   VALIDATOR_1 : entity work.validator
     generic map (
-      N => N,
+      N  => N,
       SW => SW
-    )
+      )
     port map (
-      CLK   => CLK,
-      E     => e_delayed_i(1),
-      RST   => RST,
-      INPUT => sorted_data_i,
-      VALID => VALID
-    );
+      CLK_I      => CLK_I,
+      ENABLE_I   => data_out_valid,
+      RST_I      => RST_I,
+      DATA_I     => data_sorted,
+      IN_ORDER_O => IN_ORDER_O
+      );
 
 end architecture STRUCTURAL;

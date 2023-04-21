@@ -12,34 +12,34 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 library work;
-  use work.CustomTypes.all;
+use work.CustomTypes.all;
 
-entity RR_DMUX_NXW is
+entity ROUNDROBIN_DMUX is
   generic (
     -- Bit-width of each In-/output
     W : integer := 8;
     -- Number of Outputs.
     N : integer := 8
-  );
+    );
   port (
     -- System clock.
-    CLK      : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Enable.
-    E        : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Synchronous reset.
-    RST      : in    std_logic;
+    RST_I    : in  std_logic;
     -- W-Bit input.
-    INPUT    : in    std_logic_vector(W - 1 downto 0);
+    DATA_I   : in  std_logic_vector(W - 1 downto 0);
     -- N x W-Bit output.
-    OUTPUT   : out   SLVArray(0 to N - 1)(W - 1 downto 0)
-  );
-end entity RR_DMUX_NXW;
+    DATA_O   : out SLVArray(0 to N - 1)(W - 1 downto 0)
+    );
+end entity ROUNDROBIN_DMUX;
 
-architecture BEHAVIORAL of RR_DMUX_NXW is
+architecture BEHAVIORAL of ROUNDROBIN_DMUX is
 
   signal count : integer range 0 to N - 1;
 
@@ -48,16 +48,16 @@ begin
   -- COUNTER---------------------------------------------------------------------
   -- Simple Counter with reset and enable.
   -------------------------------------------------------------------------------
-  COUNTER : process (CLK) is
+  COUNTER : process (CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
+    if (rising_edge(CLK_I)) then
       -- If N = 1 there is nothing to distribute and therfore no need for the timer.
       if (N > 1) then
-        if (RST = '1' or count = N - 1) then
+        if (RST_I = '1' or count = N - 1) then
           count <= 0;
         else
-          if (E = '1') then
+          if (ENABLE_I = '1') then
             count <= count + 1;
           end if;
         end if;
@@ -67,20 +67,20 @@ begin
   end process COUNTER;
 
   -- DEMUX-----------------------------------------------------------------------
-  -- Synchronously demultiplexes INPUT to OUTPUT with count as selection signal.
+  -- Synchronously demultiplexes DATA_I to DATA_O with count as selection signal.
   -------------------------------------------------------------------------------
-  DEMUX : process (CLK) is
+  DEMUX : process (CLK_I) is
   begin
 
-    if rising_edge(CLK) then
-      if (RST = '1') then
-        OUTPUT <= (others => (others => '0'));
+    if rising_edge(CLK_I) then
+      if (RST_I = '1') then
+        DATA_O <= (others => (others => '0'));
       else
-        -- Similarily, the output becomes independent of the timer if N = 1.
-        if (N>1) then
-          OUTPUT(count) <= INPUT;
+        -- Similarily, the DATA_O becomes independent of the timer if N = 1.
+        if (N > 1) then
+          DATA_O(count) <= DATA_I;
         else
-          OUTPUT(0) <= INPUT;
+          DATA_O(0) <= DATA_I;
         end if;
       end if;
     end if;

@@ -12,28 +12,28 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 entity LFSR is
   generic (
     -- Bit-width of LFSR
-    W    : integer          := 8;
+    W    : integer := 8;
     -- Generator Polynomial
     POLY : std_logic_vector
-  );
+    );
   port (
     -- System Clock
-    CLK    : in    std_logic;
+    CLK_I    : in  std_logic;
     -- Enable
-    E      : in    std_logic;
+    ENABLE_I : in  std_logic;
     -- Reset
-    RST      : in    std_logic;
+    RST_I    : in  std_logic;
     -- Seed for pseudo-random number generation
-    SEED   : in    std_logic_vector(W - 1 downto 0);
+    SEED_I   : in  std_logic_vector(W - 1 downto 0);
     -- W-Bit output.
-    OUTPUT : out   std_logic_vector(W - 1 downto 0)
-  );
+    OUTPUT_O : out std_logic_vector(W - 1 downto 0)
+    );
 end entity LFSR;
 
 architecture BEHAVIORAL of LFSR is
@@ -43,7 +43,7 @@ architecture BEHAVIORAL of LFSR is
 
 begin
 
-  OUTPUT <= reg;
+  OUTPUT_O <= reg;
   -- GENMASK----------------------------------------------------------------------
   -- Generates mask value from generator polynomial and LSB of reg.
   --------------------------------------------------------------------------------
@@ -59,17 +59,17 @@ begin
   end process GENMASK;
 
   -- MAIN-------------------------------------------------------------------------
-  -- On reset, fills reg with value of seed otherwise applies XOR of reg and high
+  -- On reset, fills reg with value of seed_I otherwise applies XOR of reg and high
   -- to reg.
   --------------------------------------------------------------------------------
-  MAIN : process(CLK) is
+  MAIN : process(CLK_I) is
   begin
 
-    if (rising_edge(CLK)) then
-      if (RST = '1') then
-        reg <= SEED;
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
+        reg <= SEED_I;
       else
-        if (E = '1') then
+        if (ENABLE_I = '1') then
           reg <= '0' & reg(reg'high downto reg'low + 1) xor mask;
         end if;
       end if;
