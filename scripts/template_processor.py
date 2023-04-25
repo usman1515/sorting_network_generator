@@ -693,6 +693,7 @@ class VHDLTemplateProcessor:
             """
 DelayRegister: process (CLK_I) is
 begin
+if (rising_edge(CLK_I)) then
 """
         )
         for z, layer in enumerate(network.ff_layers):
@@ -717,7 +718,7 @@ begin
 
         print(ff_chains)
         self.__process_reg_chains(network, stream_layer_ff, ff_chains)
-        self.writer.write_incremental("\nend process;\n")
+        self.writer.write_incremental("\nend if;\nend process;\n")
         self.writer.write_end_comment()
 
     def __handle_registers(
