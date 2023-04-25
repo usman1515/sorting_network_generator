@@ -22,7 +22,7 @@ end entity TB_DESERIALIZER;
 
 architecture TB of TB_DESERIALIZER is
 
-  constant CLK_PERIOD              : time := 10 ns;
+  constant CLK_PERIOD                               : time := 10 ns;
 
   procedure load_and_store (
     constant W        : integer;
@@ -87,22 +87,22 @@ architecture TB of TB_DESERIALIZER is
 
   end procedure assert_equivalence;
 
-  constant W                       : integer := 8;
-  constant N                       : integer := 4;
-  constant SW                      : integer := 1;
+  constant W                                        : integer := 8;
+  constant N                                        : integer := 4;
+  constant SW                                       : integer := 1;
 
-  signal clk                       : std_logic;
-  signal rst                       : std_logic;
-  signal enable                    : std_logic;
+  signal clk                                        : std_logic;
+  signal rst                                        : std_logic;
+  signal enable                                     : std_logic;
 
-  signal start,start_delayed                     : std_logic;
+  signal start,   start_delayed                     : std_logic;
 
-  signal s_ready, s_valid          : std_logic;
-  signal d_ready, d_valid          : std_logic;
+  signal s_ready, s_valid                           : std_logic;
+  signal d_ready, d_valid                           : std_logic;
 
-  signal input                     : SLVArray(0 to N - 1)(W - 1 downto 0);
-  signal stream                    : SLVArray(0 to N - 1)(SW - 1 downto 0);
-  signal output                    : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal input                                      : SLVArray(0 to N - 1)(W - 1 downto 0);
+  signal stream                                     : SLVArray(0 to N - 1)(SW - 1 downto 0);
+  signal output                                     : SLVArray(0 to N - 1)(W - 1 downto 0);
 
 begin
 
@@ -116,16 +116,17 @@ begin
 
   end process CLK_PROCESS;
 
-  START_GEN : process(clk) is
+  START_GEN : process (clk) is
 
     constant LIMIT : integer := ((W + SW - 1) / SW) - 1;
     variable c     : integer range 0 to LIMIT;
 
   begin
+
     if rising_edge(clk) then
       if (rst = '1') then
-        c     := LIMIT;
-        start <= '0';
+        c             := LIMIT;
+        start         <= '0';
         start_delayed <= '0';
       else
         start_delayed <= start;
@@ -138,6 +139,7 @@ begin
         end if;
       end if;
     end if;
+
   end process START_GEN;
 
   SERIALIZER_SR_3 : entity work.serializer_sr

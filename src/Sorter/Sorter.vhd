@@ -23,9 +23,9 @@ entity SORTER is
     -- Bit-width of subwords
     SW       : integer := 1;
     -- Number of input words.
-    N        : integer := 2;
+    N        : integer := 4;
     -- Number of sorted ouput words.
-    M        : integer := 2;
+    M        : integer := 4;
     -- Number of available BRAMs
     NUM_BRAM : integer := 4318
   );
@@ -125,7 +125,7 @@ begin
       STREAM_O       => stream_unsorted
     );
 
-  NETWORK : entity work.oddeven_2x2
+  NETWORK : entity work.oddeven_4x4
     port map (
       CLK_I             => CLK_I,
       RST_I             => RST_I,

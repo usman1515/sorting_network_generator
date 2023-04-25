@@ -58,11 +58,11 @@ begin
       else
         if (LOAD_I = '1') then
           if (W mod SW /= 0) then
-            sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
-                                                                DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
+            sreg(sreg'high downto sreg'low + (SW mod W) - 1)
+              <= DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
           else
-            sreg(sreg'high downto sreg'low ) <=
-                                                DATA_I(DATA_I'high  downto DATA_I'low);
+            sreg(sreg'high downto sreg'low )
+              <= DATA_I(DATA_I'high  downto DATA_I'low);
           end if;
         else
           if (RUN_I = '1') then
@@ -78,24 +78,25 @@ begin
   -- Asynchronously outputs either the MSB of sreg or the MSB of DATA_I
   -- depeding on LOAD_I.
   -----------------------------------------------------------------------------
-  ASYNC_OUTPUT : process (RUN_I, LOAD_I, sreg, DATA_I) is
-  begin
+  STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
+  -- ASYNC_OUTPUT : process (RUN_I, LOAD_I, sreg, DATA_I) is
+  -- begin
 
-    STREAM_O <= (others => '0');
+  --   STREAM_O <= (others => '0');
 
-    if (RUN_I = '1') then
-      if (LOAD_I = '1') then
-        if (W mod SW > 0) then
-          STREAM_O(SW - 1 downto W mod SW) <= (others => '0');
-          STREAM_O(W mod SW - 1 downto 0)  <= DATA_I(DATA_I'high downto SW * (W / SW));
-        else
-          STREAM_O <= DATA_I(W - 1 downto W - SW);
-        end if;
-      else
-        STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
-      end if;
-    end if;
+  --   if (RUN_I = '1') then
+  --     if (LOAD_I = '1') then
+  --       if (W mod SW > 0) then
+  --         STREAM_O(SW - 1 downto W mod SW) <= (others => '0');
+  --         STREAM_O(W mod SW - 1 downto 0)  <= DATA_I(DATA_I'high downto SW * (W / SW));
+  --       else
+  --         STREAM_O <= DATA_I(W - 1 downto W - SW);
+  --       end if;
+  --     else
+  --       STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
+  --     end if;
+  --   end if;
 
-  end process ASYNC_OUTPUT;
+  -- end process ASYNC_OUTPUT;
 
 end architecture BEHAVIORAL;

@@ -79,7 +79,7 @@ begin
       else
         if (ENABLE_I = '1') then
           if (state = RUNNING or next_state = RUNNING) then
-            if (count > 0) then
+            if (count /= 0) then
               count <= count - 1;
             else
               count <= LIMIT;

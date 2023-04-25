@@ -26,8 +26,8 @@ architecture TB of TB_SORTER is
 
   constant W             : integer := 8;
   constant SW            : integer := 1;
-  constant N             : integer := 2;
-  constant M             : integer := 2;
+  constant N             : integer := 4;
+  constant M             : integer := 4;
   signal   rst           : std_logic; -- Debounced reset signal.
   signal   enable        : std_logic; -- Debounced enable signal.
   --
@@ -39,36 +39,18 @@ architecture TB of TB_SORTER is
   signal read_ready      : std_logic;
   signal read_valid      : std_logic;
 
-  constant NUM_DATA      : integer := 2;
+  signal out_reg         : SLVArray(0 to  N - 1)(W - 1 downto 0);
+
+  constant NUM_DATA      : integer := 4;
 
   type stim_t is array (0 to NUM_DATA - 1) of SLVArray(0 to  N - 1) (W - 1 downto 0);
 
   constant STIM_DATA     : stim_t :=
   (
-    (
-      X"7F",
-      X"80"                           --,
-      -- X"04",
-      -- X"33"
-    ),
-    (
-      X"80",
-      X"7F"                           --,
-      -- X"04",
-      -- X"33"
-    )
-    -- (
-    --   X"04",
-    --   X"DF",
-    --   X"A2",
-    --   X"33"
-    -- ),
-    -- (
-    --   X"33",
-    --   X"DF",
-    --   X"04",
-    --   X"A2"
-    -- )
+    (X"80", X"40", X"20", X"10"),
+    (X"40", X"80", X"20", X"10"),
+    (X"40", X"20", X"80", X"10"),
+    (X"40", X"20", X"10", X"80")
   );
 
 begin
@@ -107,7 +89,7 @@ begin
 
     enable        <= '0';
     rst           <= '1';
-    wait for CKTIME /2 ;
+    wait for CKTIME / 2;
     write_valid   <= '0';
     data_unsorted <= (others =>(others => '0'));
     wait for CKTIME;
@@ -118,15 +100,15 @@ begin
 
       write_valid   <= '1';
       data_unsorted <= STIM_DATA(i);
+
       while (write_ready = '0') loop
 
         wait for CKTIME;
 
       end loop;
+
       write_valid <= '0';
       wait for CKTIME;
-
-
 
     end loop;
 
@@ -138,13 +120,14 @@ begin
 
   begin
 
-    wait for CKTIME /2 ;
+    wait for CKTIME / 2;
+    out_reg <= (others => (others => '0'));
     read_ready <= '0';
     wait for CKTIME;
 
     for i in 0 to NUM_DATA - 1 loop
 
-      read_ready <= '0';
+      read_ready <= '1';
 
       while (read_valid = '0') loop
 
@@ -152,9 +135,9 @@ begin
 
       end loop;
 
-      read_ready <= '1';
+      out_reg <= data_sorted;
+      read_ready <= '0';
       wait for CKTIME;
-
       for j in 0 to N - 1 loop
 
         assert (data_sorted(i) = STIM_DATA(i)(j));
