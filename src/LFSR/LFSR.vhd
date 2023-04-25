@@ -32,7 +32,7 @@ entity LFSR is
     -- Seed for pseudo-random number generation
     SEED_I   : in  std_logic_vector(W - 1 downto 0);
     -- W-Bit output.
-    OUTPUT_O : out std_logic_vector(W - 1 downto 0)
+    DATA_O : out std_logic_vector(W - 1 downto 0)
     );
 end entity LFSR;
 
@@ -43,7 +43,7 @@ architecture BEHAVIORAL of LFSR is
 
 begin
 
-  OUTPUT_O <= reg;
+  DATA_O <= reg;
   -- GENMASK----------------------------------------------------------------------
   -- Generates mask value from generator polynomial and LSB of reg.
   --------------------------------------------------------------------------------

@@ -55,7 +55,7 @@ begin
       port map (
         A_I => A_I(i),
         B_I => B_I(i),
-        SEL => next_state(1),
+        SEL_I => next_state(1),
         A_O => a(i),
         B_O => b(i)
         );

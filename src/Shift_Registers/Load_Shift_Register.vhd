@@ -12,8 +12,8 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.NUMERIC_STD.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
 entity LOAD_SHIFT_REGISTER is
   generic (
@@ -21,21 +21,21 @@ entity LOAD_SHIFT_REGISTER is
     W  : integer := 8;
     -- Length of subwords to be output at a time.
     SW : integer := 1
-    );
+  );
   port (
     -- System Clock
-    CLK_I    : in  std_logic;
+    CLK_I    : in    std_logic;
     -- Synchonous Reset
-    RST_I    : in  std_logic;
+    RST_I    : in    std_logic;
     -- Run signal progressing serialization.
-    RUN_I : in  std_logic;
+    RUN_I    : in    std_logic;
     -- Load signal
-    LOAD_I   : in  std_logic;
+    LOAD_I   : in    std_logic;
     -- w-bit parallel input
-    DATA_I   : in  std_logic_vector(W - 1 downto 0);
+    DATA_I   : in    std_logic_vector(W - 1 downto 0);
     -- subword parallel to bit-serial output
-    STREAM_O : out std_logic_vector(SW - 1 downto 0)
-    );
+    STREAM_O : out   std_logic_vector(SW - 1 downto 0)
+  );
 end entity LOAD_SHIFT_REGISTER;
 
 architecture BEHAVIORAL of LOAD_SHIFT_REGISTER is
@@ -59,10 +59,10 @@ begin
         if (LOAD_I = '1') then
           if (W mod SW /= 0) then
             sreg(sreg'high downto sreg'low + (SW mod W) - 1) <=
-              DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
+                                                                DATA_I(DATA_I'high - (W mod SW) downto DATA_I'low);
           else
-            sreg(sreg'high downto sreg'low + SW) <=
-              DATA_I(DATA_I'high - SW downto DATA_I'low);
+            sreg(sreg'high downto sreg'low ) <=
+                                                DATA_I(DATA_I'high  downto DATA_I'low);
           end if;
         else
           if (RUN_I = '1') then
@@ -78,18 +78,22 @@ begin
   -- Asynchronously outputs either the MSB of sreg or the MSB of DATA_I
   -- depeding on LOAD_I.
   -----------------------------------------------------------------------------
-  ASYNC_OUTPUT : process (LOAD_I, sreg, DATA_I) is
+  ASYNC_OUTPUT : process (RUN_I, LOAD_I, sreg, DATA_I) is
   begin
 
-    if (LOAD_I = '1') then
-      if (W mod SW > 0) then
-        STREAM_O(SW - 1 downto W mod SW) <= (others => '0');
-        STREAM_O(W mod SW - 1 downto 0)  <= DATA_I(DATA_I'high downto SW * (W / SW));
+    STREAM_O <= (others => '0');
+
+    if (RUN_I = '1') then
+      if (LOAD_I = '1') then
+        if (W mod SW > 0) then
+          STREAM_O(SW - 1 downto W mod SW) <= (others => '0');
+          STREAM_O(W mod SW - 1 downto 0)  <= DATA_I(DATA_I'high downto SW * (W / SW));
+        else
+          STREAM_O <= DATA_I(W - 1 downto W - SW);
+        end if;
       else
-        STREAM_O <= DATA_I(W - 1 downto W - SW);
+        STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
       end if;
-    else
-      STREAM_O <= sreg(sreg'high downto sreg'high - (SW - 1));
     end if;
 
   end process ASYNC_OUTPUT;

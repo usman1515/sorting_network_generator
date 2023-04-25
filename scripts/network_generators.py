@@ -254,6 +254,7 @@ class Generator:
         network.signals[signal_name].is_replicated = True
         network.signals[signal_name].num_replications = num_sig
         network.signals[signal_name].max_fanout = max_fanout
+
         # If not enough delay stages are present, extend all layers
         # with delay stages to the required amount.
         # if data_delay < dist_depth:

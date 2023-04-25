@@ -42,8 +42,8 @@ end entity TEST_SORTER_X;
 
 architecture STRUCTURAL of TEST_SORTER_X is
 
-  constant N         : integer := 8;
-  constant DEPTH     : integer := 6;
+  constant N         : integer := 4;
+  constant DEPTH     : integer := 3;
   constant POLY_BASE : integer := 654;
   constant SEED_BASE : integer := 58;
   constant ceilWSW   : integer := ((W + SW - 1) / SW);
@@ -155,12 +155,6 @@ begin
   end process rng_timer;
 
   SORTER_1 : entity work.SORTER
-    generic map (
-      W        => W,
-      SW       => SW,
-      N        => N,
-      M        => M,
-      NUM_BRAM => NUM_BRAM)
     port map (
       CLK_I            => CLK_I,
       ENABLE_I         => ENABLE_I,
@@ -168,23 +162,22 @@ begin
       DATA_IN_READY_O  => data_in_ready,
       DATA_IN_VALID_I  => data_in_valid,
       DATA_I           => data_unsorted,
-      DATA_OUT_READY_I => '1',
+      DATA_OUT_READY_I => data_out_ready,
       DATA_OUT_VALID_O => data_out_valid,
       DATA_O           => data_sorted);
 
 
-
-  VALIDATOR_1 : entity work.validator
+  VALIDATOR_1: entity work.VALIDATOR
     generic map (
       N  => N,
-      SW => SW
-      )
+      W  => W,
+      SW => SW)
     port map (
-      CLK_I      => CLK_I,
-      ENABLE_I   => data_out_valid,
-      RST_I      => RST_I,
-      DATA_I     => data_sorted,
-      IN_ORDER_O => IN_ORDER_O
-      );
-
+      CLK_I        => CLK_I,
+      RST_I        => RST_I,
+      ENABLE_I     => ENABLE_I,
+      DATA_I       => data_sorted,
+      DATA_VALID_I => data_out_valid,
+      DATA_READY_O => data_out_ready,
+      IN_ORDER_O   => IN_ORDER_O);
 end architecture STRUCTURAL;

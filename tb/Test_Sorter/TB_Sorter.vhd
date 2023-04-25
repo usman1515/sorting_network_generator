@@ -21,27 +21,27 @@ end entity TB_SORTER;
 
 architecture TB of TB_SORTER is
 
-  constant CKTIME  : time := 10 ns;
-  signal   clk     : std_logic;
+  constant CKTIME     : time := 10 ns;
+  signal   clk        : std_logic;
 
-  constant W       : integer := 4;
-  constant SW      : integer := 1;
-  signal   rst_i   : std_logic; -- Debounced reset signal.
-  signal   e_i     : std_logic; -- Debounced enable signal.
-  signal   valid_i : std_logic;
+  constant W          : integer := 8;
+  constant SW         : integer := 1;
+  signal   rst        : std_logic; -- Debounced reset signal.
+  signal   enable     : std_logic; -- Debounced enable signal.
+  signal   in_order      : std_logic;
 
 begin
 
   TEST_SORTER_X_1 : entity work.test_sorter_x
     generic map (
-      W => W,
+      W  => W,
       SW => SW
     )
     port map (
-      CLK   => clk,
-      RST   => rst_i,
-      E     => e_i,
-      VALID => valid_i
+      CLK_I    => clk,
+      RST_I    => rst,
+      ENABLE_I => enable,
+      IN_ORDER_O  => in_order
     );
 
   CLK_PROCESS : process is
@@ -58,15 +58,15 @@ begin
 
   begin
 
-    e_i   <= '0';
-    rst_i <= '1';
+    enable <= '0';
+    rst    <= '1';
     wait for CKTIME;
-    rst_i <= '0';
-    e_i   <= '1';
+    rst    <= '0';
+    enable <= '1';
     wait for 10 * W * CKTIME;
 
     wait;
 
   end process SIGNAL_PROCESS;
-  
+
 end architecture TB;

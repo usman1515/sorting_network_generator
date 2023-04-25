@@ -17,12 +17,12 @@ library IEEE;
 
 entity MUX_2X2 is
   port (
-    A0   : in    std_logic;
-    B0   : in    std_logic;
-    SEL  : in    std_logic;
+    A_I   : in    std_logic;
+    B_I   : in    std_logic;
+    SEL_I  : in    std_logic;
 
-    A1   : out   std_logic;
-    B1   : out   std_logic
+    A_O   : out   std_logic;
+    B_O   : out   std_logic
   );
 end entity MUX_2X2;
 
@@ -30,15 +30,15 @@ architecture BEHAVIORAL of MUX_2X2 is
 
 begin
 
-  MUX : process (A0, B0, SEL) is
+  MUX : process (A_I, B_I, SEL_I) is
   begin
 
-    if (SEL = '1') then
-      A1 <= B0;
-      B1 <= A0;
+    if (SEL_I = '1') then
+      A_O <= B_I;
+      B_O <= A_I;
     else
-      A1 <= A0;
-      B1 <= B0;
+      A_O <= A_I;
+      B_O <= B_I;
     end if;
 
   end process MUX;

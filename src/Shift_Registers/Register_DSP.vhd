@@ -36,16 +36,16 @@ entity REGISTER_DSP is
     -- Enable
     ENABLE_I : in    std_logic;
     -- bit serial input
-    REG_I    : in    std_logic_vector(NUM_INPUT - 1 downto 0);
+    REG_I    : in    std_logic_vector(NUM_INPUTS - 1 downto 0);
     -- bit-serial output
-    REG_O    : out   std_logic_vector(NUM_INPUT - 1 downto 0)
+    REG_O    : out   std_logic_vector(NUM_INPUTS - 1 downto 0)
   );
 end entity REGISTER_DSP;
 
 architecture BEHAVIORAL of REGISTER_DSP is
 
   signal   open_carryout : std_logic;
-  constant ZERO_B        : std_logic_vector(NUM_INPUT - 1 downto 0) := (others => '0');
+  constant ZERO_B        : std_logic_vector(NUM_INPUTS - 1 downto 0) := (others => '0');
 
 begin
 
@@ -60,7 +60,7 @@ begin
       -- Desired clock cycle latency, 0-2
       LATENCY => REG_PER_INPUT,
       -- Input / Output bus width, 1-48
-      WIDTH => NUM_INPUT
+      WIDTH => NUM_INPUTS
     )
     port map (
       -- 1-bit carry-out output signal
@@ -78,9 +78,9 @@ begin
       -- 1-bit clock enable input
       CE => '1',
       -- 1-bit clock input
-      CLK_I => CLK_I,
+      CLK => CLK_I,
       -- 1-bit active high synchronous reset
-      RST_I => RST_I
+      RST => RST_I
     );
 
   -- End of ADDSUB_MACRO_inst instantiation

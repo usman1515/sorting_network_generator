@@ -294,7 +294,7 @@ class VHDLTemplateProcessor:
   -- Generator scripts array is indexed using (z,y,x) = (Layer, Stage, N)
   -- but here perm_arr is indexed with (z,x,y) = (N,Stage,Subword) to allow
   -- compact shift register definition.
-  type stream_array_t is array (0 to N-1) of SLVArray(0 to DEPTH-1)(SW-1 downto 0);
+  type stream_array_t is array (0 to N-1) of SLVArray(0 to DEPTH)(SW-1 downto 0);
   -- Wire grid with the dimensions of NxDepthxSubword
   signal stream_array     : stream_array_t;
 
@@ -319,7 +319,7 @@ class VHDLTemplateProcessor:
                     "depth": str(network.get_depth()),
                     "N": signal.num_replications,
                 }
-                def_str += "signal {signal_name}_array : SLVArray(0 to {N}-1)(0 to {depth}-1);\n".format_map(
+                def_str += "signal {signal_name}_array : SLVArray(0 to {N}-1)(0 to {depth});\n".format_map(
                     fmap
                 )
         return def_str
@@ -352,8 +352,8 @@ class VHDLTemplateProcessor:
             inputs += "stream_array({n})(0) <= STREAM_I({n});\n".format(n=i)
         outputs = "\n"
         for entry in network.output_set:
-            outputs += "STREAM_O({m}) <= stream_array({depth})({m});\n".format(
-                m=entry, depth=network.get_depth() - 1
+            outputs += "STREAM_O({m}) <= stream_array({m})({depth});\n".format(
+                m=entry, depth=network.get_depth()
             )
 
         # Handle output of control signals
@@ -367,10 +367,9 @@ class VHDLTemplateProcessor:
                 if signal.distribution == DistributionType.GLOBAL:
                     # Other types of signals should be handled in
                     # make_signal_replicators.
-                    for i in range(signal.num_replications):
-                        inputs += "{sname}_global <= {pname}_I;\n".format(
-                            sname=signal.name.lower(), pname=signal.name.upper()
-                        )
+                    inputs += "{sname}_global <= {pname}_I;\n".format(
+                        sname=signal.name.lower(), pname=signal.name.upper()
+                    )
             output_ports = [
                 port.split("_")[0]
                 for port in template.ports
@@ -378,11 +377,11 @@ class VHDLTemplateProcessor:
             ]
             if signal.name.upper() in output_ports:
                 for i in range(signal.num_replications):
-                    outputs += "{pname}_O <= {name}_array({i})({depth});\n".format(
+                    outputs += "{pname}_O({i}) <= {name}_array({i})({depth});\n".format(
                         pname=signal.name.upper(),
                         name=signal.name.lower(),
                         i=i,
-                        depth=network.get_depth() - 1,
+                        depth=network.get_depth(),
                     )
         self.writer.write_start_comment("Generated I/O Assignments")
         self.writer.write_incremental(inputs + outputs)
@@ -405,13 +404,13 @@ class VHDLTemplateProcessor:
                     ports.pop("REPLIC_O")
                     generics = {
                         "NUM_SIGNALS": str(signal.num_replications),
-                        "MAX_FANOUT": str(signal.max_fanout),
+                        "MAX_FANOUT": str(max(signal.max_fanout, 2)),
                     }
                     ports["SOURCE_I"] = signal.name.upper() + "_I"
                     ports["FEEDBACK_O"] = signal.name.upper() + "_FEEDBACK_O"
                     for j in range(signal.num_replications):
                         ports[
-                            "REPLIC({})".format(j)
+                            "REPLIC_O({})".format(j)
                         ] = "{signal_name}_array({j})(0)".format(
                             j=j, signal_name=signal.name.lower()
                         )
@@ -542,7 +541,7 @@ class VHDLTemplateProcessor:
                 ports = {}
                 for key in repl.entity.ports:
                     ports[key] = ""
-                ports["ENABLE_I"] = "1"
+                ports["ENABLE_I"] = "'1'"
                 ports.pop("REG_O")
                 ports.pop("REG_I")
                 reg_index = 0
@@ -642,7 +641,7 @@ class VHDLTemplateProcessor:
         ff_chains: list[list[tuple[int, int, int]]],
     ):
         reg_assign = "{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
-        reg_assign_sw = "{signal_name}_array({x})({y_s})({sw_e} downto {sw_s}) <= {signal_name}_array({x})({y_e})({sw_e} downto {sw_s});\n"
+        reg_assign_sw = "{signal_name}_array({x})({y_e})({sw_e} downto {sw_s}) <= {signal_name}_array({x})({y_s})({sw_e} downto {sw_s});\n"
 
         for z, group in enumerate(ff_chains):
             if z == 0:
@@ -660,18 +659,19 @@ class VHDLTemplateProcessor:
                             )
                         )
             else:
+                signal = None
+                for s in network.signals.values():
+                    if s.layer_index == z:
+                        signal = s
+                        break
+                if not signal:
+                    print("No signal associated with layer {z}!".format(z=z))
+                    continue
+                signal_name = signal.name
+                num_signals = signal.num_replications
+                max_fan_out = signal.max_fanout
                 for x, start, end in group:
-                    signal = None
-                    for s in network.signals.values():
-                        if s.layer_index == z:
-                            signal = s
-                            break
-                    if not signal:
-                        print("No signal associated with layer {z}!".format(z=z))
-                        continue
-                    signal_name = signal.name
-                    num_signals = signal.num_replications
-                    max_fan_out = signal.max_fanout
+                    print(x, start, end)
                     self.writer.write_incremental(
                         reg_assign.format(
                             signal_name=signal_name.lower(),
@@ -698,10 +698,12 @@ begin
         for z, layer in enumerate(network.ff_layers):
             # Iterate over the layer stage wise.
             ff_chains.append([])
+            print(z)
             for x in range(layer.shape[1]):
                 start = 0
                 end = 0
                 # Find lateral register chains in the layer.
+                print(layer[0:-1, x])
                 for y in range(layer.shape[0]):
                     if layer[y, x]:
                         if start == end:
@@ -710,6 +712,10 @@ begin
                     elif start < end:
                         ff_chains[z].append((x, start, end))
                         start = end
+                if start < end:
+                    ff_chains[z].append((x, start, end))
+
+        print(ff_chains)
         self.__process_reg_chains(network, stream_layer_ff, ff_chains)
         self.writer.write_incremental("\nend process;\n")
         self.writer.write_end_comment()
