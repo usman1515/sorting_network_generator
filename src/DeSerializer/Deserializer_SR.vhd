@@ -69,15 +69,12 @@ begin
     if rising_edge(CLK_I) then
       if (RST_I = '1' or ENABLE_I = '0') then
         count <= LIMIT;
-        VALID_O <= '0';
       else
-        if (state = running) then
+        if (state = RUNNING or (state=IDLE and START_I = '1') ) then
           if (count = 0) then
             count <= LIMIT;
-            VALID_O <= '1';
           else
             count <= count - 1;
-            VALID_O <= '0';
           end if;
         end if;
       end if;
@@ -113,9 +110,11 @@ begin
     if (RST_I = '1') then
       next_state <= IDLE;
       run        <= '0';
+      VALID_O <= '0';
     else
       next_state <= state;
       run        <= '0';
+      VALID_O <= '0';
 
       case state is
 
@@ -128,12 +127,7 @@ begin
         when RUNNING =>
           run <= '1';
           if (count = 0) then
-            if (START_I = '1') then
-              next_state <= RUNNING;
-            else
-              run        <= '0';
-              next_state <= IDLE;
-            end if;
+            VALID_O <= '1';
           end if;
 
       end case;

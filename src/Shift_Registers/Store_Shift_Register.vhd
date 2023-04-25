@@ -43,7 +43,7 @@ architecture BEHAVIORAL of STORE_SHIFT_REGISTER is
 
 begin
 
-  DATA_O <= sreg;
+  DATA_O <= sreg(sreg'high - SW downto sreg'low) & STREAM_I;
 
   -- SHIFT_STORE----------------------------------------------------------------
   -- When enabled, shifts value from STREAM_I into register.
