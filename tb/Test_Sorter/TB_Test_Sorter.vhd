@@ -24,8 +24,6 @@ architecture TB of TB_TEST_SORTER is
   constant CKTIME     : time := 10 ns;
   signal   clk        : std_logic;
 
-  constant W          : integer := 8;
-  constant SW         : integer := 1;
   signal   rst        : std_logic; -- Debounced reset signal.
   signal   enable     : std_logic; -- Debounced enable signal.
   signal   in_order      : std_logic;
@@ -33,10 +31,6 @@ architecture TB of TB_TEST_SORTER is
 begin
 
   TEST_SORTER_1 : entity work.test_sorter
-    generic map (
-      W  => W,
-      SW => SW
-    )
     port map (
       CLK_I    => clk,
       RST_I    => rst,
@@ -63,7 +57,6 @@ begin
     wait for CKTIME;
     rst    <= '0';
     enable <= '1';
-    wait for 10 * W * CKTIME;
 
     wait;
 

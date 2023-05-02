@@ -20,7 +20,7 @@ use work.CustomTypes.all;
 entity VALIDATOR is
   generic (
     -- Number of w-Bit inputs.
-    N  : integer := 4;
+    M  : integer := 4;
     W  : integer := 8;
     SW : integer := 1
     );
@@ -32,8 +32,8 @@ entity VALIDATOR is
     -- Enable signal
     ENABLE_I : in std_logic;
 
-    -- N x W-Bit input treated as unsigned
-    DATA_I       : in  SLVArray(0 to N - 1)(W - 1 downto 0);
+    -- M x W-Bit input treated as unsigned
+    DATA_I       : in  SLVArray(0 to M - 1)(W - 1 downto 0);
     DATA_VALID_I : in  std_logic;
     DATA_READY_O : out std_logic;
     -- Bit indicating validity of received STREAM_I sequence. '1' indicates total ordering of STREAM_I
@@ -44,8 +44,8 @@ end entity VALIDATOR;
 
 architecture BEHAVIORAL of VALIDATOR is
 
-  signal data        : SLVArray(0 to N - 1)(W - 1 downto 0);
-  signal cur_lesser : std_logic_vector(0 to N - 2);
+  signal data        : SLVArray(0 to M - 1)(W - 1 downto 0);
+  signal cur_lesser : std_logic_vector(0 to M - 2);
   signal any_lesser : std_logic;
 
   signal busy         : std_logic;
@@ -106,7 +106,7 @@ begin
 
   ready <= not busy;
 
-  SW_TO_SW_MUX : for i in 0 to N - 2 generate
+  SW_TO_SW_MUX : for i in 0 to M - 2 generate
 
     SERIALCOMPARE_1 : entity work.serialcompare
       generic map (
@@ -138,7 +138,7 @@ begin
       else
         if (ENABLE_I = '1') then
 
-          for i in 0 to N - 2 loop
+          for i in 0 to M - 2 loop
 
             any_lesser <= any_lesser or cur_lesser(i);
 

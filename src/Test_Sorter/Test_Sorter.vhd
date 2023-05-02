@@ -12,77 +12,81 @@
 ----------------------------------------------------------------------------------
 
 library ieee;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.NUMERIC_STD.all;
+  use IEEE.STD_LOGIC_1164.all;
+  use IEEE.NUMERIC_STD.all;
 
 library work;
-use work.CustomTypes.all;
+  use work.CustomTypes.all;
 
 entity TEST_SORTER is
-  generic (
-    -- Bit-Width of input values.
-    W        : integer := 8;
-    -- Length of subwords.
-    SW       : integer := 1;
-    -- Number of available BRAMs
-    NUM_BRAM : integer := 4318
-    );
   port (
     -- Clock signal
-    CLK_I      : in  std_logic;
+    CLK_I      : in    std_logic;
     -- Synchronous Reset
-    RST_I      : in  std_logic;
+    RST_I      : in    std_logic;
     -- Enable signal
-    ENABLE_I   : in  std_logic;
+    ENABLE_I   : in    std_logic;
     -- Bit indicating validity of received input sequence. '1' indicates total ordering of input
     -- sequence, '0' an order violation.
-    IN_ORDER_O : out std_logic
-    );
+    IN_ORDER_O : out   std_logic
+  );
 end entity TEST_SORTER;
 
 architecture STRUCTURAL of TEST_SORTER is
 
-  constant N         : integer := 4;
-  constant DEPTH     : integer := 3;
-  constant POLY_BASE : integer := 654;
-  constant SEED_BASE : integer := 58;
+  -- Number of available BRAMs
+  constant NUM_BRAM                     : integer := 4318;
+  -- Bit-Width of words.
+  constant W                            : integer := 8;
+  -- Length of subwords, i.e. number of bits to be sorted at a time.
+  constant SW                           : integer := 1;
+  -- Number of inputs
+  constant N                            : integer := 4;
+  -- Number of outputs
+  constant M                            : integer := 4;
 
-  signal input_control_busy: std_logic;
+  -- Base values for LFSR generation.
+  constant POLY_BASE                    : integer := 654;
+  constant SEED_BASE                    : integer := 58;
 
-  signal enable_delayed : std_logic_vector(1 downto 0);
-  -- Output of LFSRs
-  signal data_unsorted  : SLVArray(0 to N - 1)(W - 1 downto 0);
-  -- Output of Sorting Network
-  signal data_sorted    : SLVArray(0 to N - 1)(W - 1 downto 0);
+  -- Busy signal used to control input value generation.
+  signal input_control_busy             : std_logic;
 
-  signal data_in_valid, data_in_ready : std_logic;
-  signal rng_enable                   : std_logic;
-
+  -- Enable signal for LFSRs.
+  signal rng_enable                     : std_logic;
+  -- Ready,Valid signals for network input.
+  signal data_in_valid,  data_in_ready  : std_logic;
+  -- Output of LFSRs, input of network
+  signal data_unsorted                  : SLVArray(0 to N - 1)(W - 1 downto 0);
+  -- Ready, Valid signals for network output.
   signal data_out_valid, data_out_ready : std_logic;
-  signal validator_enable               : std_logic;
+  -- Output of Sorting Network, input of validator
+  signal data_sorted                    : SLVArray(0 to N - 1)(W - 1 downto 0);
+
 begin
 
   INPUT : for i in 0 to N - 1 generate
 
     LFSR_1 : entity work.lfsr
       generic map (
-        W    => W,
+        W => W,
         -- Attempt to create unique LFSR configuration to prevent consolidation at synthesis.
         POLY => std_logic_vector(to_unsigned(POLY_BASE + i, W))
-        )
+      )
       port map (
         CLK_I    => CLK_I,
         ENABLE_I => rng_enable,
         RST_I    => RST_I,
         -- Same reason as with assignment of POLY.
-        SEED_I   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W, W)),
-        DATA_O   => data_unsorted(i)
-        );
+        SEED_I => std_logic_vector(to_unsigned(SEED_BASE + i/2**W, W)),
+        DATA_O => data_unsorted(i)
+      );
 
   end generate INPUT;
 
   INPUT_CONTROL : process (CLK_I) is
   begin
+
     if (rising_edge(CLK_I)) then
       if (RST_I = '1') then
         input_control_busy <= '0';
@@ -96,26 +100,28 @@ begin
         end if;
       end if;
     end if;
+
   end process INPUT_CONTROL;
 
   INPUT_CONTROL_COMB : process (RST_I, input_control_busy, data_in_ready) is
   begin
+
     if (RST_I = '1') then
       data_in_valid <= '0';
-      rng_enable <= '0';
+      rng_enable    <= '0';
     else
       if (input_control_busy = '0' and data_in_ready = '1') then
         data_in_valid <= '1';
-        rng_enable <= '1';
+        rng_enable    <= '1';
       else
         data_in_valid <= '0';
-        rng_enable <= '0';
+        rng_enable    <= '0';
       end if;
     end if;
+
   end process INPUT_CONTROL_COMB;
 
-
-  SORTER_1 : entity work.SORTER
+  SORTER_1 : entity work.sorter
     port map (
       CLK_I            => CLK_I,
       ENABLE_I         => ENABLE_I,
@@ -125,14 +131,15 @@ begin
       DATA_I           => data_unsorted,
       DATA_OUT_READY_I => data_out_ready,
       DATA_OUT_VALID_O => data_out_valid,
-      DATA_O           => data_sorted);
+      DATA_O           => data_sorted
+    );
 
-
-  VALIDATOR_1: entity work.VALIDATOR
+  VALIDATOR_1 : entity work.validator
     generic map (
-      N  => N,
+      M  => M,
       W  => W,
-      SW => SW)
+      SW => SW
+    )
     port map (
       CLK_I        => CLK_I,
       RST_I        => RST_I,
@@ -140,7 +147,7 @@ begin
       DATA_I       => data_sorted,
       DATA_VALID_I => data_out_valid,
       DATA_READY_O => data_out_ready,
-      IN_ORDER_O   => IN_ORDER_O);
-
+      IN_ORDER_O   => IN_ORDER_O
+    );
 
 end architecture STRUCTURAL;
