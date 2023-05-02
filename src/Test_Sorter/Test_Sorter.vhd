@@ -3,7 +3,7 @@
 --
 -- Create Date: 03/08/2022 02:46:11 PM
 -- Design Name:
--- Module Name: Test_Sorter_X - STRUCTURAL
+-- Module Name: Test_Sorter - STRUCTURAL
 -- Project Name: BitSerialCompareSwap
 -- Tool Versions: Vivado 2021.2
 -- Description: Connects components to form a test sorting network with pseudo
@@ -18,7 +18,7 @@ use IEEE.NUMERIC_STD.all;
 library work;
 use work.CustomTypes.all;
 
-entity TEST_SORTER_X is
+entity TEST_SORTER is
   generic (
     -- Bit-Width of input values.
     W        : integer := 8;
@@ -38,36 +38,31 @@ entity TEST_SORTER_X is
     -- sequence, '0' an order violation.
     IN_ORDER_O : out std_logic
     );
-end entity TEST_SORTER_X;
+end entity TEST_SORTER;
 
-architecture STRUCTURAL of TEST_SORTER_X is
+architecture STRUCTURAL of TEST_SORTER is
 
   constant N         : integer := 4;
   constant DEPTH     : integer := 3;
   constant POLY_BASE : integer := 654;
   constant SEED_BASE : integer := 58;
-  constant ceilWSW   : integer := ((W + SW - 1) / SW);
 
+  signal input_control_busy: std_logic;
 
   signal enable_delayed : std_logic_vector(1 downto 0);
   -- Output of LFSRs
-  signal data_random    : SLVArray(0 to N / ceilWSW)(W - 1 downto 0);
-  -- Output of Round-Robin DMUXs
   signal data_unsorted  : SLVArray(0 to N - 1)(W - 1 downto 0);
   -- Output of Sorting Network
   signal data_sorted    : SLVArray(0 to N - 1)(W - 1 downto 0);
-  -- Since open outputs are disallowed...
-  signal unused         : SLVArray(0 to W - 1 - N rem W)(W - 1 downto 0);
 
   signal data_in_valid, data_in_ready : std_logic;
-  signal data_counter                 : integer range 0 to ceilWSW;
   signal rng_enable                   : std_logic;
 
   signal data_out_valid, data_out_ready : std_logic;
   signal validator_enable               : std_logic;
 begin
 
-  INPUT : for i in 0 to N / ceilWSW - 1 generate
+  INPUT : for i in 0 to N - 1 generate
 
     LFSR_1 : entity work.lfsr
       generic map (
@@ -77,82 +72,48 @@ begin
         )
       port map (
         CLK_I    => CLK_I,
-        ENABLE_I => ENABLE_I,
+        ENABLE_I => rng_enable,
         RST_I    => RST_I,
         -- Same reason as with assignment of POLY.
         SEED_I   => std_logic_vector(to_unsigned(SEED_BASE + i/2**W, W)),
-        DATA_O   => data_random(i)
-        );
-
-    ROUNDROBIN_DMUX_DIV : entity work.ROUNDROBIN_DMUX
-      generic map (
-        W => W,
-        N => ceilWSW
-        )
-      port map (
-        CLK_I    => CLK_I,
-        ENABLE_I => ENABLE_I,
-        RST_I    => RST_I,
-        DATA_I   => data_random(i),
-        DATA_O   => data_unsorted(i*ceilWSW to (i + 1)*ceilWSW - 1)
+        DATA_O   => data_unsorted(i)
         );
 
   end generate INPUT;
 
-  INPUT_REM : if (N rem ceilWSW /= 0) generate
-
-    LFSR_REM : entity work.lfsr
-      generic map (
-        W    => W,
-        POLY => std_logic_vector(to_unsigned(POLY_BASE + N/W, W))
-        )
-      port map (
-        CLK_I    => CLK_I,
-        ENABLE_I => ENABLE_I,
-        RST_I    => RST_I,
-        SEED_I   => std_logic_vector(to_unsigned(SEED_BASE + N/W/W, W)),
-        DATA_O   => data_random(N/ceilWSW)
-        );
-
-    ROUNDROBIN_DMUX_REM : entity work.ROUNDROBIN_DMUX
-      generic map (
-        W => W,
-        N => N mod ceilWSW
-        )
-      port map (
-        CLK_I    => CLK_I,
-        ENABLE_I => ENABLE_I,
-        RST_I    => RST_I,
-        DATA_I   => data_random(N/ceilWSW),
-        DATA_O   => data_unsorted(N - N mod ceilWSW to N -1)
-        );
-
-  end generate INPUT_REM;
-
-
-
-  rng_timer : process (CLK_I) is
+  INPUT_CONTROL : process (CLK_I) is
   begin
-    if (RST_I = '1') then
-      data_counter  <= ceilWSW-1;
-      rng_enable    <= '0';
-      data_in_valid <= '0';
-    else
-      if (ENABLE_I = '1') then
-        rng_enable <= '1';
-        if (data_counter = 0) then
-          rng_enable    <= '0';
-          data_in_valid <= '1';
-          if(data_in_ready = '1') then
-            rng_enable   <= '1';
-            data_counter <= ceilWSW - 1;
+    if (rising_edge(CLK_I)) then
+      if (RST_I = '1') then
+        input_control_busy <= '0';
+      else
+        if (input_control_busy = '0') then
+          if (data_in_ready = '1' and data_in_valid = '1') then
+            input_control_busy <= '1';
           end if;
         else
-          data_counter <= data_counter - 1;
+          input_control_busy <= '0';
         end if;
       end if;
     end if;
-  end process rng_timer;
+  end process INPUT_CONTROL;
+
+  INPUT_CONTROL_COMB : process (RST_I, input_control_busy, data_in_ready) is
+  begin
+    if (RST_I = '1') then
+      data_in_valid <= '0';
+      rng_enable <= '0';
+    else
+      if (input_control_busy = '0' and data_in_ready = '1') then
+        data_in_valid <= '1';
+        rng_enable <= '1';
+      else
+        data_in_valid <= '0';
+        rng_enable <= '0';
+      end if;
+    end if;
+  end process INPUT_CONTROL_COMB;
+
 
   SORTER_1 : entity work.SORTER
     port map (
@@ -180,4 +141,6 @@ begin
       DATA_VALID_I => data_out_valid,
       DATA_READY_O => data_out_ready,
       IN_ORDER_O   => IN_ORDER_O);
+
+
 end architecture STRUCTURAL;
