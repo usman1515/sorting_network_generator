@@ -49,6 +49,26 @@ class VHDLTemplateWriter:
         self.preamble_written = True
         return self.preamble_written
 
+    def write_tokens(self, tokens: dict[str, str]) -> bool:
+        """Write template with tokens for generics and other
+        parameters.
+
+        Parameters:
+            tokens : dict[str:str]
+                Dict of tokens and values from which generics and parameters in
+                the template are filled out.
+        Returns:
+            template_written : Bool
+                True if writing was successful.
+        """
+        self.template.tokens = tokens
+        template_string = self.template.as_template()
+        with self.output_file.open("w") as file:
+            num_char = file.write(template_string)
+            if num_char != len(template_string):
+                return False
+        return True
+
     def write_start_comment(self, block_title: str):
         len_title = 4 + len(block_title)
         self.write_incremental("-" * self.len_line + "\n")
@@ -135,8 +155,7 @@ class VHDLTemplateProcessor:
     generated code into file whose path is provided in init.
     """
 
-    def __init__(self, output_file: Path):
-        self.output_file = output_file
+    def __init__(self):
         self.writer: VHDLTemplateWriter
 
     def __get_signal_source(
@@ -740,14 +759,15 @@ if (rising_edge(CLK_I)) then
             )
         self.__make_registers(network, stream_layer_ff, entities)
 
-    def process_template(
+    def process_network_template(
         self,
+        output_path: Path,
         network: Network,
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
         **kwargs
     ):
-        self.writer = VHDLTemplateWriter(template, self.output_file)
+        self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = "{}_{}X{}".format(
             network.typename, network.get_N(), len(network.output_set)
@@ -776,3 +796,29 @@ if (rising_edge(CLK_I)) then
         self.__connect_cs_network(network, template, entities, tokens)
         self.__handle_registers(network, template, entities, **kwargs)
         self.writer.write_footer()
+        del self.writer
+
+    def process_template(
+        self, output_path: Path, network: Network, template: VHDLTemplate, **kwargs
+    ):
+        self.writer = VHDLTemplateWriter(template, output_path)
+        tokens = template.tokens
+        tokens["top_name"] = "{}_{}X{}".format(
+            network.typename, network.get_N(), len(network.output_set)
+        )
+        if network.shape:
+            tokens["top_name"] += "_" + network.shape
+        tokens["num_inputs"] = str(network.get_N())
+        tokens["net_depth"] = str(network.get_depth())
+        tokens["num_outputs"] = str(len(network.output_set))
+        tokens["word_width"] = str(kwargs.get("W")) or str(8)
+        tokens["subword_width"] = str(network.signals["STREAM"].bit_width)
+
+        for signal in network.signals.values():
+            tokens["num_" + signal.name.lower()] = str(signal.num_replications)
+
+        for key in tokens.keys():
+            if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
+                tokens[key] = str(1)
+        self.writer.write_tokens(tokens)
+        del self.writer

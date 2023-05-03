@@ -55,7 +55,10 @@ class Interface:
         self.reporter = Reporter()
 
     def __del__(self):
-        print("Finished after " + str(time.perf_counter_ns() - self.start_time) + "ns.")
+        print_timestamp(
+            "Finished after " + str(time.perf_counter_ns() - self.start_time) + "ns."
+        )
+        print()
 
     def __str__(self):
         return ""
@@ -205,38 +208,51 @@ class Interface:
         print(" done.")
         return self
 
-    def write_template(
+    def write(
         self,
-        template_name: str,
         path: str = "",
         cs: str = "SWCS",
         W: int = 8,
     ):
+        # Templates: Network.vhd, Sorter.vhd, Test_Sorter.vhd
+        template_names = ["Sorter.vhd", "Test_Sorter.vhd"]
+        templates = [self.templates[n] for n in template_names]
         print_timestamp(
-            "Writing template {} ...".format(template_name),
+            "Writing templates {} ...",
         )
-        self.template = self.templates[template_name]
-        cs = self.entities[cs]
+        cs_entity = self.entities[cs]
         if not path:
             name = self.network.typename
             name += "_" + str(self.network.get_N())
             name += "X" + str(len(self.network.output_set))
             if self.network.shape:
                 name += "_" + self.network.shape
-            path = "build/{}.vhd".format(name)
-
-        template_processor = VHDLTemplateProcessor(Path(path))
-        entities = {"CS": cs, "Signal_Distributor": self.entities["SIGNAL_DISTRIBUTOR"]}
+            path = "build/{}/".format(name)
+        path_obj = Path(path)
+        path_obj.mkdir(parents=True, exist_ok=True)
+        template_processor = VHDLTemplateProcessor()
+        entities = {
+            "CS": cs_entity,
+            "Signal_Distributor": self.entities["SIGNAL_DISTRIBUTOR"],
+        }
         kwargs = {"W": W, "ff_replacements": self.ffreplacements}
-        template_processor.process_template(
+        template_processor.process_network_template(
+            path_obj / "Network.vhd",
             self.network,
-            self.template,
+            self.templates["Network.vhd"],
             entities,
             **kwargs,
         )
+        for temp in template_names:
+            template_processor.process_template(
+                path_obj / temp,
+                self.network,
+                self.templates[temp],
+                **kwargs,
+            )
         self.reporter.add(self.network)
         print(" done.")
-        print("Wrote {}".format(path))
+        print("Wrote Network.vhd, " + ", ".join(template_names) + " to {}".format(path))
         return self
 
     def write_report(self, path=""):
