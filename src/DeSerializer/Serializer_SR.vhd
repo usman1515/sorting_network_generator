@@ -125,7 +125,7 @@ begin
   -- zero. The next state may either be IDLE, if VALID is zero, or STARTUP
   -- again, if VALID is positive.
   --------------------------------------------------------------------------------
-  FSM : process (RST_I, NET_FEEDBACK_I, START_I, VALID_I, count) is
+  FSM : process (RST_I,state, NET_FEEDBACK_I, START_I, VALID_I, count) is
   begin
 
     if (RST_I = '1') then

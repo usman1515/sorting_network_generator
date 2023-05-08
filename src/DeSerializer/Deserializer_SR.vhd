@@ -104,7 +104,7 @@ begin
 
   -- FSM--------------------------------------------------------------------------
   --------------------------------------------------------------------------------
-  FSM : process (RST_I, START_I, READY_I, count) is
+  FSM : process (RST_I, START_I, READY_I, state, count) is
   begin
 
     if (RST_I = '1') then

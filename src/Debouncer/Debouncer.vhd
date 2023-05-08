@@ -20,41 +20,41 @@ entity DEBOUNCER is
   );
   port (
     -- System Clock signal
-    CLK         : in    std_logic;
+    CLK_I         : in    std_logic;
     -- Synchronous Reset
-    RST         : in    std_logic;
+    RST_I         : in    std_logic;
     -- Bouncing input
-    INPUT       : in    std_logic;
+    INPUT_I       : in    std_logic;
     -- Debounced ouput signal
-    OUTPUT      : out   std_logic
+    OUTPUT_O      : out   std_logic
   );
 end entity DEBOUNCER;
 
 architecture BEHAVIORAL of DEBOUNCER is
 
   signal count    : integer range 0 to TIMEOUT_CYCLES - 1;
-  signal output_i : std_logic;
+  signal output : std_logic;
 
 begin
 
-  OUTPUT <= output_i;
+  OUTPUT_O <= output;
 
   -- DEBOUNCE------------------------------------------------------------------
-  -- Debounces a input signal by enforcing a time out after a signal change.
+  -- Debounces a input_I signal by enforcing a time out after a signal change.
   -----------------------------------------------------------------------------
-  DEBOUNCE : process (CLK) is
+  DEBOUNCE : process (CLK_I) is
   begin
 
-    if rising_edge(CLK) then
-      if (RST = '1') then
+    if rising_edge(CLK_I) then
+      if (RST_I = '1') then
         count    <= 0;
-        output_i <= INPUT;
+        output <= INPUT_I;
       else
         if (count < TIMEOUT_CYCLES - 1) then
           count <= count + 1;
-        elsif (INPUT /= output_i) then
+        elsif (INPUT_I /= output) then
           count    <= 0;
-          output_i <= INPUT;
+          output <= INPUT_I;
         end if;
       end if;
     end if;
