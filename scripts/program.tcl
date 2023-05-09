@@ -23,16 +23,23 @@ if {$::env(BOARD) eq "genesys2"} {
   open_hw_target {localhost:3121/xilinx_tcf/Digilent/200300A8CD43B}
 
   current_hw_device [get_hw_devices xc7k325t_0]
-  set_property PROGRAM.FILE {work-fpga/ariane_xilinx.bit} [get_hw_devices xc7k325t_0]
+  set_property PROGRAM.FILE $::env(BIT_FILE) [get_hw_devices xc7k325t_0]
   program_hw_devices [get_hw_devices xc7k325t_0]
   refresh_hw_device [lindex [get_hw_devices xc7k325t_0] 0]
 } elseif {$::env(BOARD) eq "vc707"} {
   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210203A5FC70A}
 
   current_hw_device [get_hw_devices xc7vx485t_0]
-  set_property PROGRAM.FILE {work-fpga/ariane_xilinx.bit} [get_hw_devices xc7vx485t_0]
+  set_property PROGRAM.FILE $::env(BIT_FILE) [get_hw_devices xc7vx485t_0]
   program_hw_devices [get_hw_devices xc7vx485t_0]
   refresh_hw_device [lindex [get_hw_devices xc7vx485t_0] 0]
+} elseif {$::env(BOARD) eq "nexys4ddr"} {
+  open_hw_target {localhost:3121/xilinx_tcf/Digilent/210292696759A}
+
+  current_hw_device [get_hw_devices xc7a100t_0]
+  set_property PROGRAM.FILE $::env(BIT_FILE) [get_hw_devices xc7a100t_0]
+  program_hw_devices [get_hw_devices xc7a100t_0]
+  refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
 } else {
       exit 1
 }

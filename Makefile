@@ -20,7 +20,6 @@ BOARD ?= nexys4ddr
 ifeq ($(BOARD), nexys4ddr)
 	XILINX_PART              := xc7a100tcsg324-1
 	XILINX_BOARD             := digilentinc.com:nexys4_ddr:part0:1.1
-	CLK_PERIOD_NS            := 40
 	CONSTRAINTS 		     := $(root-dir)/constr/nexys4ddr.xdc
 else
 $(error Unknown board - please specify a supported FPGA board)
@@ -65,12 +64,13 @@ src := $(addprefix $(root-dir)/, $(src))
 
 top ?= TEST_SORTER_TOP
 
+work-dir := $(SORTER)/work_dir
+BIT_FILE := $(work-dir)/$(top).bit
 
-VIVADOENV := BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CLK_PERIOD_NS=$(CLK_PERIOD_NS) CONSTRAINTS=$(CONSTRAINTS)
+VIVADOENV := BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CONSTRAINTS=$(CONSTRAINTS) BIT_FILE=$(BIT_FILE)
 VIVADO ?= vivado
 VIVADOFLAGS ?= -nojournal -mode batch -source $(root-dir)/scripts/prologue.tcl
 
-work-dir := $(SORTER)/work_dir
 
 bit := $(work-dir)/test_sorter_top.bit
 mcs := $(work-dir)/test_sorter_top.mcs
@@ -95,7 +95,7 @@ $(bit): fpga
 	cp $(work-dir)/BitCS.runs/impl_1/$(top)* ./$(work-dir)
 
 program:
-	$(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/program.tcl
+	$(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/program.tcl
 
 clean:
 	rm -rf $(work-dir)
