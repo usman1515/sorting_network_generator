@@ -218,7 +218,7 @@ class Interface:
         template_names = ["Sorter.vhd", "Test_Sorter.vhd"]
         templates = [self.templates[n] for n in template_names]
         print_timestamp(
-            "Writing templates {} ...",
+            "Writing templates ...",
         )
         cs_entity = self.entities[cs]
         if not path:

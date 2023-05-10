@@ -63,7 +63,7 @@ architecture STRUCTURAL of SORTER is
   signal start_feedback                 : std_logic;
   -- Start signal after collective delays from the
   -- entire sorting network.
-  constant NUM_START                    : integer := 2;
+  constant NUM_START                    : integer := {num_start};
   signal   start_delayed                : std_logic_vector(0 to NUM_START - 1);
 
   -- Enable signal after delay from replication.

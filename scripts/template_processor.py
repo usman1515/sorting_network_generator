@@ -283,7 +283,7 @@ class VHDLTemplateProcessor:
             if signal.distribution == DistributionType.PER_LINE:
                 x, y, z = source_point
                 y = y // signal.max_fanout
-                print(signal.name, source_point, x, y)
+                # print(signal.name, source_point, x, y)
                 return "{s_name}_array({x})({y})".format(
                     s_name=signal.name.lower(), x=x, y=y
                 )
@@ -690,7 +690,7 @@ class VHDLTemplateProcessor:
                 num_signals = signal.num_replications
                 max_fan_out = signal.max_fanout
                 for x, start, end in group:
-                    print(x, start, end)
+                    # print(x, start, end)
                     self.writer.write_incremental(
                         reg_assign.format(
                             signal_name=signal_name.lower(),
@@ -718,12 +718,12 @@ if (rising_edge(CLK_I)) then
         for z, layer in enumerate(network.ff_layers):
             # Iterate over the layer stage wise.
             ff_chains.append([])
-            print(z)
+            # print(z)
             for x in range(layer.shape[1]):
                 start = 0
                 end = 0
                 # Find lateral register chains in the layer.
-                print(layer[0:-1, x])
+                # print(layer[0:-1, x])
                 for y in range(layer.shape[0]):
                     if layer[y, x]:
                         if start == end:
@@ -735,7 +735,7 @@ if (rising_edge(CLK_I)) then
                 if start < end:
                     ff_chains[z].append((x, start, end))
 
-        print(ff_chains)
+        # print(ff_chains)
         self.__process_reg_chains(network, stream_layer_ff, ff_chains)
         self.writer.write_incremental("\nend if;\nend process;\n")
         self.writer.write_end_comment()
