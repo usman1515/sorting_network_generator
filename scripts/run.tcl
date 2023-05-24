@@ -55,6 +55,7 @@ exec rm -f reports/*
 check_timing -verbose                                                   -file reports/$project.check_timing.rpt
 report_timing -max_paths 100 -nworst 100 -delay_type max -sort_by slack -file reports/$project.timing_WORST_100.rpt
 report_timing -nworst 1 -delay_type max -sort_by group                  -file reports/$project.timing.rpt
+report_power -advisory                                                  -file reports/$project.power.rpt
 report_utilization -hierarchical                                        -file reports/$project.utilization.rpt
 report_cdc                                                              -file reports/$project.cdc.rpt
 report_clock_interaction                                                -file reports/$project.clock_interaction.rpt
@@ -79,3 +80,4 @@ check_timing                                                              -file 
 report_timing -max_paths 100 -nworst 100 -delay_type max -sort_by slack   -file reports/${project}.timing_WORST_100_impl.rpt
 report_timing -nworst 1 -delay_type max -sort_by group                    -file reports/${project}.timing_impl.rpt
 report_utilization -hierarchical                                          -file reports/${project}.utilization_impl.rpt
+report_power -advisory                                                    -file reports/$project.power_impl.rpt
