@@ -35,9 +35,7 @@ class ResultAggregator:
 
     def __init__(self):
         self.dataframe = pd.DataFrame()
-        self.factors = pd.read_csv(
-            "factors.csv", header=None, comment="#"
-        )
+        # self.factors = pd.read_csv("factors.csv", header=None, comment="#")
 
     def __str__(self):
         return str(self.dataframe)
@@ -58,9 +56,7 @@ class ResultAggregator:
                None
         """
         print(data_path)
-        new_df = pd.read_csv(
-            str(data_path), sep=self.separator, header=None
-        )
+        new_df = pd.read_csv(str(data_path), sep=self.separator, header=None)
         for i in range(2, len(new_df.columns)):
             label = new_df[i][0].split(" ")[0]
             self.header[i] = label
@@ -69,9 +65,7 @@ class ResultAggregator:
             #      ^^^^^^^^
             new_df[i] = new_df[i].str.split(" ").str.get(2)
             if label == "N":
-                new_df[1] = new_df[i].astype(float) / new_df[
-                    1
-                ].astype(float)
+                new_df[1] = new_df[i].astype(float) / new_df[1].astype(float)
 
         # Insert filename into later column names.
         new_df[0] = new_df[0].apply(
@@ -80,17 +74,15 @@ class ResultAggregator:
 
         new_df = new_df.rename(columns=self.header)
         # Apply factors to rows selected by regex read from factors.csv
-        for index, regex, value in self.factors.itertuples():
-            new_df.loc[
-                new_df["Name"].str.match(regex) == True,
-                "Throughput",
-            ] *= value
+        # for index, regex, value in self.factors.itertuples():
+        #     new_df.loc[
+        #         new_df["Name"].str.match(regex) == True,
+        #         "Throughput",
+        #     ] *= value
         if self.dataframe.empty:
             self.dataframe = new_df
         else:
-            self.dataframe = pd.concat(
-                [self.dataframe, new_df], axis=0
-            )
+            self.dataframe = pd.concat([self.dataframe, new_df], axis=0)
 
     def get_results(self, benchnames=[], index_col="N"):
         """Pivots dataframe and returns the selected columns.
@@ -103,9 +95,9 @@ class ResultAggregator:
                              selected results column-wise.
         """
         df = self.dataframe[self.dataframe["Name"].isin(benchnames)]
-        df = df.pivot(
-            columns="Name", values="Throughput", index=index_col
-        ).sort_values(by=[index_col], key=lambda col: col.astype(int))
+        df = df.pivot(columns="Name", values="Throughput", index=index_col).sort_values(
+            by=[index_col], key=lambda col: col.astype(int)
+        )
         # Plotting logscale with index is bugged
         # N must be added again
         df[index_col] = df.index.astype(int)
@@ -146,9 +138,7 @@ class PlotWrapper:
                                       --grid
         """
         print(title)
-        data = self.agg.get_results(
-            list(self.columns.keys()), index_col
-        )
+        data = self.agg.get_results(list(self.columns.keys()), index_col)
         data.rename(columns=self.columns, inplace=True)
         data.plot(x=index_col, marker="x")
         plt.title(title)
@@ -182,14 +172,14 @@ class PlotWrapper:
             self.agg.add_data(fpath)
         return self
 
-    def plotall(self):
+    def all(self):
         """Plot all plots defined as functions in plots.py"""
-        import plots as p
+        import scripts.plots as p
 
         for i in dir(p):
-            plot = getattr(p, i)
-            if callable(plot):
-                plot(self)
+            plot_func = getattr(p, i)
+            if callable(plot_func):
+                plot_func(self)
 
     def print_names(self):
         """Outputs all available column names found in .csv
@@ -197,18 +187,17 @@ class PlotWrapper:
         """
         print(self.agg.dataframe["Name"].unique())
 
-    def testfactors(self):
-        """Displays matched columns by regex from factors.csv"""
-        factors = pd.read_csv("factors.csv", header=None, comment="#")
-        for index, regex, value in factors.itertuples():
-            print("Regex: ", regex, " Factor: ", value)
-            print("Matched elements:")
-            print(
-                self.agg.dataframe.loc[
-                    self.agg.dataframe["Name"].str.match(regex)
-                    == True,
-                ]
-            )
+    # def testfactors(self):
+    #     """Displays matched columns by regex from factors.csv"""
+    #     factors = pd.read_csv("factors.csv", header=None, comment="#")
+    #     for index, regex, value in factors.itertuples():
+    #         print("Regex: ", regex, " Factor: ", value)
+    #         print("Matched elements:")
+    #         print(
+    #             self.agg.dataframe.loc[
+    #                 self.agg.dataframe["Name"].str.match(regex) == True,
+    #             ]
+    #         )
 
 
 if __name__ == "__main__":

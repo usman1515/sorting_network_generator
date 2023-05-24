@@ -11,6 +11,7 @@ import scripts.network_generators as generators
 from scripts.reporter import Reporter, Report
 from scripts.template_processor import VHDLTemplateProcessor
 from scripts.resource_allocator import Block_Allocator, is_ff
+from scripts.plotter import PlotWrapper
 
 
 def get_sources(path=Path()):
@@ -335,6 +336,9 @@ class Interface:
                 else:
                     line += "  "
             print(line)
+
+    def plot(self):
+        return PlotWrapper()
 
 
 # a = Interface()
