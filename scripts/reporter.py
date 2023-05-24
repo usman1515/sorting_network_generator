@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-
+import pandas as pd
 import csv
 from pathlib import Path
 from scripts.network_generators import Network
+from scripts.resource_allocator import FF_Replacement, FF_Assignment
 
 
 class Report:
     def __init__(self, network):
-        self.content = self.evaluate(network)
+        self.content = dict()
+        self.evaluate_network(network)
 
-    def evaluate(self, network):
-        content = dict()
-        content["network"] = network.typename
+    def evaluate_network(self, network):
+        self.content["network"] = network.typename
 
         # Estimate network shape
         if network.shape:
-            content["shape"] = network.shape
+            self.content["shape"] = network.shape
         else:
             output_list = list(network.get_output_set())
             output_list.sort()
@@ -26,17 +27,17 @@ class Report:
                 ]
             ):
                 if output_list[0] == 0:
-                    content["shape"] = "min"
+                    self.content["shape"] = "min"
                 elif output_list[-1] == len(output_list):
-                    content["shape"] = "max"
+                    self.content["shape"] = "max"
                 else:
-                    content["shape"] = "median"
+                    self.content["shape"] = "median"
             else:
-                content["shape"] = "mixed"
+                self.content["shape"] = "mixed"
 
-        content["num_inputs"] = network.get_N()
-        content["num_outputs"] = len(network.get_output_set())
-        content["depth"] = network.get_depth()
+        self.content["num_inputs"] = network.get_N()
+        self.content["num_outputs"] = len(network.get_output_set())
+        self.content["depth"] = network.get_depth()
 
         # Get number of CS and histograms of FF-chains and compare distances.
         depth = network.get_depth()
@@ -67,34 +68,83 @@ class Report:
                     i = bypass_end
                 i += 1
 
-        content["num_cs"] = num_cs
-        content["distance_hist"] = dict()
+        self.content["num_cs"] = num_cs
+        self.content["distance_hist"] = dict()
         for i in range(N):
             if distance_hist[i]:
-                content["distance_hist"][i] = distance_hist[i]
-        content["num_ff"] = num_ff
-        content["FF_hist"] = dict()
+                self.content["distance_hist"][i] = distance_hist[i]
+        self.content["num_ff"] = num_ff
+        self.content["FF_hist"] = dict()
         for i in range(depth):
             if FF_hist[i]:
-                content["FF_hist"][i + 1] = FF_hist[i]
+                self.content["FF_hist"][i + 1] = FF_hist[i]
 
-        return content
+        self.content["ff_replacement"] = "None"
+        self.content["num_replacements"] = 0
+        self.content["ff_per_entity"] = 0
+        self.content["replaced_ff"] = 0
+
+    def evaluate_ffreplacement(self, ff_replacement):
+        self.content["ff_replacement"] = ff_replacement.entity.name
+        self.content["num_replacements"] = len(ff_replacement.groups)
+        self.content["ff_per_entity"] = ff_replacement.ff_per_entity
+
+        ff_per_group = []
+        for group in ff_replacement.groups:
+            ff = 0
+            for assignment in group:
+                ff += assignment.ff_range[1] - assignment.ff_range[0]
+            ff_per_group.append(ff)
+        self.content["replaced_ff"] = sum(ff_per_group)
+
+    def as_df(self):
+        name = (
+            self.content["network"]
+            + "_"
+            + str(self.content["num_inputs"])
+            + "X"
+            + str(self.content["num_outputs"])
+        )
+
+        self.content["name"] = name
+        data = [self.content]
+        return pd.DataFrame.from_records(data, index="name")
 
 
 class Reporter:
     def __init__(self):
-        self.reports = list()
+        self.current_report = None
+        self.current_report_committed = False
+        self.reports = None
 
-    def add(self, network):
-        self.reports.append(Report(network))
-        return network
+    def commit_report(self):
+        if not self.current_report_committed:
+            if not self.reports:
+                self.reports = self.current_report.as_df()
+            else:
+                current_df = self.current_report.as_df()
+                self.reports = pd.concat(
+                    [
+                        self.reports[~self.reports.index.isin(current_df.index)],
+                        current_df,
+                    ]
+                )
+
+    def report_network(self, network):
+        self.current_report = Report(network)
+        self.current_report_committed = False
+
+    def report_ff_replacement(self, ff_replacement):
+        self.current_report.evaluate_ffreplacement(ff_replacement)
 
     def write_report(self, report_file=""):
-        if self.reports:
-            header_key = self.reports[0].content.keys()
-            report_contents = [report.content for report in self.reports]
-            with open(str(report_file), "w") as fd:
-                w = csv.DictWriter(fd, header_key)
-                # w.writerow(dict((fn, fn) for fn in log_dict.keys()))
-                w.writeheader()
-                w.writerows(report_contents)
+        if not self.reports.empty:
+            fpath = Path(report_file)
+            if fpath.exists():
+                reports = pd.read_csv(str(fpath), index_col="name")
+                reports = pd.concat(
+                    [reports[~reports.index.isin(self.reports.index)], self.reports]
+                )
+                reports.to_csv(report_file)
+            else:
+                self.reports.to_csv(report_file)

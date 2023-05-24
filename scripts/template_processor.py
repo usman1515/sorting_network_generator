@@ -569,8 +569,8 @@ class VHDLTemplateProcessor:
                 c_x, c_y = (-1, -1)
                 reg_ports_in = {}
                 reg_ports_out = {}
-                for point, ff_range in group:
-                    x, y, z = point
+                for assignment in group:
+                    x, y, z = assignment.point
                     if not c_x:
                         c_x = x
                     else:
@@ -580,7 +580,7 @@ class VHDLTemplateProcessor:
                     else:
                         c_y += y
 
-                    start, end = ff_range
+                    start, end = assignment.ff_range
                     # Special handling of the first layer
                     if z == 0:
                         for i in range(start, end):

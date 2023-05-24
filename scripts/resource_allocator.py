@@ -97,13 +97,15 @@ class Block_Allocator(Resource_Allocator):
                     ff_at_point = network.signals["STREAM"].bit_width
 
                 # Find the current number of FF assigned to the group.
-                cur_group_ff = sum([ff_r[1] - ff_r[0] for p, ff_r in groups[grp_i]])
+                cur_group_ff = sum(
+                    [a.ff_range[1] - a.ff_range[0] for a in groups[grp_i]]
+                )
                 # The new endpoint of the range is either the full amount of FF
                 # at that point or at least all FF that still fit into the group.
                 # Since we need the old value of ff_end, make a copy.
                 ff_end_prev = ff_end
                 ff_end = min(ff_at_point, target_nff[grp_i] - cur_group_ff)
-                groups[grp_i].append((point, (ff_start, ff_end)))
+                groups[grp_i].append(FF_Assignment(point, (ff_start, ff_end)))
                 ff_start = ff_end_prev
                 if cur_group_ff + ff_end >= target_nff[grp_i]:
                     # if the group is full increment grp_i.

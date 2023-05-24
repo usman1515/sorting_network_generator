@@ -49,11 +49,10 @@ class Interface:
         print_timestamp("Parsing templates...")
         self.templates = get_templates(Path("templates/"))
         print(" done.")
-        self.generator = None
-        self.network = None
-        self.template = None
-        self.ffreplacements = []
-        self.reporter = Reporter()
+        self.__generator = None
+        self.__network = None
+        self.__ffreplacements = []
+        self.__reporter = Reporter()
 
     def __del__(self):
         print_timestamp(
@@ -118,27 +117,33 @@ class Interface:
         return self
 
     def generate(self, ntype: str, N: int, SW: int = 1):
+        # Multiple generates withine one call should cause the
+        # reporter to commit its aggregated stats to memory.
+        if self.__network:
+            self.__reporter.commit_report()
+
         valid_types = ["oddeven", "bitonic", "blank"]
         if "oddeven" == ntype.lower():
             print_timestamp("Generating Odd-Even-Network...")
             logp = int(math.ceil(math.log2(N)))
-            self.generator = generators.OddEven()
-            self.network = self.generator.create(2**logp)
-            self.network = self.generator.reduce(self.network, N)
+            self.__generator = generators.OddEven()
+            self.__network = self.__generator.create(2**logp)
+            self.__network = self.__generator.reduce(self.__network, N)
         elif "bitonic" == ntype.lower():
             print_timestamp("Generating Bitonic-Network...")
             logp = int(math.ceil(math.log2(N)))
-            self.generator = generators.Bitonic()
-            self.network = self.generator.create(N)
-            self.network = self.generator.reduce(self.network, N)
+            self.__generator = generators.Bitonic()
+            self.__network = self.__generator.create(N)
+            self.__network = self.__generator.reduce(self.__network, N)
         elif "blank" == ntype.lower():
             print_timestamp("Generating blank Network...")
             logp = int(math.ceil(math.log2(N)))
             depth = logp * (logp + 1) // 2
-            self.network = generators.Network(N, depth)
+            self.__network = generators.Network(N, depth)
         else:
             print("Options: oddeven, bitonic, blank")
         if ntype.lower() in valid_types:
+            self.__reporter.report_network(self.__network)
             print(" done.")
         return self
 
@@ -147,9 +152,9 @@ class Interface:
         only a number of rows less than max_fanout is driven by the signal.
         """
         print_timestamp("Distributing signal '{}'...".format(signal_name))
-        if self.network:
-            self.network = self.generator.distribute_signal(
-                self.network, signal_name, max_fanout
+        if self.__network:
+            self.__network = self.__generator.distribute_signal(
+                self.__network, signal_name, max_fanout
             )
         print(" done.")
         return self
@@ -163,39 +168,32 @@ class Interface:
                     shape_type, num_outputs
                 ),
             )
-            N = self.network.get_N()
+            N = self.__network.get_N()
             if shape_type.lower() == "max":
-                self.generator.prune(self.network, range(0, num_outputs))
-                self.network.shape = "max"
+                self.__generator.prune(self.__network, range(0, num_outputs), "max")
             elif shape_type.lower() == "min":
-                self.generator.prune(self.network, range(N - num_outputs, N))
-                self.network.shape = "min"
+                self.__generator.prune(self.__network, range(N - num_outputs, N), "min")
             elif shape_type.lower() == "median":
                 lower_bound = N // 2 - num_outputs // 2
                 upper_bound = N // 2 + (num_outputs + 1) // 2
-                self.generator.prune(self.network, range(lower_bound, upper_bound))
-                self.network.shape = "median"
+                self.__generator.prune(
+                    self.__network, range(lower_bound, upper_bound), "median"
+                )
             print(" done.")
         return self
 
-    def prune(self, output_list):
+    def prune(self, output_list, shape="mixed"):
         print_timestamp(
             "Pruning Network outputs...",
         )
-        self.generator.prune(self.network, output_list)
-        self.network.shape = "mixed"
+        self.__generator.prune(self.__network, output_list)
+        self.__network.shape = shape
         print(" done.")
+        self.__reporter.report_network(self.__network)
         return self
 
     def show_network(self):
-        print(self.network)
-        return self
-
-    def show_template(self):
-        if self.template:
-            print(self.template.as_template())
-        else:
-            print("No template selected.")
+        print(self.__network)
         return self
 
     def replace_ff(self, entity: str, limit=1500, entity_ff=48):
@@ -204,8 +202,9 @@ class Interface:
         )
         entity_obj = self.entities[entity]
         ralloc = Block_Allocator()
-        ffrepl = ralloc.reallocate_ff(self.network, entity_obj, limit, entity_ff)
-        self.ffreplacements.append(ffrepl)
+        ffrepl = ralloc.reallocate_ff(self.__network, entity_obj, limit, entity_ff)
+        self.__reporter.report_ff_replacement(ffrepl)
+        self.__ffreplacements.append(ffrepl)
         print(" done.")
         return self
 
@@ -223,11 +222,11 @@ class Interface:
         )
         cs_entity = self.entities[cs]
         if not path:
-            name = self.network.typename
-            name += "_" + str(self.network.get_N())
-            name += "X" + str(len(self.network.output_set))
-            if self.network.shape:
-                name += "_" + self.network.shape
+            name = self.__network.typename
+            name += "_" + str(self.__network.get_N())
+            name += "X" + str(len(self.__network.output_set))
+            if self.__network.shape:
+                name += "_" + self.__network.shape
             path = "build/{}/".format(name)
         path_obj = Path(path)
         path_obj.mkdir(parents=True, exist_ok=True)
@@ -236,10 +235,10 @@ class Interface:
             "CS": cs_entity,
             "Signal_Distributor": self.entities["SIGNAL_DISTRIBUTOR"],
         }
-        kwargs = {"W": W, "ff_replacements": self.ffreplacements}
+        kwargs = {"W": W, "ff_replacements": self.__ffreplacements}
         template_processor.process_network_template(
             path_obj / "Network.vhd",
-            self.network,
+            self.__network,
             self.templates["Network.vhd"],
             entities,
             **kwargs,
@@ -247,31 +246,32 @@ class Interface:
         for temp in template_names:
             template_processor.process_template(
                 path_obj / temp,
-                self.network,
+                self.__network,
                 self.templates[temp],
                 **kwargs,
             )
-        self.reporter.add(self.network)
         print(" done.")
-        print("Wrote Network.vhd, " + ", ".join(template_names) + " to {}".format(path))
-        return self
-
-    def write_report(self, path=""):
-        if not path:
-            path = "build/report.csv"
-        if not self.template and self.network:
-            self.reporter.add(self.network)
-        self.reporter.write_report(path)
+        print(
+            "Wrote Network.vhd, "
+            + ", ".join(template_names)
+            + " to {}".format(str(path_obj))
+        )
+        print_timestamp("Writing reports ...")
+        self.__reporter.commit_report()
+        path = "build/report.csv"
+        self.__reporter.write_report(path)
+        print(" done.")
+        print("Added data to build/report.csv.")
         return self
 
     def report_net(self, path=""):
-        report = Report(self.network)
+        report = Report(self.__network)
         for key, value in report.content.items():
             print(key, value)
         return self
 
     def show_ff(self):
-        layer = self.network.con_net
+        layer = self.__network.con_net
         line = "|"
         for i in range(len(layer[0])):
             line += "{:<2}".format(i % 10)
@@ -289,7 +289,7 @@ class Interface:
             print(line)
 
     def pretty_print(self):
-        layer = self.network.con_net
+        layer = self.__network.con_net
         for stage in layer:
             print(" " + "--" * len(stage) + "")
             for i, pair in enumerate(stage):
@@ -315,8 +315,8 @@ class Interface:
                         )
 
     def show_ff_assign(self):
-        layer = self.network.con_net
-        groups = self.ffreplacements[0]
+        layer = self.__network.con_net
+        groups = self.__ffreplacements[0]
         line = "|"
         for i in range(len(layer[0])):
             line += "{:<2}".format(i % 10)
