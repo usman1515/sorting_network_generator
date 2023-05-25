@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import ast
 
 
-def figure_luts(pltwrap):
+def figure_luts(df):
     x = np.arange(1, 2**15, 1)
     # Fomulars based on Sorting networks on FPGAs, Mueller et al., 2012.
     p = np.log2(x)
@@ -32,9 +34,10 @@ def figure_luts(pltwrap):
     plt.legend(handles=line_handles, loc=9, title="FPGAs")
     plt.gca().add_artist(legend0)
     plt.savefig("build/graphs/" + "Network_LUTs" + ".png", dpi=200)
+    plt.close("all")
 
 
-def figure_ff(pltwrap):
+def figure_ff(df):
     x = np.arange(1, 2**15, 1)
     # Fomulars based on Sorting networks on FPGAs, Mueller et al., 2012.
     p = np.log2(x)
@@ -64,11 +67,47 @@ def figure_ff(pltwrap):
     ]
     plt.legend(handles=line_handles, loc=9, title="FPGAs")
     plt.gca().add_artist(legend0)
-    plt.savefig("build/graphs/" + "Network_LUTs" + ".png", dpi=200)
     plt.savefig("build/graphs/" + "Network_FF" + ".png", dpi=200)
+    plt.close("all")
 
 
-# def figure_example(pltwrap : PlotWrapper):
+def figure_cs_distances(df: pd.DataFrame):
+    base_title = "CS Distances"
+    print(df.index)
+    for index, row in df.iterrows():
+        name = index
+        title = name + " " + base_title
+        print(title)
+        cs_dist = row.distance_hist
+        dist_dict = ast.literal_eval(cs_dist)
+        if dist_dict:
+            pd.DataFrame.from_dict(dist_dict, orient="index").plot(kind="bar")
+
+            plt.title(title)
+            plt.xlabel("Distance")
+            plt.ylabel("Number of CS")
+            plt.savefig("build/graphs/" + title + ".png", dpi=200)
+            plt.close("all")
+
+
+def figure_ff_chain_lengths(df: pd.DataFrame):
+    base_title = "FF Chain Lengths"
+    for index, row in df.iterrows():
+        name = index
+        title = name + " " + base_title
+        print(title)
+        ff_length = row.ff_hist
+        ff_dict = ast.literal_eval(ff_length)
+        if ff_dict:
+            pd.DataFrame.from_dict(ff_dict, orient="index").plot(kind="bar")
+            plt.title(title)
+            plt.xlabel("Length")
+            plt.ylabel("Occurances")
+            plt.savefig("build/graphs/" + title + ".png", dpi=200)
+            plt.close("all")
+
+
+# def figure_example(df) : PlotWrapper):
 #     columns = {
 #         "example_col": "example_title",
 #     }
@@ -77,8 +116,8 @@ def figure_ff(pltwrap):
 #     for key, value in columns.items():
 #         syscol[key] = value
 
-#     pltwrap.columns = syscol
-#     pltwrap.plot(
+#     df).columns = syscol
+#     df).plot(
 #         title="Figure Title",
 #         index_col="Index",
 #         xscale="log",

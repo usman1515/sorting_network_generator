@@ -35,8 +35,8 @@ class Report:
             else:
                 self.content["shape"] = "mixed"
 
-        self.content["num_inputs"] = network.get_N()
-        self.content["num_outputs"] = len(network.get_output_set())
+        self.content["N"] = network.get_N()
+        self.content["M"] = len(network.get_output_set())
         self.content["depth"] = network.get_depth()
 
         # Get number of CS and histograms of FF-chains and compare distances.
@@ -45,7 +45,7 @@ class Report:
         num_cs = 0
         num_ff = 0
         distance_hist = [0 for i in range(N)]
-        FF_hist = [0 for i in range(depth)]
+        ff_hist = [0 for i in range(depth)]
         for i in range(depth):
             for j in range(N):
                 # Each out of order value constitutes a cs.
@@ -64,7 +64,7 @@ class Report:
                         bypass_end += 1
                     bypass_end = bypass_end - 1
                     num_ff += bypass_end - bypass_beg + 1
-                    FF_hist[bypass_end - bypass_beg] += 1
+                    ff_hist[bypass_end - bypass_beg] += 1
                     i = bypass_end
                 i += 1
 
@@ -74,10 +74,10 @@ class Report:
             if distance_hist[i]:
                 self.content["distance_hist"][i] = distance_hist[i]
         self.content["num_ff"] = num_ff
-        self.content["FF_hist"] = dict()
+        self.content["ff_hist"] = dict()
         for i in range(depth):
-            if FF_hist[i]:
-                self.content["FF_hist"][i + 1] = FF_hist[i]
+            if ff_hist[i]:
+                self.content["ff_hist"][i + 1] = ff_hist[i]
 
         self.content["ff_replacement"] = "None"
         self.content["num_replacements"] = 0
@@ -101,9 +101,9 @@ class Report:
         name = (
             self.content["network"]
             + "_"
-            + str(self.content["num_inputs"])
+            + str(self.content["N"])
             + "X"
-            + str(self.content["num_outputs"])
+            + str(self.content["M"])
         )
 
         self.content["name"] = name
@@ -115,11 +115,11 @@ class Reporter:
     def __init__(self):
         self.current_report = None
         self.current_report_committed = False
-        self.reports = None
+        self.reports = pd.DataFrame()
 
     def commit_report(self):
         if not self.current_report_committed:
-            if not self.reports:
+            if self.reports.empty:
                 self.reports = self.current_report.as_df()
             else:
                 current_df = self.current_report.as_df()
