@@ -19,9 +19,10 @@ use work.CustomTypes.all;
 
 entity TEST_SORTER_TOP is
   port (
-    SYS_CLK_I : in  std_logic;
-    SW_I      : in  std_logic_vector(0 downto 1);
-    LED_O     : out std_logic_vector(0 downto 0)
+    SYS_CLK : in  std_logic;
+    SW_RST  : in  std_logic;
+    SW_EN   : in  std_logic;
+    LED     : out std_logic_vector(0 downto 0)
     );
 end entity TEST_SORTER_TOP;
 
@@ -38,9 +39,9 @@ begin
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYS_CLK_I,
+      CLK_I    => SYS_CLK,
       RST_I    => '0',
-      INPUT_I  => SW_I(0),
+      INPUT_I  => SW_RST,
       OUTPUT_O => reset
       );
 
@@ -49,18 +50,18 @@ begin
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYS_CLK_I,
+      CLK_I    => SYS_CLK,
       RST_I    => '0',
-      INPUT_I  => SW_I(1),
+      INPUT_I  => SW_EN,
       OUTPUT_O => enable
       );
 
   TEST_SORTER_1 : entity work.test_sorter
     port map (
-      CLK_I      => SYS_CLK_I,
+      CLK_I      => SYS_CLK,
       RST_I      => reset,
       ENABLE_I   => enable,
-      IN_ORDER_O => LED_O(0)
+      IN_ORDER_O => LED(0)
       );
 
 end architecture STRUCTURAL;
