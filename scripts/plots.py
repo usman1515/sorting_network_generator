@@ -6,6 +6,8 @@ import ast
 
 
 def figure_luts(df):
+    title = "Network LUTs for Bit-Serial CS"
+    print(title)
     x = np.arange(1, 2**15, 1)
     # Fomulars based on Sorting networks on FPGAs, Mueller et al., 2012.
     p = np.log2(x)
@@ -20,7 +22,7 @@ def figure_luts(df):
     (p1,) = plt.plot(x, oe_luts, label="Odd-Even")
     (p2,) = plt.plot(x, bitonic_luts, label="Bitonic")
     plot_handles = [p1, p2]
-    plt.title("Network LUTs for Bit-Serial CS")
+    plt.title(title)
     plt.xlabel("N")
     plt.ylabel("LUTs")
     plt.xscale("log", base=2)
@@ -38,6 +40,8 @@ def figure_luts(df):
 
 
 def figure_ff(df):
+    title = "Network FFs for Bit-Serial CS"
+    print(title)
     x = np.arange(1, 2**15, 1)
     # Fomulars based on Sorting networks on FPGAs, Mueller et al., 2012.
     p = np.log2(x)
@@ -54,7 +58,7 @@ def figure_ff(df):
     (p1,) = plt.plot(x, oe_ff, label="Odd-Even")
     (p2,) = plt.plot(x, bitonic_ff, label="Bitonic")
     plot_handles = [p1, p2]
-    plt.title("Network FFs for Bit-Serial CS")
+    plt.title(title)
     plt.xlabel("N")
     plt.ylabel("LUTs")
     plt.xscale("log", base=2)
@@ -73,7 +77,6 @@ def figure_ff(df):
 
 def figure_cs_distances(df: pd.DataFrame):
     base_title = "CS Distances"
-    print(df.index)
     for index, row in df.iterrows():
         name = index
         title = name + " " + base_title
@@ -105,6 +108,46 @@ def figure_ff_chain_lengths(df: pd.DataFrame):
             plt.ylabel("Occurances")
             plt.savefig("build/graphs/" + title + ".png", dpi=200)
             plt.close("all")
+
+
+def figure_avg_cs_dists(df: pd.DataFrame):
+    title = "Average CS Distances"
+    print(title)
+    avg = lambda x: sum(num * dist for num, dist in x.items()) / (
+        sum(dist for dist in x.values() or 1)
+    )
+    avg_from_str = lambda x: avg(ast.literal_eval(x))
+    distance_hist = df["distance_hist"]
+    distance_hist = distance_hist.apply(avg_from_str)
+    temp_df = df.assign(avg_dist=distance_hist)
+    temp_df = temp_df.pivot(columns="network", index="N", values=["avg_dist"])
+
+    temp_df.plot()
+    plt.title(title)
+    plt.xlabel("Length")
+    plt.ylabel("Occurances")
+    plt.savefig("build/graphs/" + title + ".png", dpi=200)
+    plt.close("all")
+
+
+def figure_avg_cs_dists(df: pd.DataFrame):
+    title = "Average FF Chain Lengths"
+    print(title)
+    avg = lambda x: sum(num * dist for num, dist in x.items()) / (
+        sum(dist for dist in x.values()) or 1
+    )
+    avg_from_str = lambda x: avg(ast.literal_eval(x))
+    ff_hist = df["ff_hist"]
+    ff_hist = ff_hist.apply(avg_from_str)
+    temp_df = df.assign(avg_ff_length=ff_hist)
+    temp_df = temp_df.pivot(columns="network", index="N", values=["avg_ff_length"])
+
+    temp_df.plot()
+    plt.title(title)
+    plt.xlabel("Length")
+    plt.ylabel("Occurances")
+    plt.savefig("build/graphs/" + title + ".png", dpi=200)
+    plt.close("all")
 
 
 # def figure_example(df) : PlotWrapper):
