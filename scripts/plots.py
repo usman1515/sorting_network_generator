@@ -60,7 +60,7 @@ def figure_ff(df):
     plot_handles = [p1, p2]
     plt.title(title)
     plt.xlabel("N")
-    plt.ylabel("LUTs")
+    plt.ylabel("FFs")
     plt.xscale("log", base=2)
     plt.grid(True)
     legend0 = plt.legend(handles=plot_handles, loc=2, title="Network Type")
