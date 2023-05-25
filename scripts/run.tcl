@@ -30,12 +30,6 @@
 
 source add_sources.tcl
 
-if {$::env(BOARD) eq "nexys4ddr"} {
-    # Board specific files
-} else {
-    exit 1
-}
-
 update_compile_order -fileset sources_1
 
 add_files -fileset constrs_1 -norecurse $::env(CONSTRAINTS)

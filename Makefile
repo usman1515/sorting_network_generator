@@ -28,7 +28,7 @@ ifeq ($(BOARD), nexys4ddr)
 	CONSTRAINTS 		     := $(root-dir)/constr/nexys4ddr.xdc
 else ifeq($(BOARD), vcu118)
 	XILINX_PART              := xcvu9p-flga2104-2L-e
-	XILINX_BOARD             := xc7a100tcsg324-1
+	XILINX_BOARD             := xilinx.com:vcu118:part0:2.4
 	CONSTRAINTS 		     := $(root-dir)/constr/vcu118.xdc
 else
 $(error Unknown board - please specify a supported FPGA board)

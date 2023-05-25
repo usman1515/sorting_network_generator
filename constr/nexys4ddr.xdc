@@ -10,7 +10,7 @@ create_clock -period 10.000 -name SYS_CLK_I -waveform {0.000 5.000} -add [get_po
 ##Switches
 
 set_property -dict { PACKAGE_PIN J15   IOSTANDARD LVCMOS33 } [get_ports { SW_I[0] }]; #IO_L24N_T3_RS0_15 Sch=SW_I[0]
-# set_property -dict { PACKAGE_PIN L16   IOSTANDARD LVCMOS33 } [get_ports { SW_I[1] }]; #IO_L3N_T0_DQS_EMCCLK_14 Sch=SW_I[1]
+set_property -dict { PACKAGE_PIN L16   IOSTANDARD LVCMOS33 } [get_ports { SW_I[1] }]; #IO_L3N_T0_DQS_EMCCLK_14 Sch=SW_I[1]
 # set_property -dict { PACKAGE_PIN M13   IOSTANDARD LVCMOS33 } [get_ports { SW_I[2] }]; #IO_L6N_T0_D08_VREF_14 Sch=SW_I[2]
 # set_property -dict { PACKAGE_PIN R15   IOSTANDARD LVCMOS33 } [get_ports { SW_I[3] }]; #IO_L13N_T2_MRCC_14 Sch=SW_I[3]
 # set_property -dict { PACKAGE_PIN R17   IOSTANDARD LVCMOS33 } [get_ports { SW_I[4] }]; #IO_L12N_T1_MRCC_14 Sch=SW_I[4]
@@ -172,7 +172,6 @@ set_property -dict { PACKAGE_PIN C12   IOSTANDARD LVCMOS33 } [get_ports { RESETN
 
 
 ##Micro SD Connector
-# ***TODO***
 #set_property -dict { PACKAGE_PIN E2    IOSTANDARD LVCMOS33 } [get_ports { SD_RESET }]; #IO_L14P_T2_SRCC_35 Sch=sd_reset
 #set_property -dict { PACKAGE_PIN A1    IOSTANDARD LVCMOS33 } [get_ports { SD_CD }]; #IO_L9N_T1_DQS_AD7N_35 Sch=sd_cd
 #set_property -dict { PACKAGE_PIN B1    IOSTANDARD LVCMOS33 } [get_ports { SD_SCK }]; #IO_L9P_T1_DQS_AD7P_35 Sch=sd_sck
@@ -245,7 +244,6 @@ set_property -dict { PACKAGE_PIN C12   IOSTANDARD LVCMOS33 } [get_ports { RESETN
 
 
 ##Quad SPI Flash
-## ***TODO*** CVA6 peripherals use standard SPI. Also use of sclk requires STARTUP2 primitive.
 #set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports { qspi_dq[0] }]; #IO_L1P_T0_D00_MOSI_14 Sch=qspi_dq[0]
 #set_property -dict { PACKAGE_PIN K18   IOSTANDARD LVCMOS33 } [get_ports { qspi_dq[1] }]; #IO_L1N_T0_D01_DIN_14 Sch=qspi_dq[1]
 #set_property -dict { PACKAGE_PIN L14   IOSTANDARD LVCMOS33 } [get_ports { qspi_dq[2] }]; #IO_L2P_T0_D02_14 Sch=qspi_dq[2]
