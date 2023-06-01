@@ -124,7 +124,7 @@ class Block_Allocator(Resource_Allocator):
                 be distributed
             total_ff : int
                 Total number of FF to be distributed into groups.
-            num_groups : int
+            max_ff_per_group : int
                 Number of groups to be created.
          Returns:
             groups : list[list[tuple[int,int,int]]]
@@ -133,6 +133,8 @@ class Block_Allocator(Resource_Allocator):
         """
         start_x, start_y = rect[0]
         end_x, end_y = rect[1]
+        if total_ff == 0:
+            return self.groups
         num_groups = math.ceil(total_ff / max_ff_per_group)
 
         # Number of ff for each group

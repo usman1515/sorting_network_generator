@@ -770,10 +770,10 @@ if (rising_edge(CLK_I)) then
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = "{}_{}X{}".format(
-            network.typename, network.get_N(), len(network.output_set)
+            network.algorithm, network.get_N(), len(network.output_set)
         )
-        if network.shape:
-            tokens["top_name"] += "_" + network.shape
+        if network.output_config:
+            tokens["top_name"] += "_" + network.output_config.upper()
         tokens["num_inputs"] = str(network.get_N())
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))
@@ -804,10 +804,10 @@ if (rising_edge(CLK_I)) then
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = "{}_{}X{}".format(
-            network.typename, network.get_N(), len(network.output_set)
+            network.algorithm, network.get_N(), len(network.output_set)
         )
-        if network.shape:
-            tokens["top_name"] += "_" + network.shape
+        if network.output_config:
+            tokens["top_name"] += "_" + network.output_config
         tokens["num_inputs"] = str(network.get_N())
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))

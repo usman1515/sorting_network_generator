@@ -33,11 +33,11 @@ class NetworkSignal:
 
 class Network:
     def __init__(self, N: int = 0, depth: int = 0, SW: int = 1):
-        # Name of the network type
-        self.typename = ""
-        # Name of the network shape. may be left empty.
-        self.shape = ""
-        # Set of outputs containing valid items
+        # Name of the underlying algorithm
+        self.algorithm = ""
+        # Name of the output configuration. Namely min, max, or median.
+        self.output_config = "full"
+        # Set of output indices produced by the network.
         self.output_set: set[int] = set()
         # "Permutation matrix" describing the network
         # In actuality each row of the matrix is the one-line notation
@@ -162,7 +162,7 @@ class Network:
         return self.pmatrix.__setitem__(key, value)
 
     def __str__(self):
-        a = "{0}: {1}\n".format(self.typename, self.get_N())
+        a = "{0}: {1}\n".format(self.algorithm, self.get_N())
         for stage in self.pmatrix:
             a += str(stage)
             a += "\n"
@@ -318,24 +318,24 @@ class Generator:
                     if not is_in_order(i, network[d][i]):
                         new_output_set.add(network[d][i])
                     else:
-                        network[d][i] = i
+                        network.pmatrix[d][i] = i
                         network.ff_layers[0][d][i] = False
                 elif network[d][i] in new_output_set:
                     new_output_set.add(i)
                 else:
-                    network[d][i] = i
+                    network.pmatrix[d][i] = i
                     network.ff_layers[0][d][i] = False
             # If the output set contains all ports we are done.
             if len(new_output_set) == N:
                 break
 
         # Remove stages which only contain delay elements.
-        network.pmatrix = [
-            stage
-            for stage in network.pmatrix
-            if any([not is_in_order(i, perm) for i, perm in enumerate(stage)])
-        ]
-
+        indices = []
+        for i in range(0, network.pmatrix.shape[0]):
+            stage = network.pmatrix[i]
+            if all(is_in_order(j, p) for j, p in enumerate(stage)):
+                indices.append(i)
+        network.pmatrix = np.delete(network.pmatrix, indices, axis=0)
         return network
 
 
@@ -354,7 +354,7 @@ class OddEven(Generator):
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
         network = Network(N, depth)
-        network.typename = self.name
+        network.algorithm = self.name
         d = -1  # Current network depth index
         for p_e in range(0, logp):
             p = 2**p_e
@@ -440,7 +440,7 @@ class Bitonic(Generator):
         logp = int(math.ceil((math.log2(N))))
         depth = logp * (logp + 1) // 2
         network = Network(N, depth)
-        network.typename = self.name
+        network.algorithm = self.name
         self.bitonicSort(network, 0, N, 0)
 
         # d = -1  # Current network depth index

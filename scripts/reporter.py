@@ -12,29 +12,10 @@ class Report:
         self.evaluate_network(network)
 
     def evaluate_network(self, network):
-        self.content["network"] = network.typename
+        self.content["algorithm"] = network.algorithm
 
         # Estimate network shape
-        if network.shape:
-            self.content["shape"] = network.shape
-        else:
-            output_list = list(network.get_output_set())
-            output_list.sort()
-            if all(
-                [
-                    output_list[i] == output_list[i + 1] + 1
-                    for i in range(len(output_list) - 1)
-                ]
-            ):
-                if output_list[0] == 0:
-                    self.content["shape"] = "min"
-                elif output_list[-1] == len(output_list):
-                    self.content["shape"] = "max"
-                else:
-                    self.content["shape"] = "median"
-            else:
-                self.content["shape"] = "mixed"
-
+        self.content["output_config"] = network.output_config
         self.content["N"] = network.get_N()
         self.content["M"] = len(network.get_output_set())
         self.content["depth"] = network.get_depth()
@@ -99,11 +80,13 @@ class Report:
 
     def as_df(self):
         name = (
-            self.content["network"]
+            self.content["algorithm"]
             + "_"
             + str(self.content["N"])
             + "X"
             + str(self.content["M"])
+            + "_"
+            + str(self.content["output_config"]).upper()
         )
 
         self.content["name"] = name

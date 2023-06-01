@@ -159,35 +159,39 @@ class Interface:
         print(" done.")
         return self
 
-    def shape(self, shape_type, num_outputs):
-        if shape_type.lower() not in ["max", "min", "median"]:
-            print("Error: shape_type options are max, min, median")
+    def reshape(self, output_config, num_outputs):
+        if output_config.lower() not in ["max", "min", "median"]:
+            print("Error: output_config options are max, min, median")
         else:
             print_timestamp(
                 "Reshaping Network to {} with {} outputs...".format(
-                    shape_type, num_outputs
+                    output_config, num_outputs
                 ),
             )
             N = self.__network.get_N()
-            if shape_type.lower() == "max":
-                self.__generator.prune(self.__network, range(0, num_outputs), "max")
-            elif shape_type.lower() == "min":
-                self.__generator.prune(self.__network, range(N - num_outputs, N), "min")
-            elif shape_type.lower() == "median":
+            if output_config.lower() == "max":
+                self.__generator.prune(self.__network, set(range(0, num_outputs)))
+                self.__network.output_config = "max"
+            elif output_config.lower() == "min":
+                self.__generator.prune(self.__network, set(range(N - num_outputs, N)))
+                self.__network.output_config = "min"
+            elif output_config.lower() == "median":
                 lower_bound = N // 2 - num_outputs // 2
                 upper_bound = N // 2 + (num_outputs + 1) // 2
                 self.__generator.prune(
-                    self.__network, range(lower_bound, upper_bound), "median"
+                    self.__network, set(range(lower_bound, upper_bound))
                 )
+                self.__network.output_config = "median"
             print(" done.")
+            self.__reporter.report_network(self.__network)
         return self
 
-    def prune(self, output_list, shape="mixed"):
+    def prune(self, output_list, output_config="mixed"):
         print_timestamp(
             "Pruning Network outputs...",
         )
         self.__generator.prune(self.__network, output_list)
-        self.__network.shape = shape
+        self.__network.output_config = output_config
         print(" done.")
         self.__reporter.report_network(self.__network)
         return self
@@ -222,11 +226,11 @@ class Interface:
         )
         cs_entity = self.entities[cs]
         if not path:
-            name = self.__network.typename
+            name = self.__network.algorithm
             name += "_" + str(self.__network.get_N())
             name += "X" + str(len(self.__network.output_set))
-            if self.__network.shape:
-                name += "_" + self.__network.shape
+            if self.__network.output_config:
+                name += "_" + self.__network.output_config.upper()
             path = "build/{}/".format(name)
         path_obj = Path(path)
         path_obj.mkdir(parents=True, exist_ok=True)
