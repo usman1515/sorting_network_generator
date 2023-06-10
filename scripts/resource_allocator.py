@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import math
+from math import ceil
 import numpy as np
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -44,7 +44,14 @@ class ResourceAllocator(ABC):
         pass
 
     def reallocate_ff(self, network, entity, max_entities, ff_per_entity):
-        ff_groups = self.allocate_ff_groups(network, ff_per_entity, max_entities)
+        ff_groups = self.allocate_ff_groups(
+            network, ff_per_entity, max_entities)
+
+        for i, group in enumerate(ff_groups):
+            print("Group: " + str(i + 1))
+            for assign in group:
+                print(assign)
+        print_layers_with_ffgroups(network, ff_groups)
         return FFReplacement(entity, ff_per_entity, ff_groups)
 
 
@@ -93,6 +100,18 @@ class BlockAllocator(ResourceAllocator):
         self.ff_matrix = None
         self.groups: list[list[FFAssignment]] = []
 
+    def __print_block(self, dim_x, dim_y, block: Block):
+        for y in range(dim_y):
+            line = "|"
+            for x in range(dim_x):
+                elem = " "
+                if x >= block.start[0] and x < block.start[0] + block.size[0]:
+                    if y >= block.start[1] and y < block.start[1] + block.size[1]:
+                        elem = "+"
+                line += elem
+            line += "|"
+            print(line)
+
     def allocate_ff_groups(
         self, network: Network, num_ff_per_group: int, max_entities: int
     ) -> list[list[FFAssignment]]:
@@ -109,7 +128,8 @@ class BlockAllocator(ResourceAllocator):
         # Create 2d matrix containing total number of FFs at a point.
         self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
         # Stream layer is treated differently as bit_width has to be considered.
-        self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
+        self.ff_matrix += network.ff_layers[0] * \
+            network.signals["STREAM"].bit_width
 
         # print(self.ff_matrix)
         N = network.get_N()
@@ -117,7 +137,8 @@ class BlockAllocator(ResourceAllocator):
 
         # Begin subdivision procedure.
         self.divide_block(
-            network, Block(True, (0, 0), (N, depth)), num_ff_per_group, max_entities
+            network, Block(True, (0, 0), (N, depth)
+                           ), num_ff_per_group, max_entities
         )
         if len(self.groups) > max_entities:
             self.groups = self.groups[:max_entities]
@@ -125,6 +146,21 @@ class BlockAllocator(ResourceAllocator):
         # self.allocate_control_ff(network)
         # print(self.sub_groups)
         return self.groups
+
+    def __get_second_half(self, parent: Block, child: Block) -> Block:
+        # Figure out axis using coord of child and parent.
+        # If x coords are the same, division axis was y and
+        # vice versa.
+        size_x, size_y = parent.size
+        if parent.start[0] == child.start[0]:
+            size_y -= child.size[1]
+        else:
+            size_x -= child.size[0]
+        return Block(
+            True,
+            parent.start,
+            (size_x, size_y),
+        )
 
     def divide_block(
         self,
@@ -149,17 +185,23 @@ class BlockAllocator(ResourceAllocator):
             # Total number of FF contained in the block.
             # TODO: Calculation is only required once.
             total = np.sum(
-                self.ff_matrix[start_y : start_y + size_y, start_x : start_x + size_x]
+                self.ff_matrix[start_y: start_y +
+                               size_y, start_x: start_x + size_x]
             )
-            print(blocks[-1], "with", total, "FF is processed:")
+            print(blocks[-1], "with", total, "FF is being processed:")
+            self.__print_block(
+                init_block.size[0], init_block.size[1], blocks[-1])
             if not blocks[-1].first_half:
                 # Reached parent block those first half has been proceessed, at which point
                 # the blocks second half has been proccessed as well.
                 # Remove from stack
-                print("\tParent block finished.")
-                blocks.pop()
+                print(" " * len(blocks), "\tParent block finished.")
+                child = blocks.pop()
                 if blocks:
-                    blocks[-1].first_half = False
+                    parent = blocks[-1]
+                    if blocks[-1].first_half:
+                        blocks[-1].first_half = False
+                        blocks.append(self.__get_second_half(parent, child))
             else:
                 # Check whether current block is a leaf block, i.e. if its
                 # total number of FFs is below a threshold.
@@ -169,56 +211,49 @@ class BlockAllocator(ResourceAllocator):
                     self.distribute_to_groups(
                         network, blocks[-1], total, max_ff_per_group
                     )
-                    print("\tTotal FF below threshold. Distributing to groups")
+                    print(" " * len(blocks),
+                          "\tTotal FF below threshold. Distributing to groups")
                     child = blocks.pop()
                     if blocks:
                         parent = blocks[-1]
                         # If child was parents first half, calculate dim of second half
                         # and put on block stack.
-                        print("\tParent blocks first half has been processed")
+                        print(" " * len(blocks),
+                              "\tParent blocks first half has been processed")
                         if parent.first_half:
                             blocks[-1].first_half = False
-                            # Figure out axis using coord of child and parent.
-                            # If x coords are the same, division axis was y and
-                            # vice versa.
-                            size_x, size_y = parent.size
-                            if parent.start[0] == child.start[0]:
-                                size_y -= child.size[1]
-                            else:
-                                size_x -= child.size[0]
                             blocks.append(
-                                Block(
-                                    True,
-                                    parent.start,
-                                    (size_x, size_y),
-                                )
-                            )
+                                self.__get_second_half(parent, child))
+                            print(" " * len(blocks),
+                                  "\tSecond Half is ", blocks[-1])
 
                 elif total > 0:
                     half_sum_x = np.sum(
                         self.ff_matrix[
-                            start_y : start_y + size_y, start_x : start_x + size_x // 2
+                            start_y: start_y + size_y, start_x: start_x + size_x // 2
                         ]
                     )
                     diff_x = abs(total // 2 - half_sum_x)
                     half_sum_y = np.sum(
                         self.ff_matrix[
-                            start_y : start_y + size_y // 2,
-                            start_x : start_x + size_x,
+                            start_y: start_y + size_y // 2,
+                            start_x: start_x + size_x,
                         ]
                     )
                     diff_y = abs(total // 2 - half_sum_y)
                     if diff_x < diff_y:
-                        start_x += size_x // 2
+                        start_x += ceil(size_x / 2)
                         size_x = size_x // 2
                     else:
-                        start_y += size_y // 2
+                        start_y += ceil(size_y / 2)
                         size_y = size_y // 2
 
-                    blocks.append(Block(True, (start_x, start_y), (size_x, size_y)))
-                    print("\tTotal FF exceeded threshold.")
-                    print("\tDivided along x-axis:", diff_x < diff_y)
-                    print("\tChild block is ", blocks[-1])
+                    blocks.append(
+                        Block(True, (start_x, start_y), (size_x, size_y)))
+                    print(" " * len(blocks), "\tTotal FF exceeded threshold.")
+                    print(" " * len(blocks),
+                          "\tDivided along x-axis:", diff_x < diff_y)
+                    print(" " * len(blocks), "\tChild block is ", blocks[-1])
 
     def distribute_to_groups(self, network, block, total_ff, max_ff_per_group):
         """Takes network and rectangle and attempts to distribute ffs
@@ -244,7 +279,7 @@ class BlockAllocator(ResourceAllocator):
         end_y += start_y
         if total_ff == 0:
             return self.groups
-        num_groups = math.ceil(total_ff / max_ff_per_group)
+        num_groups = ceil(total_ff / max_ff_per_group)
 
         # Number of ff for each group
         target_ff = [total_ff // (num_groups) for i in range(num_groups)]
@@ -423,7 +458,13 @@ def print_layer(layer):
 
 def print_layers_with_ffgroups(network, groups):
     for z, layer in enumerate(network.ff_layers):
-        print("Layer {}: {}".format(z, network.layer_attr[z].signal_name))
+        layer_name = ""
+        for attrib in network.signals:
+            if attrib.index == z:
+                layer_name = attrib.name
+                break
+
+        print("Layer {}: {}".format(z, layer_name))
         for y in range(len(layer)):
             line = "|"
             # Get the number of blanks required for the largest integer in
@@ -433,10 +474,16 @@ def print_layers_with_ffgroups(network, groups):
                 elem = " " + " " * len_blanks
                 if layer[y][x]:
                     elem = "+" + " " * len_blanks
+                is_assigned = False
                 for i, group in enumerate(groups):
-                    if (x, y, z) in group:
-                        elem = " {:" + str(len_blanks) + "}"
-                        elem = elem.format(i)
+                    for assign in group:
+                        if (x, y, z) == assign.point:
+                            if is_assigned:
+                                elem = "#" + " " * len_blanks
+                            else:
+                                elem = " {:" + str(len_blanks) + "}"
+                                elem = elem.format(i)
+                            is_assigned = True
                 line += elem
             line += "|"
             print(line)
