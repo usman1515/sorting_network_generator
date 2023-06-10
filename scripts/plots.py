@@ -120,17 +120,19 @@ def figure_avg_cs_dists(df: pd.DataFrame):
     distance_hist = df["distance_hist"]
     distance_hist = distance_hist.apply(avg_from_str)
     temp_df = df.assign(avg_dist=distance_hist)
-    temp_df = temp_df.pivot(columns="network", index="N", values=["avg_dist"])
+    alg_conf = df["algorithm"] + "_" + df["output_config"]
+    temp_df = temp_df.assign(alg_conf=alg_conf)
+    temp_df = temp_df.pivot(columns="alg_conf", index="N", values=["avg_dist"])
 
     temp_df.plot()
     plt.title(title)
-    plt.xlabel("Length")
-    plt.ylabel("Occurances")
+    plt.xlabel("N")
+    plt.ylabel("Avg. Distance")
     plt.savefig("build/graphs/" + title + ".png", dpi=200)
     plt.close("all")
 
 
-def figure_avg_cs_dists(df: pd.DataFrame):
+def figure_avg_ff_lengths(df: pd.DataFrame):
     title = "Average FF Chain Lengths"
     print(title)
     avg = lambda x: sum(num * dist for num, dist in x.items()) / (
@@ -140,13 +142,41 @@ def figure_avg_cs_dists(df: pd.DataFrame):
     ff_hist = df["ff_hist"]
     ff_hist = ff_hist.apply(avg_from_str)
     temp_df = df.assign(avg_ff_length=ff_hist)
-    temp_df = temp_df.pivot(columns="network", index="N", values=["avg_ff_length"])
+    alg_conf = df["algorithm"] + "_" + df["output_config"]
+    temp_df = temp_df.assign(alg_conf=alg_conf)
+    temp_df = temp_df.pivot(columns="alg_conf", index="N", values=["avg_ff_length"])
 
     temp_df.plot()
     plt.title(title)
-    plt.xlabel("Length")
-    plt.ylabel("Occurances")
+    plt.xlabel("N")
+    plt.ylabel("Avg. FF-Chain Length")
     plt.savefig("build/graphs/" + title + ".png", dpi=200)
+    plt.close("all")
+
+
+def figure_luts_single(df):
+    title = "CS of Pruned Networks"
+    print(title)
+    x = np.arange(1, 2**15, 1)
+    # Fomulars based on Sorting networks on FPGAs, Mueller et al., 2012.
+    p = np.log2(x)
+    s = p * (p + 1.0) / 2.0
+    oe_cs = (p * p - p + 4) * np.power(2, p - 2) - 1
+    bitonic_cs = (p * p + p) * np.power(2, p - 2)
+    # LUTs based on implemenation data of bit-serial CS.
+    oe_luts = 2.0 * oe_cs
+    bitonic_luts = 2.0 * bitonic_cs
+
+    ax = df.pivot(columns="output_config", index="N", values=["num_cs"]).plot()
+    plt.title(title)
+    plt.xlabel("N")
+    plt.ylabel("CS")
+    plt.xscale("log", base=2)
+    plt.grid(True)
+    ax.legend(["Full", "Max", "Median", "Min"])
+    # l1 = plt.axhline(y=1182 * 10**3, color="black", label="VU9P")
+    # plt.legend(handles=line_handles, loc=9, title="FPGAs")
+    plt.savefig("build/graphs/" + "Pruned_CS" + ".png", dpi=200)
     plt.close("all")
 
 

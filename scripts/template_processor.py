@@ -6,7 +6,7 @@ import math
 
 from scripts.vhdl import VHDLEntity, VHDLTemplate, parseVHDLEntity
 from scripts.network_generators import Network, NetworkSignal, DistributionType
-from scripts.resource_allocator import FF_Replacement, FF_Assignment
+from scripts.resource_allocator import FFReplacement, FFAssignment
 
 
 class VHDLTemplateWriter:
@@ -73,7 +73,8 @@ class VHDLTemplateWriter:
         len_title = 4 + len(block_title)
         self.write_incremental("-" * self.len_line + "\n")
         self.write_incremental(
-            "-- " + block_title + " " + "-" * (len_title - self.len_line) + "\n"
+            "-- " + block_title + " " + "-" *
+            (len_title - self.len_line) + "\n"
         )
         self.write_incremental("-" * self.len_line + "\n")
 
@@ -237,7 +238,8 @@ class VHDLTemplateProcessor:
                     if network.ff_layers[z, p[1], p[0]]:
                         return True, source_point
                 distance += 1
-                points = __list_points_in_distance((x, y), distance, bounds[:1])
+                points = __list_points_in_distance(
+                    (x, y), distance, bounds[:1])
         return False, source_point
 
     def __map_signal(
@@ -249,7 +251,8 @@ class VHDLTemplateProcessor:
     ) -> str:
         normalized_name = signal_name.split("_")[0].upper()
         if normalized_name not in network.signals:
-            print("Signal '{name}' not found in network signals", normalized_name)
+            print("Signal '{name}' not found in network signals",
+                  normalized_name)
             return "open"
         signal = network.signals[normalized_name]
         if signal.distribution == DistributionType.GLOBAL:
@@ -331,7 +334,8 @@ class VHDLTemplateProcessor:
                 # Data array creation is handled in another function.
                 continue
             if signal.distribution == DistributionType.GLOBAL:
-                def_str += "signal {}_global : std_logic;\n".format(signal.name.lower())
+                def_str += "signal {}_global : std_logic;\n".format(
+                    signal.name.lower())
             else:
                 fmap = {
                     "signal_name": signal.name.lower(),
@@ -357,8 +361,10 @@ class VHDLTemplateProcessor:
             signal_definitions : str
                 VHDL code containing all relevant signal definitions.
         """
-        signal_definitions = self.__get_permutation_layer_definitions(network, **kwargs)
-        signal_definitions += self.__get_control_layer_definitions(network, **kwargs)
+        signal_definitions = self.__get_permutation_layer_definitions(
+            network, **kwargs)
+        signal_definitions += self.__get_control_layer_definitions(
+            network, **kwargs)
         return signal_definitions
 
     def __make_io_assignments(self, network, template):
@@ -500,7 +506,8 @@ class VHDLTemplateProcessor:
         # Start signal is usally replicated and distributed in another layer.
         # Assign each CS its appropriate source register for that signal.
         cs = entities["CS"]
-        unconnected_ports = [port for port in cs.ports.keys() if port not in ports]
+        unconnected_ports = [
+            port for port in cs.ports.keys() if port not in ports]
         for port in unconnected_ports:
             signal_name = port.split("_")[0].upper()
             if signal_name in network.signals:
@@ -509,13 +516,15 @@ class VHDLTemplateProcessor:
             if signal_name.upper() not in network.signals:
                 # Signal is not represented anywhere in the network,
                 # must be global, like f.e. CLK.
-                ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
+                ports[port] = "{signal_name}_I".format(
+                    signal_name=signal_name.upper())
             else:
                 ports[port] = self.__map_signal(
                     network, template, signal_name.upper(), (x, y)
                 )
 
-        self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
+        self.writer.write_incremental(
+            cs.as_instance(instance_name, generics, ports))
 
     def __connect_cs_network(
         self,
@@ -545,7 +554,7 @@ class VHDLTemplateProcessor:
         network: Network,
         template: VHDLTemplate,
         stream_layer_ff: np.ndarray,
-        ff_replacements: list[FF_Replacement],
+        ff_replacements: list[FFReplacement],
     ) -> np.ndarray:
         """Replaces points in the network which normally contain FF resources
         with a functionally equivalent replacement of (ideally) another
@@ -752,7 +761,8 @@ if (rising_edge(CLK_I)) then
         # Since the only information provided by the ff_layers is whether
         # any FF are present at a point, a new matrix has to be created.
         stream_layer_ff = np.zeros(network.ff_layers[0].shape, dtype=int)
-        stream_layer_ff = network.signals["STREAM"].bit_width * network.ff_layers[0]
+        stream_layer_ff = network.signals["STREAM"].bit_width * \
+            network.ff_layers[0]
         if "ff_replacements" in kwargs:
             stream_layer_ff = self.__instantiate_ff_replacements(
                 network, template, stream_layer_ff, kwargs["ff_replacements"]

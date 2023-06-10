@@ -24,31 +24,31 @@ def is_inbounds(nw, point):
 
 
 @dataclass
-class FF_Assignment:
+class FFAssignment:
     point: tuple[int, int, int]
     ff_range: tuple[int, int]
 
 
 @dataclass
-class FF_Replacement:
+class FFReplacement:
     entity: VHDLEntity
     ff_per_entity: int
-    groups: list[list[FF_Assignment]]
+    groups: list[list[FFAssignment]]
 
 
-class Resource_Allocator(ABC):
+class ResourceAllocator(ABC):
     @abstractmethod
     def allocate_ff_groups(
         self, network: Network, max_ff_per_group: int, max_entities: int
-    ) -> list[list[FF_Assignment]]:
+    ) -> list[list[FFAssignment]]:
         pass
 
     def reallocate_ff(self, network, entity, max_entities, ff_per_entity):
         ff_groups = self.allocate_ff_groups(network, ff_per_entity, max_entities)
-        return FF_Replacement(entity, ff_per_entity, ff_groups)
+        return FFReplacement(entity, ff_per_entity, ff_groups)
 
 
-# class Simple_Allocator(Resource_Allocator):
+# class Simple_Allocator(ResourceAllocator):
 #     def allocate_row(self, network, start_point, num_ff):
 #         ff = 0
 #         ff_points = []
@@ -79,12 +79,229 @@ class Resource_Allocator(ABC):
 #         return ff_groups
 
 
-class Block_Allocator(Resource_Allocator):
+@dataclass
+class Block:
+    """Container for geometry info used in recursion algorithm of the BlockAllocator"""
+
+    first_half: bool
+    start: tuple[int, int]
+    size: tuple[int, int]
+
+
+class BlockAllocator(ResourceAllocator):
     def __init__(self):
         self.ff_matrix = None
-        self.groups: list[list[FF_Assignment]] = []
+        self.groups: list[list[FFAssignment]] = []
 
-    def __add_ff_to_group(self, network, groups, grp_i, target_nff, x, y):
+    def allocate_ff_groups(
+        self, network: Network, num_ff_per_group: int, max_entities: int
+    ) -> list[list[FFAssignment]]:
+        """Allocate FF present in the entire network (delay and replicated
+        signals) to groups later replaced by other means.
+        Parameters: network : Network object
+                    num_ff_per_group : int
+                        Number of a single group may contain
+        Returns:   groups : list[list[FFAssignment]]
+                        List of groups themselves consisting of a list of FFAssignments.
+        """
+
+        self.groups = []
+        # Create 2d matrix containing total number of FFs at a point.
+        self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
+        # Stream layer is treated differently as bit_width has to be considered.
+        self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
+
+        # print(self.ff_matrix)
+        N = network.get_N()
+        depth = network.get_depth()
+
+        # Begin subdivision procedure.
+        self.divide_block(
+            network, Block(True, (0, 0), (N, depth)), num_ff_per_group, max_entities
+        )
+        if len(self.groups) > max_entities:
+            self.groups = self.groups[:max_entities]
+        # print(self.groups)
+        # self.allocate_control_ff(network)
+        # print(self.sub_groups)
+        return self.groups
+
+    def divide_block(
+        self,
+        network: Network,
+        init_block: Block,
+        max_ff_per_group: int,
+        max_entities: int,
+    ):
+        """Recursively divides the rectangle given by init_block parameter
+        on the long edge depending on which edge divides the number of FFs more
+        evenly.
+        """
+        # Stack of blocks to process.
+        blocks = [
+            init_block,
+        ]
+        print()
+        while blocks and len(self.groups) < max_entities:
+            # Unpack block into start and end coordinates
+            start_x, start_y = blocks[-1].start
+            size_x, size_y = blocks[-1].size
+            # Total number of FF contained in the block.
+            # TODO: Calculation is only required once.
+            total = np.sum(
+                self.ff_matrix[start_y : start_y + size_y, start_x : start_x + size_x]
+            )
+            print(blocks[-1], "with", total, "FF is processed:")
+            if not blocks[-1].first_half:
+                # Reached parent block those first half has been proceessed, at which point
+                # the blocks second half has been proccessed as well.
+                # Remove from stack
+                print("\tParent block finished.")
+                blocks.pop()
+                if blocks:
+                    blocks[-1].first_half = False
+            else:
+                # Check whether current block is a leaf block, i.e. if its
+                # total number of FFs is below a threshold.
+                if total < 3 * max_ff_per_group:
+                    # Block is a leaf as it is small enough to be processed
+                    # into FFAssignment groups.
+                    self.distribute_to_groups(
+                        network, blocks[-1], total, max_ff_per_group
+                    )
+                    print("\tTotal FF below threshold. Distributing to groups")
+                    child = blocks.pop()
+                    if blocks:
+                        parent = blocks[-1]
+                        # If child was parents first half, calculate dim of second half
+                        # and put on block stack.
+                        print("\tParent blocks first half has been processed")
+                        if parent.first_half:
+                            blocks[-1].first_half = False
+                            # Figure out axis using coord of child and parent.
+                            # If x coords are the same, division axis was y and
+                            # vice versa.
+                            size_x, size_y = parent.size
+                            if parent.start[0] == child.start[0]:
+                                size_y -= child.size[1]
+                            else:
+                                size_x -= child.size[0]
+                            blocks.append(
+                                Block(
+                                    True,
+                                    parent.start,
+                                    (size_x, size_y),
+                                )
+                            )
+
+                elif total > 0:
+                    half_sum_x = np.sum(
+                        self.ff_matrix[
+                            start_y : start_y + size_y, start_x : start_x + size_x // 2
+                        ]
+                    )
+                    diff_x = abs(total // 2 - half_sum_x)
+                    half_sum_y = np.sum(
+                        self.ff_matrix[
+                            start_y : start_y + size_y // 2,
+                            start_x : start_x + size_x,
+                        ]
+                    )
+                    diff_y = abs(total // 2 - half_sum_y)
+                    if diff_x < diff_y:
+                        start_x += size_x // 2
+                        size_x = size_x // 2
+                    else:
+                        start_y += size_y // 2
+                        size_y = size_y // 2
+
+                    blocks.append(Block(True, (start_x, start_y), (size_x, size_y)))
+                    print("\tTotal FF exceeded threshold.")
+                    print("\tDivided along x-axis:", diff_x < diff_y)
+                    print("\tChild block is ", blocks[-1])
+
+    def distribute_to_groups(self, network, block, total_ff, max_ff_per_group):
+        """Takes network and rectangle and attempts to distribute ffs
+        evenly into groups respecting some degree of locality.
+
+        Parameters:
+            network : Network
+                Network object containing 3d matrix ff_layers.
+            block : Block
+                Block object containing geometry info.
+            total_ff : int
+                Total number of FF to be distributed into groups.
+            max_ff_per_group : int
+                Number of groups to be created.
+         Returns:
+            groups : list[list[FFAssignment]]]
+                List of groups themself consisting of a list of coordinate tuples.
+                Mirrored in the attribute groups.
+        """
+        start_x, start_y = block.start
+        end_x, end_y = block.size
+        end_x += start_x
+        end_y += start_y
+        if total_ff == 0:
+            return self.groups
+        num_groups = math.ceil(total_ff / max_ff_per_group)
+
+        # Number of ff for each group
+        target_ff = [total_ff // (num_groups) for i in range(num_groups)]
+        groups = [[] for i in range(num_groups)]
+        index = 0
+        # Distribute remainder among groups
+        for i in range(total_ff % num_groups):
+            target_ff[i] += 1
+
+        if end_y - start_y < end_x - start_x:
+            for y in range(start_y, end_y):
+                for x in range(start_x, end_x):
+                    index = self.__add_ff_to_group(
+                        network, groups, index, target_ff, x, y
+                    )
+        else:
+            for x in range(start_x, end_x):
+                for y in range(start_y, end_y):
+                    index = self.__add_ff_to_group(
+                        network, groups, index, target_ff, x, y
+                    )
+        self.groups += groups
+        return self.groups
+
+    def __add_ff_to_group(
+        self,
+        network: Network,
+        groups: list[list[FFAssignment]],
+        grp_i: int,
+        target_ff: list[int],
+        x: int,
+        y: int,
+    ):
+        """Takes a point and adds FF to group indicated by group index until
+        either the target number of FF is reached or no FF remain at that
+        point.
+
+        Parameters:
+            network: Network
+                Sorting Network on which to work on.
+            groups: list[list[FFAssignment]]
+                List of groups to operate on.
+            grp_i: int
+                Index of the group to operate on.
+            target_ff: list[int]
+                List of maximum numbers of FF per group. Each group index
+                relates to the associated maximum number of FF in target_ff.
+            x: int
+                X coordinate in the network.
+            y: int
+                Y coordinate in the network.
+        Returns:
+            grp_i: int
+                Group index of the next group to operate on. Increment happens
+                when the maximum number of FFs of the current group has been
+                reached but unassigned FFs at the point remain.
+        """
         for z in range(network.ff_layers.shape[0]):
             point = (x, y, z)
             ff_start = 0
@@ -104,160 +321,24 @@ class Block_Allocator(Resource_Allocator):
                 # at that point or at least all FF that still fit into the group.
                 # Since we need the old value of ff_end, make a copy.
                 ff_end_prev = ff_end
-                ff_end = min(ff_at_point, target_nff[grp_i] - cur_group_ff)
-                groups[grp_i].append(FF_Assignment(point, (ff_start, ff_end)))
+                ff_end = min(ff_at_point, target_ff[grp_i] - cur_group_ff)
+                groups[grp_i].append(FFAssignment(point, (ff_start, ff_end)))
                 ff_start = ff_end_prev
-                if cur_group_ff + ff_end >= target_nff[grp_i]:
+                if cur_group_ff + ff_end >= target_ff[grp_i]:
                     # if the group is full increment grp_i.
                     grp_i += 1
         return grp_i
-
-    def distribute_to_groups(self, network, rect, total_ff, max_ff_per_group):
-        """Takes network and rectangle and attempts to distribute ffs
-        evenly into groups respecting some degree of locality.
-
-        Parameters:
-            network : Network
-                Network object containing 3d matrix ff_layers.
-            rect : tuple[tuple[int,int], tuple[int,int]]
-                Rectangle within the network with ff within to
-                be distributed
-            total_ff : int
-                Total number of FF to be distributed into groups.
-            max_ff_per_group : int
-                Number of groups to be created.
-         Returns:
-            groups : list[list[tuple[int,int,int]]]
-                List of groups themself consisting of a list of coordinate tuples.
-                Mirrored in the attribute groups.
-        """
-        start_x, start_y = rect[0]
-        end_x, end_y = rect[1]
-        if total_ff == 0:
-            return self.groups
-        num_groups = math.ceil(total_ff / max_ff_per_group)
-
-        # Number of ff for each group
-        target_nff = [total_ff // (num_groups) for i in range(num_groups)]
-        groups = [[] for i in range(num_groups)]
-        index = 0
-        # Distribute remainder among groups
-        for i in range(total_ff % num_groups):
-            target_nff[i] += 1
-
-        if end_y - start_y < end_x - start_x:
-            for y in range(start_y, end_y):
-                for x in range(start_x, end_x):
-                    index = self.__add_ff_to_group(
-                        network, groups, index, target_nff, x, y
-                    )
-        else:
-            for x in range(start_x, end_x):
-                for y in range(start_y, end_y):
-                    index = self.__add_ff_to_group(
-                        network, groups, index, target_nff, x, y
-                    )
-        self.groups += groups
-        return self.groups
-
-    def divide_block(self, network, rect, max_ff_per_group, max_entities):
-        """Recursively divides the rectangle on the long edge depending on
-        the number of FFs present.
-
-
-        """
-        # List of blocks to be divided and or distributed,
-        # depdending on the number of FF.
-        blocks = [
-            rect,
-        ]
-        while blocks and len(self.groups) < max_entities:
-            block = blocks.pop()
-            # Unpack block into start and end coordinates
-            start_x, start_y = block[0]
-            end_x, end_y = block[1]
-            total = np.sum(self.ff_matrix[start_y:end_y, start_x:end_x])
-            if total < 3 * max_ff_per_group:
-                # Distribute ff between groups evenly.
-                self.distribute_to_groups(network, block, total, max_ff_per_group)
-            elif total > 0:
-                # Along the x and y, build sum of ffs then compute cumulative sum.
-                ff_over_x = np.sum(self.ff_matrix[start_y:end_y, start_x:end_x], axis=0)
-                ff_csum_x = np.cumsum(ff_over_x)
-                ff_over_y = np.sum(self.ff_matrix[start_y:end_y, start_x:end_x], axis=1)
-                ff_csum_y = np.cumsum(ff_over_y)
-
-                # Find indices in x,y where the cumulative sum exceeds half the total
-                split_x = 0
-                while split_x < len(ff_csum_x) and ff_csum_x[split_x + 1] < total // 2:
-                    split_x += 1
-                split_y = 0
-                while split_y < len(ff_csum_y) and ff_csum_y[split_y + 1] < total // 2:
-                    split_y += 1
-
-                # To assert which axis split is more even, check which split
-                # produces blocks closer to half the total.
-                # Difference from optimal in x axis.
-                diff_opt_x = total // 2 - ff_csum_x[split_x]
-                diff_opt_y = total // 2 - ff_csum_y[split_y]
-                axis = 0
-                if diff_opt_y < diff_opt_x:
-                    axis = 1
-
-                # Total number of blocks exceeds 3 times the maximum.
-                # Recursively subdivide.
-                if axis == 0:
-                    blocks.append((block[0], (start_x + split_x, end_y)))
-                    blocks.append(((start_x + split_x, start_y), block[1]))
-                else:
-                    blocks.append((block[0], (end_x, start_y + split_y)))
-                    blocks.append(((start_x, start_y + split_y), block[1]))
-                # print(self.ff_matrix[start_y:end_y, start_x:end_x])
-                # print("Rectangle:", block, "with", total, "FF divided into")
-                # print("Indices x,y:", split_x, split_y)
-                # print("Axis:", axis)
-                # print("Calling divide_block on:")
-                # print("  Rect0:", blocks[-2])
-                # print("  Rect1:", blocks[-1])
-
-    def allocate_ff_groups(
-        self, network: Network, num_ff_per_group: int, max_entities: int
-    ) -> list[list[FF_Assignment]]:
-        """Allocate FF present in the entire network (delay and replicated
-        signals) to groups later replaced by other means.
-        Parameters: network : Network object
-                    num_ff_per_group : int
-                        Number of a single group may contain
-        Returns:   groups : list[list[tuple(int)]]
-                        List of groups consisting of a list of array indices.
-        """
-
-        self.groups = []
-        self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
-        self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
-
-        # print(self.ff_matrix)
-        N = network.get_N()
-        depth = network.get_depth()
-
-        self.divide_block(network, ((0, 0), (N, depth)), num_ff_per_group, max_entities)
-        if len(self.groups) > max_entities:
-            self.groups = self.groups[:max_entities]
-        # print(self.groups)
-        # self.allocate_control_ff(network)
-        # print(self.sub_groups)
-        return self.groups
 
 
 def norm2square(point):
     return np.dot(point, point)
 
 
-def get_distscore_rect(nw, rect):
+def get_distscore_rect(nw, block):
     """Calculates the smallest bounding box of FF contained in given rectangle.
     Returns square of diagonal."""
 
-    a, b = rect
+    a, b = block
     start_x, start_y = a
     end_x, end_y = b
 

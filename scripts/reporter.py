@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import pandas as pd
-import csv
 from pathlib import Path
 from scripts.network_generators import Network
-from scripts.resource_allocator import FF_Replacement, FF_Assignment
+from scripts.resource_allocator import FFReplacement
 
 
 class Report:
-    def __init__(self, network):
+    def __init__(self, network: Network):
         self.content = dict()
         self.evaluate_network(network)
 
@@ -60,18 +59,18 @@ class Report:
             if ff_hist[i]:
                 self.content["ff_hist"][i + 1] = ff_hist[i]
 
-        self.content["ff_replacement"] = "None"
+        self.content["ffreplacement"] = "None"
         self.content["num_replacements"] = 0
         self.content["ff_per_entity"] = 0
         self.content["replaced_ff"] = 0
 
-    def evaluate_ffreplacement(self, ff_replacement):
-        self.content["ff_replacement"] = ff_replacement.entity.name
-        self.content["num_replacements"] = len(ff_replacement.groups)
-        self.content["ff_per_entity"] = ff_replacement.ff_per_entity
+    def evaluate_ffreplacement(self, ffreplacement: FFReplacement):
+        self.content["ffreplacement"] = ffreplacement.entity.name
+        self.content["num_replacements"] = len(ffreplacement.groups)
+        self.content["ff_per_entity"] = ffreplacement.ff_per_entity
 
         ff_per_group = []
-        for group in ff_replacement.groups:
+        for group in ffreplacement.groups:
             ff = 0
             for assignment in group:
                 ff += assignment.ff_range[1] - assignment.ff_range[0]
@@ -108,7 +107,8 @@ class Reporter:
                 current_df = self.current_report.as_df()
                 self.reports = pd.concat(
                     [
-                        self.reports[~self.reports.index.isin(current_df.index)],
+                        self.reports[~self.reports.index.isin(
+                            current_df.index)],
                         current_df,
                     ]
                 )
@@ -117,8 +117,8 @@ class Reporter:
         self.current_report = Report(network)
         self.current_report_committed = False
 
-    def report_ff_replacement(self, ff_replacement):
-        self.current_report.evaluate_ffreplacement(ff_replacement)
+    def report_ff_replacement(self, ffreplacement):
+        self.current_report.evaluate_ffreplacement(ffreplacement)
 
     def write_report(self, report_file=""):
         if not self.reports.empty:
@@ -126,7 +126,8 @@ class Reporter:
             if fpath.exists():
                 reports = pd.read_csv(str(fpath), index_col="name")
                 reports = pd.concat(
-                    [reports[~reports.index.isin(self.reports.index)], self.reports]
+                    [reports[~reports.index.isin(
+                        self.reports.index)], self.reports]
                 )
                 reports.to_csv(report_file)
             else:
