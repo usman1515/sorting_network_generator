@@ -30,9 +30,8 @@ def figure_luts(df):
     legend0 = plt.legend(handles=plot_handles, loc=2, title="Network Type")
 
     l1 = plt.axhline(y=1182 * 10**3, color="black", label="VU9P")
-    line_handles = [
-        l1,
-    ]
+    l2 = plt.axhline(y=4085760, color="grey", label="VU19P")
+    line_handles = [l1, l2]
     plt.legend(handles=line_handles, loc=9, title="FPGAs")
     plt.gca().add_artist(legend0)
     plt.savefig("build/graphs/" + "Network_LUTs" + ".png", dpi=200)
@@ -66,9 +65,8 @@ def figure_ff(df):
     legend0 = plt.legend(handles=plot_handles, loc=2, title="Network Type")
 
     l1 = plt.axhline(y=2364 * 10**3, color="black", label="VU9P")
-    line_handles = [
-        l1,
-    ]
+    l2 = plt.axhline(y=8171520, color="grey", label="VU19P")
+    line_handles = [l1, l2]
     plt.legend(handles=line_handles, loc=9, title="FPGAs")
     plt.gca().add_artist(legend0)
     plt.savefig("build/graphs/" + "Network_FF" + ".png", dpi=200)
