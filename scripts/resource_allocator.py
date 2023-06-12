@@ -44,14 +44,13 @@ class ResourceAllocator(ABC):
         pass
 
     def reallocate_ff(self, network, entity, max_entities, ff_per_entity):
-        ff_groups = self.allocate_ff_groups(
-            network, ff_per_entity, max_entities)
+        ff_groups = self.allocate_ff_groups(network, ff_per_entity, max_entities)
 
-        for i, group in enumerate(ff_groups):
-            print("Group: " + str(i + 1))
-            for assign in group:
-                print(assign)
-        print_layers_with_ffgroups(network, ff_groups)
+        # for i, group in enumerate(ff_groups):
+        # print("Group: " + str(i + 1))
+        # for assign in group:
+        # print(assign)
+        # print_layers_with_ffgroups(network, ff_groups)
         return FFReplacement(entity, ff_per_entity, ff_groups)
 
 
@@ -128,8 +127,7 @@ class BlockAllocator(ResourceAllocator):
         # Create 2d matrix containing total number of FFs at a point.
         self.ff_matrix = np.sum(network.ff_layers[1:], axis=0, dtype=np.int32)
         # Stream layer is treated differently as bit_width has to be considered.
-        self.ff_matrix += network.ff_layers[0] * \
-            network.signals["STREAM"].bit_width
+        self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
 
         # print(self.ff_matrix)
         N = network.get_N()
@@ -137,8 +135,7 @@ class BlockAllocator(ResourceAllocator):
 
         # Begin subdivision procedure.
         self.divide_block(
-            network, Block(True, (0, 0), (N, depth)
-                           ), num_ff_per_group, max_entities
+            network, Block(True, (0, 0), (N, depth)), num_ff_per_group, max_entities
         )
         if len(self.groups) > max_entities:
             self.groups = self.groups[:max_entities]
@@ -177,7 +174,7 @@ class BlockAllocator(ResourceAllocator):
         blocks = [
             init_block,
         ]
-        print()
+        # print()
         while blocks and len(self.groups) < max_entities:
             # Unpack block into start and end coordinates
             start_x, start_y = blocks[-1].start
@@ -185,17 +182,15 @@ class BlockAllocator(ResourceAllocator):
             # Total number of FF contained in the block.
             # TODO: Calculation is only required once.
             total = np.sum(
-                self.ff_matrix[start_y: start_y +
-                               size_y, start_x: start_x + size_x]
+                self.ff_matrix[start_y : start_y + size_y, start_x : start_x + size_x]
             )
-            print(blocks[-1], "with", total, "FF is being processed:")
-            self.__print_block(
-                init_block.size[0], init_block.size[1], blocks[-1])
+            # print(blocks[-1], "with", total, "FF is being processed:")
+            # self.__print_block(init_block.size[0], init_block.size[1], blocks[-1])
             if not blocks[-1].first_half:
                 # Reached parent block those first half has been proceessed, at which point
                 # the blocks second half has been proccessed as well.
                 # Remove from stack
-                print(" " * len(blocks), "\tParent block finished.")
+                # print(" " * len(blocks), "\tParent block finished.")
                 child = blocks.pop()
                 if blocks:
                     parent = blocks[-1]
@@ -211,33 +206,35 @@ class BlockAllocator(ResourceAllocator):
                     self.distribute_to_groups(
                         network, blocks[-1], total, max_ff_per_group
                     )
-                    print(" " * len(blocks),
-                          "\tTotal FF below threshold. Distributing to groups")
+                    # print(
+                    #     " " * len(blocks),
+                    #     "\tTotal FF below threshold. Distributing to groups",
+                    # )
                     child = blocks.pop()
                     if blocks:
                         parent = blocks[-1]
                         # If child was parents first half, calculate dim of second half
                         # and put on block stack.
-                        print(" " * len(blocks),
-                              "\tParent blocks first half has been processed")
+                        # print(
+                        #     " " * len(blocks),
+                        #     "\tParent blocks first half has been processed",
+                        # )
                         if parent.first_half:
                             blocks[-1].first_half = False
-                            blocks.append(
-                                self.__get_second_half(parent, child))
-                            print(" " * len(blocks),
-                                  "\tSecond Half is ", blocks[-1])
+                            blocks.append(self.__get_second_half(parent, child))
+                            # print(" " * len(blocks), "\tSecond Half is ", blocks[-1])
 
                 elif total > 0:
                     half_sum_x = np.sum(
                         self.ff_matrix[
-                            start_y: start_y + size_y, start_x: start_x + size_x // 2
+                            start_y : start_y + size_y, start_x : start_x + size_x // 2
                         ]
                     )
                     diff_x = abs(total // 2 - half_sum_x)
                     half_sum_y = np.sum(
                         self.ff_matrix[
-                            start_y: start_y + size_y // 2,
-                            start_x: start_x + size_x,
+                            start_y : start_y + size_y // 2,
+                            start_x : start_x + size_x,
                         ]
                     )
                     diff_y = abs(total // 2 - half_sum_y)
@@ -248,12 +245,10 @@ class BlockAllocator(ResourceAllocator):
                         start_y += ceil(size_y / 2)
                         size_y = size_y // 2
 
-                    blocks.append(
-                        Block(True, (start_x, start_y), (size_x, size_y)))
-                    print(" " * len(blocks), "\tTotal FF exceeded threshold.")
-                    print(" " * len(blocks),
-                          "\tDivided along x-axis:", diff_x < diff_y)
-                    print(" " * len(blocks), "\tChild block is ", blocks[-1])
+                    blocks.append(Block(True, (start_x, start_y), (size_x, size_y)))
+                    # print(" " * len(blocks), "\tTotal FF exceeded threshold.")
+                    # print(" " * len(blocks), "\tDivided along x-axis:", diff_x < diff_y)
+                    # print(" " * len(blocks), "\tChild block is ", blocks[-1])
 
     def distribute_to_groups(self, network, block, total_ff, max_ff_per_group):
         """Takes network and rectangle and attempts to distribute ffs
