@@ -22,7 +22,7 @@ entity TEST_SORTER_TOP is
     SYS_CLK : in  std_logic;
     SW_RST  : in  std_logic;
     SW_EN   : in  std_logic;
-    LED     : out std_logic_vector(0 downto 0)
+    LED     : out std_logic
     );
 end entity TEST_SORTER_TOP;
 
@@ -61,7 +61,7 @@ begin
       CLK_I      => SYS_CLK,
       RST_I      => reset,
       ENABLE_I   => enable,
-      IN_ORDER_O => LED(0)
+      IN_ORDER_O => LED
       );
 
 end architecture STRUCTURAL;

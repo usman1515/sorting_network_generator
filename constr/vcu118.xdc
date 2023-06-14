@@ -1,69 +1,32 @@
 ############################################################################
 ### VCU118 Rev2.0 XDC 12/08/2017
 ############################################################################
-# Buttons
-# set_property -dict {PACKAGE_PIN L19 IOSTANDARD  LVCMOS12}  [get_ports cpu_reset] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T1U_N12_73
-# set_property PULLDOWN true [get_ports cpu_reset]
-# PCIe
-# set_false_path -from                  [get_ports sys_rst_n]
-# set_property PULLUP true              [get_ports sys_rst_n]
-# set_property IOSTANDARD LVCMOS18      [get_ports sys_rst_n]
-# set_property PACKAGE_PIN AM17         [get_ports sys_rst_n]
-create_clock -name sys_clk -period 10 [get_ports SYS_CLK]
-
-set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
-# set_property -dict {PACKAGE_PIN AC8}  [get_ports sys_clk_n]
-
-# JTAG
-# set_property -dict {PACKAGE_PIN N28 IOSTANDARD  LVCMOS12}  [get_ports tck] ;   # PMOD1_0
-# set_property -dict {PACKAGE_PIN M30 IOSTANDARD  LVCMOS12}  [get_ports tdi] ;   # PMOD1_1
-# set_property -dict {PACKAGE_PIN N30 IOSTANDARD  LVCMOS12}  [get_ports tdo] ;   # PMOD1_2
-# set_property -dict {PACKAGE_PIN P30 IOSTANDARD  LVCMOS12}  [get_ports tms] ;   # PMOD1_3
-# set_property -dict {PACKAGE_PIN P29 IOSTANDARD  LVCMOS12}  [get_ports trst_n] ;# PMOD1_4
-# accept sub-optimal placement
-# set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets tck_IBUF_inst/O]
-
-# set_property -dict {PACKAGE_PIN AW25 IOSTANDARD  LVCMOS18} [get_ports tx] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_64
-# set_property -dict {PACKAGE_PIN BB21 IOSTANDARD  LVCMOS18} [get_ports rx] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_64
-
-## SD Card **TODO(zarubaf)*** This is wrong for the VCU118
-# set_property -dict {PACKAGE_PIN AY14 IOSTANDARD  LVCMOS18} [get_ports spi_clk_o] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
-# set_property -dict {PACKAGE_PIN AY15 IOSTANDARD  LVCMOS18} [get_ports spi_clk_o_2] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
-
-# set_property -dict {PACKAGE_PIN BF16 IOSTANDARD  LVCMOS18} [get_ports spi_ss] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L2N_T0L_N3_FWE_FCS2_B_65
-# set_property -dict {PACKAGE_PIN BF20 IOSTANDARD  LVCMOS18} [get_ports spi_ss_2] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_RS1_65
-
-# set_property -dict {PACKAGE_PIN AM18 IOSTANDARD  LVCMOS18} [get_ports spi_miso] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L22N_T3U_N7_DBC_AD0N_D05_65
-# set_property -dict {PACKAGE_PIN AM19 IOSTANDARD  LVCMOS18} [get_ports spi_mosi] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L22P_T3U_N6_DBC_AD0P_D04_65
-# set_property -dict {PACKAGE_PIN AP20 IOSTANDARD  LVCMOS18} [get_ports spi_miso_2] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L21N_T3L_N5_AD8N_D07_65
-# set_property -dict {PACKAGE_PIN AN20 IOSTANDARD  LVCMOS18} [get_ports spi_mosi_2] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L21P_T3L_N4_AD8P_D06_65
-
-# #Other net   PACKAGE_PIN AE17     - DXN                       Bank   0 - DXN
-# #Other net   PACKAGE_PIN AE18     - DXP                       Bank   0 - DXP
-# #Other net   PACKAGE_PIN AD18     - GND                       Bank   0 - VREFP
-# #Other net   PACKAGE_PIN AC17     - GND                       Bank   0 - VREFN
-# #Other net   PACKAGE_PIN AC18     - SYSMON_VP                 Bank   0 - VP
-# #Other net   PACKAGE_PIN AD17     - SYSMON_VN                 Bank   0 - VN
-# #Other net   PACKAGE_PIN U10      - FPGA_M0                   Bank   0 - M0_0
-# #Other net   PACKAGE_PIN Y11      - FPGA_M1                   Bank   0 - M1_0
-# #Other net   PACKAGE_PIN AC12     - FPGA_INIT_B               Bank   0 - INIT_B_0
-# #Other net   PACKAGE_PIN W11      - FPGA_M2                   Bank   0 - M2_0
-# #Other net   PACKAGE_PIN AB11     - GND                       Bank   0 - RSVDGND
-# #Other net   PACKAGE_PIN AD12     - PUDC_B_PIN                Bank   0 - PUDC_B_0
-# #Other net   PACKAGE_PIN AG12     - POR_OVERRIDE_PIN          Bank   0 - POR_OVERRIDE
-# #Other net   PACKAGE_PIN AE12     - FPGA_DONE                 Bank   0 - DONE_0
-# #Other net   PACKAGE_PIN AH11     - FPGA_PROG_B               Bank   0 - PROGRAM_B_0
-# #Other net   PACKAGE_PIN AD13     - FPGA_TDO_FMC_TDI          Bank   0 - TDO_0
-# #Other net   PACKAGE_PIN AD15     - JTAG_TDI                  Bank   0 - TDI_0
-# #Other net   PACKAGE_PIN AJ11     - QSPI0_CS_B                Bank   0 - RDWR_FCS_B_0
-# #Other net   PACKAGE_PIN AM11     - QSPI0_DQ2                 Bank   0 - D02_0
-# #Other net   PACKAGE_PIN AP11     - QSPI0_DQ0                 Bank   0 - D00_MOSI_0
-# #Other net   PACKAGE_PIN AL11     - QSPI0_DQ3                 Bank   0 - D03_0
-# #Other net   PACKAGE_PIN AN11     - QSPI0_DQ1                 Bank   0 - D01_DIN_0
-# #Other net   PACKAGE_PIN AF15     - JTAG_TMS                  Bank   0 - TMS_0
-# #Other net   PACKAGE_PIN AF13     - QSPI_CCLK                 Bank   0 - CCLK_0
-# #Other net   PACKAGE_PIN AE13     - JTAG_TCK                  Bank   0 - TCK_0
-# #Other net   PACKAGE_PIN AT11     - FPGA_VBATT                Bank   0 - VBATT
+#Other net   PACKAGE_PIN AE17     - DXN                       Bank   0 - DXN
+#Other net   PACKAGE_PIN AE18     - DXP                       Bank   0 - DXP
+#Other net   PACKAGE_PIN AD18     - GND                       Bank   0 - VREFP
+#Other net   PACKAGE_PIN AC17     - GND                       Bank   0 - VREFN
+#Other net   PACKAGE_PIN AC18     - SYSMON_VP                 Bank   0 - VP
+#Other net   PACKAGE_PIN AD17     - SYSMON_VN                 Bank   0 - VN
+#Other net   PACKAGE_PIN U10      - FPGA_M0                   Bank   0 - M0_0
+#Other net   PACKAGE_PIN Y11      - FPGA_M1                   Bank   0 - M1_0
+#Other net   PACKAGE_PIN AC12     - FPGA_INIT_B               Bank   0 - INIT_B_0
+#Other net   PACKAGE_PIN W11      - FPGA_M2                   Bank   0 - M2_0
+#Other net   PACKAGE_PIN AB11     - GND                       Bank   0 - RSVDGND
+#Other net   PACKAGE_PIN AD12     - PUDC_B_PIN                Bank   0 - PUDC_B_0
+#Other net   PACKAGE_PIN AG12     - POR_OVERRIDE_PIN          Bank   0 - POR_OVERRIDE
+#Other net   PACKAGE_PIN AE12     - FPGA_DONE                 Bank   0 - DONE_0
+#Other net   PACKAGE_PIN AH11     - FPGA_PROG_B               Bank   0 - PROGRAM_B_0
+#Other net   PACKAGE_PIN AD13     - FPGA_TDO_FMC_TDI          Bank   0 - TDO_0
+#Other net   PACKAGE_PIN AD15     - JTAG_TDI                  Bank   0 - TDI_0
+#Other net   PACKAGE_PIN AJ11     - QSPI0_CS_B                Bank   0 - RDWR_FCS_B_0
+#Other net   PACKAGE_PIN AM11     - QSPI0_DQ2                 Bank   0 - D02_0
+#Other net   PACKAGE_PIN AP11     - QSPI0_DQ0                 Bank   0 - D00_MOSI_0
+#Other net   PACKAGE_PIN AL11     - QSPI0_DQ3                 Bank   0 - D03_0
+#Other net   PACKAGE_PIN AN11     - QSPI0_DQ1                 Bank   0 - D01_DIN_0
+#Other net   PACKAGE_PIN AF15     - JTAG_TMS                  Bank   0 - TMS_0
+#Other net   PACKAGE_PIN AF13     - QSPI_CCLK                 Bank   0 - CCLK_0
+#Other net   PACKAGE_PIN AE13     - JTAG_TCK                  Bank   0 - TCK_0
+#Other net   PACKAGE_PIN AT11     - FPGA_VBATT                Bank   0 - VBATT
 # set_property PACKAGE_PIN B25      [get_ports "RLD3_C3_72B_DM3"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_48
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_DM3"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_48
 # set_property PACKAGE_PIN C25      [get_ports "RLD3_C3_72B_DQ71"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L24P_T3U_N10_48
@@ -88,10 +51,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK7_N"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_48
 # set_property PACKAGE_PIN D27      [get_ports "RLD3_C3_72B_QK7_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_48
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK7_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_48
-# #set_property PACKAGE_PIN A25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T3U_N12_48
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T3U_N12_48
-# #set_property PACKAGE_PIN H25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T2U_N12_48
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T2U_N12_48
+#set_property PACKAGE_PIN A25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T3U_N12_48
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T3U_N12_48
+#set_property PACKAGE_PIN H25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T2U_N12_48
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T2U_N12_48
 # set_property PACKAGE_PIN F25      [get_ports "RLD3_C3_72B_QVLD3"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_48
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_QVLD3"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_48
 # set_property PACKAGE_PIN G25      [get_ports "RLD3_C3_72B_DQ62"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_48
@@ -140,10 +103,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK5_N"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L7N_T1L_N1_QBC_AD13N_48
 # set_property PACKAGE_PIN M27      [get_ports "RLD3_C3_72B_QK5_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_48
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK5_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_48
-# #set_property PACKAGE_PIN J25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T1U_N12_48
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T1U_N12_48
-# #set_property PACKAGE_PIN M26      [get_ports "VRP_48"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_48
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_48"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_48
+#set_property PACKAGE_PIN J25      [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T1U_N12_48
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T1U_N12_48
+#set_property PACKAGE_PIN M26      [get_ports "VRP_48"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_48
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_48"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_48
 # set_property PACKAGE_PIN N24      [get_ports "RLD3_C3_72B_DM2"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_48
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_DM2"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_48
 # set_property PACKAGE_PIN P24      [get_ports "RLD3_C3_72B_DQ44"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L6P_T0U_N10_AD6P_48
@@ -168,7 +131,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK4_N"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L1N_T0L_N1_DBC_48
 # set_property PACKAGE_PIN T26      [get_ports "RLD3_C3_72B_QK4_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_48
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK4_P"] ;# Bank  48 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_48
-# #Other net   PACKAGE_PIN T25      -                  Bank  48 - VREF_48
+#Other net   PACKAGE_PIN T25      -                  Bank  48 - VREF_48
 # set_property PACKAGE_PIN C29      [get_ports "RLD3_C3_72B_A1"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_A1"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_47
 # set_property PACKAGE_PIN D29      [get_ports "RLD3_C3_72B_A2"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L24P_T3U_N10_47
@@ -219,8 +182,8 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_BA3"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L14P_T2L_N2_GC_47
 # set_property PACKAGE_PIN F31      [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
-# set_property PACKAGE_PIN G31      [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
-# set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
+set_property PACKAGE_PIN G31      [get_ports "SYS_CLK"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
+set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYS_CLK"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
 # set_property PACKAGE_PIN G32      [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property PACKAGE_PIN H32      [get_ports "USER_SI570_CLOCK_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12P_T1U_N10_GC_47
@@ -247,18 +210,33 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_DK0_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_47
 # set_property PACKAGE_PIN K29      [get_ports "RLD3_C3_72B_WE_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T1U_N12_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_WE_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T1U_N12_47
-# #set_property PACKAGE_PIN T29      [get_ports "VRP_47"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_47
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_47"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_47
+#set_property PACKAGE_PIN T29      [get_ports "VRP_47"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_47
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_47"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_47
 # set_property PACKAGE_PIN L30      [get_ports "RLD3_C3_72B_REF_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_REF_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_47
 # set_property PACKAGE_PIN L29      [get_ports "RLD3_C3_72B_RESET_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L6P_T0U_N10_AD6P_47
 # set_property IOSTANDARD  LVCMOS12 [get_ports "RLD3_C3_72B_RESET_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L6P_T0U_N10_AD6P_47
 # set_property PACKAGE_PIN N29      [get_ports "RLD3_C3_72B_CS_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L5N_T0U_N9_AD14N_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_CS_B"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L5N_T0U_N9_AD14N_47
-
+# set_property PACKAGE_PIN N28      [get_ports "PMOD1_0_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L5P_T0U_N8_AD14P_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_0_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L5P_T0U_N8_AD14P_47
+# set_property PACKAGE_PIN M30      [get_ports "PMOD1_1_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L4N_T0U_N7_DBC_AD7N_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_1_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L4N_T0U_N7_DBC_AD7N_47
+# set_property PACKAGE_PIN N30      [get_ports "PMOD1_2_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L4P_T0U_N6_DBC_AD7P_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_2_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L4P_T0U_N6_DBC_AD7P_47
+# set_property PACKAGE_PIN P30      [get_ports "PMOD1_3_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L3N_T0L_N5_AD15N_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_3_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L3N_T0L_N5_AD15N_47
+# set_property PACKAGE_PIN P29      [get_ports "PMOD1_4_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L3P_T0L_N4_AD15P_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_4_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L3P_T0L_N4_AD15P_47
+# set_property PACKAGE_PIN L31      [get_ports "PMOD1_5_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L2N_T0L_N3_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_5_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L2N_T0L_N3_47
+# set_property PACKAGE_PIN M31      [get_ports "PMOD1_6_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L2P_T0L_N2_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_6_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L2P_T0L_N2_47
+# set_property PACKAGE_PIN R29      [get_ports "PMOD1_7_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L1N_T0L_N1_DBC_47
+# set_property IOSTANDARD  LVCMOS12 [get_ports "PMOD1_7_LS"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L1N_T0L_N1_DBC_47
 # set_property PACKAGE_PIN R28      [get_ports "RLD3_C3_72B_A20"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_A20"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_47
-# #Other net   PACKAGE_PIN T28      - 43N2999                   Bank  47 - VREF_47
+#Other net   PACKAGE_PIN T28      - 43N2999                   Bank  47 - VREF_47
 # set_property PACKAGE_PIN A35      [get_ports "RLD3_C3_72B_DM1"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_46
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_DM1"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_46
 # set_property PACKAGE_PIN A34      [get_ports "RLD3_C3_72B_DQ35"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L24P_T3U_N10_46
@@ -283,10 +261,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK3_N"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_46
 # set_property PACKAGE_PIN D37      [get_ports "RLD3_C3_72B_QK3_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_46
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK3_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_46
-# #set_property PACKAGE_PIN D36      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T3U_N12_46
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T3U_N12_46
-# #set_property PACKAGE_PIN C38      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T2U_N12_46
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T2U_N12_46
+#set_property PACKAGE_PIN D36      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T3U_N12_46
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T3U_N12_46
+#set_property PACKAGE_PIN C38      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T2U_N12_46
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T2U_N12_46
 # set_property PACKAGE_PIN A38      [get_ports "RLD3_C3_72B_QVLD1"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_46
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_QVLD1"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_46
 # set_property PACKAGE_PIN B38      [get_ports "RLD3_C3_72B_DQ26"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_46
@@ -335,10 +313,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK1_N"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L7N_T1L_N1_QBC_AD13N_46
 # set_property PACKAGE_PIN F34      [get_ports "RLD3_C3_72B_QK1_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_46
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK1_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_46
-# #set_property PACKAGE_PIN E36      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T1U_N12_46
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T1U_N12_46
-# #set_property PACKAGE_PIN K38      [get_ports "VRP_46"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_46
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_46"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_46
+#set_property PACKAGE_PIN E36      [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T1U_N12_46
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T1U_N12_46
+#set_property PACKAGE_PIN K38      [get_ports "VRP_46"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_46
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_46"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_46
 # set_property PACKAGE_PIN F39      [get_ports "RLD3_C3_72B_DM0"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_46
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_DM0"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_46
 # set_property PACKAGE_PIN F38      [get_ports "RLD3_C3_72B_DQ8"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L6P_T0U_N10_AD6P_46
@@ -363,7 +341,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK0_N"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L1N_T0L_N1_DBC_46
 # set_property PACKAGE_PIN J39      [get_ports "RLD3_C3_72B_QK0_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_46
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "RLD3_C3_72B_QK0_P"] ;# Bank  46 VCCO - VCC1V2_FPGA - IO_L1P_T0L_N0_DBC_46
-# #Other net   PACKAGE_PIN J34      -                  Bank  46 - VREF_46
+#Other net   PACKAGE_PIN J34      -                  Bank  46 - VREF_46
 # set_property PACKAGE_PIN L35      [get_ports "FMCP_HSPC_LA21_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA21_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_45
 # set_property PACKAGE_PIN M35      [get_ports "FMCP_HSPC_LA21_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L24P_T3U_N10_45
@@ -388,10 +366,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA33_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_45
 # set_property PACKAGE_PIN L34      [get_ports "FMCP_HSPC_LA33_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA33_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_45
-# #set_property PACKAGE_PIN K36      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_45
-# #set_property PACKAGE_PIN R36      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_45
+#set_property PACKAGE_PIN K36      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_45
+#set_property PACKAGE_PIN R36      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_45
 # set_property PACKAGE_PIN M38      [get_ports "FMCP_HSPC_LA30_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L18N_T2U_N11_AD2N_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA30_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L18N_T2U_N11_AD2N_45
 # set_property PACKAGE_PIN N38      [get_ports "FMCP_HSPC_LA30_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L18P_T2U_N10_AD2P_45
@@ -404,10 +382,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA31_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_45
 # set_property PACKAGE_PIN P37      [get_ports "FMCP_HSPC_LA31_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA31_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_45
-# #set_property PACKAGE_PIN L38      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_45
-# #set_property PACKAGE_PIN M37      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_45
+#set_property PACKAGE_PIN L38      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_45
+#set_property PACKAGE_PIN M37      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_45
 # set_property PACKAGE_PIN P36      [get_ports "FMCP_HSPC_CLK1_M2C_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_CLK1_M2C_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_45
 # set_property PACKAGE_PIN P35      [get_ports "FMCP_HSPC_CLK1_M2C_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_45
@@ -416,10 +394,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA17_CC_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_45
 # set_property PACKAGE_PIN R34      [get_ports "FMCP_HSPC_LA17_CC_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA17_CC_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_45
-# #set_property PACKAGE_PIN R33      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_45
-# #set_property PACKAGE_PIN T33      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_45
+#set_property PACKAGE_PIN R33      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_45
+#set_property PACKAGE_PIN T33      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_45
 # set_property PACKAGE_PIN P32      [get_ports "USER_SMA_CLOCK_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_45
 # set_property IOSTANDARD  LVDS [get_ports "USER_SMA_CLOCK_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_45
 # set_property PACKAGE_PIN R32      [get_ports "USER_SMA_CLOCK_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_45
@@ -428,22 +406,22 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA18_CC_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_45
 # set_property PACKAGE_PIN R31      [get_ports "FMCP_HSPC_LA18_CC_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA18_CC_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_45
-# #set_property PACKAGE_PIN W31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_45
-# #set_property PACKAGE_PIN Y31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_45
-# #set_property PACKAGE_PIN U32      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_45
-# #set_property PACKAGE_PIN U31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_45
-# #set_property PACKAGE_PIN T31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_45
-# #set_property PACKAGE_PIN T30      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_45
-# #set_property PACKAGE_PIN V30      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_45
-# #set_property PACKAGE_PIN Y33      [get_ports "VRP_45"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_45
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_45"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_45
+#set_property PACKAGE_PIN W31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_45
+#set_property PACKAGE_PIN Y31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_45
+#set_property PACKAGE_PIN U32      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_45
+#set_property PACKAGE_PIN U31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_45
+#set_property PACKAGE_PIN T31      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_45
+#set_property PACKAGE_PIN T30      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_45
+#set_property PACKAGE_PIN V30      [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_45
+#set_property PACKAGE_PIN Y33      [get_ports "VRP_45"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_45
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_45"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_45
 # set_property PACKAGE_PIN T35      [get_ports "FMCP_HSPC_LA24_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA24_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_45
 # set_property PACKAGE_PIN T34      [get_ports "FMCP_HSPC_LA24_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L6P_T0U_N10_AD6P_45
@@ -468,7 +446,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA23_N"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L1N_T0L_N1_DBC_45
 # set_property PACKAGE_PIN Y32      [get_ports "FMCP_HSPC_LA23_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_45
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA23_P"] ;# Bank  45 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_45
-# #Other net   PACKAGE_PIN U30      - VREF_45                   Bank  45 - VREF_45
+#Other net   PACKAGE_PIN U30      - VREF_45                   Bank  45 - VREF_45
 # set_property PACKAGE_PIN AK13     [get_ports "FMC_HPC1_LA33_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA33_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_67
 # set_property PACKAGE_PIN AK14     [get_ports "FMC_HPC1_LA33_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L24P_T3U_N10_67
@@ -493,10 +471,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA27_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_67
 # set_property PACKAGE_PIN AL14     [get_ports "FMC_HPC1_LA27_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA27_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_67
-# #set_property PACKAGE_PIN AM16     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_67
-# #set_property PACKAGE_PIN AR15     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_67
+#set_property PACKAGE_PIN AM16     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T3U_N12_67
+#set_property PACKAGE_PIN AR15     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T2U_N12_67
 # set_property PACKAGE_PIN AP15     [get_ports "FMC_HPC1_LA29_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L18N_T2U_N11_AD2N_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA29_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L18N_T2U_N11_AD2N_67
 # set_property PACKAGE_PIN AN15     [get_ports "FMC_HPC1_LA29_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L18P_T2U_N10_AD2P_67
@@ -509,10 +487,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA18_CC_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_67
 # set_property PACKAGE_PIN AP12     [get_ports "FMC_HPC1_LA18_CC_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA18_CC_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_67
-# #set_property PACKAGE_PIN AN13     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_67
-# #set_property PACKAGE_PIN AN14     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_67
+#set_property PACKAGE_PIN AN13     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_67
+#set_property PACKAGE_PIN AN14     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_67
 # set_property PACKAGE_PIN AR13     [get_ports "FMC_HPC1_LA24_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA24_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_67
 # set_property PACKAGE_PIN AP13     [get_ports "FMC_HPC1_LA24_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_67
@@ -525,10 +503,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_CLK1_M2C_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_67
 # set_property PACKAGE_PIN AV14     [get_ports "FMC_HPC1_CLK1_M2C_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_CLK1_M2C_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_67
-# #set_property PACKAGE_PIN AU13     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_67
-# #set_property PACKAGE_PIN AU14     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_67
+#set_property PACKAGE_PIN AU13     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_67
+#set_property PACKAGE_PIN AU14     [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_67
 # set_property PACKAGE_PIN AY14     [get_ports "PMOD0_0_LS"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_67
 # set_property IOSTANDARD  LVCMOS18 [get_ports "PMOD0_0_LS"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_67
 # set_property PACKAGE_PIN AY15     [get_ports "PMOD0_1_LS"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_67
@@ -547,8 +525,8 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVCMOS18 [get_ports "PMOD0_7_LS"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_67
 # set_property PACKAGE_PIN AW16     [get_ports "10N8842"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_67
 # set_property IOSTANDARD  LVCMOSxx [get_ports "10N8842"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_67
-# #set_property PACKAGE_PIN BA12     [get_ports "VRP_67"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_67
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_67"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_67
+#set_property PACKAGE_PIN BA12     [get_ports "VRP_67"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_67
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_67"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_67
 # set_property PACKAGE_PIN AV11     [get_ports "FMC_HPC1_LA21_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA21_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_67
 # set_property PACKAGE_PIN AU11     [get_ports "FMC_HPC1_LA21_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L6P_T0U_N10_AD6P_67
@@ -573,7 +551,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA25_N"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L1N_T0L_N1_DBC_67
 # set_property PACKAGE_PIN AT12     [get_ports "FMC_HPC1_LA25_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_67
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA25_P"] ;# Bank  67 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_67
-# #Other net   PACKAGE_PIN AL16     - VREF_67                   Bank  67 - VREF_67
+#Other net   PACKAGE_PIN AL16     - VREF_67                   Bank  67 - VREF_67
 # set_property PACKAGE_PIN BB12     [get_ports "FMC_HPC1_LA10_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA10_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_66
 # set_property PACKAGE_PIN BB13     [get_ports "FMC_HPC1_LA10_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L24P_T3U_N10_66
@@ -618,10 +596,10 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVCMOS18 [get_ports "FMC_HPC1_PRSNT_M2C_B_LS"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L15N_T2L_N5_AD11N_66
 # set_property PACKAGE_PIN BA7      [get_ports "FMC_HPC1_PG_M2C_LS"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_66
 # set_property IOSTANDARD  LVCMOS18 [get_ports "FMC_HPC1_PG_M2C_LS"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L15P_T2L_N4_AD11P_66
-# #set_property PACKAGE_PIN BB8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_66
-# #set_property PACKAGE_PIN BB9      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_66
+#set_property PACKAGE_PIN BB8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14N_T2L_N3_GC_66
+#set_property PACKAGE_PIN BB9      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L14P_T2L_N2_GC_66
 # set_property PACKAGE_PIN BA9      [get_ports "FMC_HPC1_LA00_CC_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA00_CC_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_66
 # set_property PACKAGE_PIN AY9      [get_ports "FMC_HPC1_LA00_CC_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_66
@@ -630,30 +608,30 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_CLK0_M2C_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L12N_T1U_N11_GC_66
 # set_property PACKAGE_PIN BC9      [get_ports "FMC_HPC1_CLK0_M2C_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_CLK0_M2C_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L12P_T1U_N10_GC_66
-# #set_property PACKAGE_PIN BD10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_66
-# #set_property PACKAGE_PIN BC10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_66
+#set_property PACKAGE_PIN BD10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11N_T1U_N9_GC_66
+#set_property PACKAGE_PIN BC10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L11P_T1U_N8_GC_66
 # set_property PACKAGE_PIN BF9      [get_ports "FMC_HPC1_LA01_CC_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA01_CC_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_66
 # set_property PACKAGE_PIN BF10     [get_ports "FMC_HPC1_LA01_CC_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA01_CC_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_66
-# #set_property PACKAGE_PIN BE9      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_66
-# #set_property PACKAGE_PIN BE10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_66
-# #set_property PACKAGE_PIN BE7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_66
-# #set_property PACKAGE_PIN BE8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_66
-# #set_property PACKAGE_PIN BD7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_66
-# #set_property PACKAGE_PIN BD8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_66
-# #set_property PACKAGE_PIN BF7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_66
-# #set_property PACKAGE_PIN BD16     [get_ports "VRP_66"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_66
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_66"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_66
+#set_property PACKAGE_PIN BE9      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9N_T1L_N5_AD12N_66
+#set_property PACKAGE_PIN BE10     [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L9P_T1L_N4_AD12P_66
+#set_property PACKAGE_PIN BE7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8N_T1L_N3_AD5N_66
+#set_property PACKAGE_PIN BE8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L8P_T1L_N2_AD5P_66
+#set_property PACKAGE_PIN BD7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_66
+#set_property PACKAGE_PIN BD8      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_66
+#set_property PACKAGE_PIN BF7      [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_66
+#set_property PACKAGE_PIN BD16     [get_ports "VRP_66"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_66
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_66"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_66
 # set_property PACKAGE_PIN BF15     [get_ports "FMC_HPC1_LA08_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA08_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_66
 # set_property PACKAGE_PIN BE15     [get_ports "FMC_HPC1_LA08_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L6P_T0U_N10_AD6P_66
@@ -678,9 +656,9 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA03_N"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L1N_T0L_N1_DBC_66
 # set_property PACKAGE_PIN BD12     [get_ports "FMC_HPC1_LA03_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_66
 # set_property IOSTANDARD  LVDS [get_ports "FMC_HPC1_LA03_P"] ;# Bank  66 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_66
-# #Other net   PACKAGE_PIN BA11     - VREF_66                   Bank  66 - VREF_66
-# #set_property PACKAGE_PIN AL19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_DOUT_CSO_B_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_DOUT_CSO_B_65
+#Other net   PACKAGE_PIN BA11     - VREF_66                   Bank  66 - VREF_66
+#set_property PACKAGE_PIN AL19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_DOUT_CSO_B_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_DOUT_CSO_B_65
 # set_property PACKAGE_PIN AL20     [get_ports "FPGA_EMCCLK"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24P_T3U_N10_EMCCLK_65
 # set_property IOSTANDARD  LVCMOS18 [get_ports "FPGA_EMCCLK"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L24P_T3U_N10_EMCCLK_65
 # set_property PACKAGE_PIN AP17     [get_ports "SYSMON_SDA"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L23N_T3U_N9_PERSTN1_I2C_SDA_65
@@ -695,95 +673,95 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVCMOS18 [get_ports "QSPI1_DQ3"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L21N_T3L_N5_AD8N_D07_65
 # set_property PACKAGE_PIN AN20     [get_ports "QSPI1_DQ2"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L21P_T3L_N4_AD8P_D06_65
 # set_property IOSTANDARD  LVCMOS18 [get_ports "QSPI1_DQ2"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L21P_T3L_N4_AD8P_D06_65
-# #set_property PACKAGE_PIN AN18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20N_T3L_N3_AD1N_D09_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20N_T3L_N3_AD1N_D09_65
-# #set_property PACKAGE_PIN AN19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20P_T3L_N2_AD1P_D08_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20P_T3L_N2_AD1P_D08_65
-# #set_property PACKAGE_PIN AR17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_D11_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_D11_65
-# #set_property PACKAGE_PIN AR18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_D10_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_D10_65
+#set_property PACKAGE_PIN AN18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20N_T3L_N3_AD1N_D09_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20N_T3L_N3_AD1N_D09_65
+#set_property PACKAGE_PIN AN19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20P_T3L_N2_AD1P_D08_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L20P_T3L_N2_AD1P_D08_65
+#set_property PACKAGE_PIN AR17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_D11_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19N_T3L_N1_DBC_AD9N_D11_65
+#set_property PACKAGE_PIN AR18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_D10_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L19P_T3L_N0_DBC_AD9P_D10_65
 # set_property PACKAGE_PIN AM17     [get_ports "PCIE_PERST_LS"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T3U_N12_PERSTN0_65
 # set_property IOSTANDARD  LVCMOS18 [get_ports "PCIE_PERST_LS"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T3U_N12_PERSTN0_65
-# #set_property PACKAGE_PIN AW17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T2U_N12_CSI_ADV_B_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T2U_N12_CSI_ADV_B_65
-# #set_property PACKAGE_PIN AT19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18N_T2U_N11_AD2N_D13_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18N_T2U_N11_AD2N_D13_65
-# #set_property PACKAGE_PIN AT20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18P_T2U_N10_AD2P_D12_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18P_T2U_N10_AD2P_D12_65
-# #set_property PACKAGE_PIN AU17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17N_T2U_N9_AD10N_D15_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17N_T2U_N9_AD10N_D15_65
-# #set_property PACKAGE_PIN AT17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17P_T2U_N8_AD10P_D14_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17P_T2U_N8_AD10P_D14_65
-# #set_property PACKAGE_PIN AR19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_A01_D17_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_A01_D17_65
-# #set_property PACKAGE_PIN AR20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_A00_D16_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_A00_D16_65
-# #set_property PACKAGE_PIN AW20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15N_T2L_N5_AD11N_A03_D19_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15N_T2L_N5_AD11N_A03_D19_65
-# #set_property PACKAGE_PIN AV20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15P_T2L_N4_AD11P_A02_D18_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15P_T2L_N4_AD11P_A02_D18_65
-# #set_property PACKAGE_PIN AU18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14N_T2L_N3_GC_A05_D21_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14N_T2L_N3_GC_A05_D21_65
-# #set_property PACKAGE_PIN AU19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14P_T2L_N2_GC_A04_D20_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14P_T2L_N2_GC_A04_D20_65
-# #set_property PACKAGE_PIN AV18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_A07_D23_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_A07_D23_65
-# #set_property PACKAGE_PIN AV19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_A06_D22_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_A06_D22_65
-# #set_property PACKAGE_PIN AY18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12N_T1U_N11_GC_A09_D25_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12N_T1U_N11_GC_A09_D25_65
-# #set_property PACKAGE_PIN AW18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_A08_D24_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_A08_D24_65
-# #set_property PACKAGE_PIN BA19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_A11_D27_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_A11_D27_65
-# #set_property PACKAGE_PIN AY19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_A10_D26_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_A10_D26_65
-# #set_property PACKAGE_PIN BB17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_A13_D29_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_A13_D29_65
-# #set_property PACKAGE_PIN BA17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_A12_D28_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_A12_D28_65
-# #set_property PACKAGE_PIN BC19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_A15_D31_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_A15_D31_65
-# #set_property PACKAGE_PIN BB19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_A14_D30_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_A14_D30_65
-# #set_property PACKAGE_PIN BC18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_A17_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_A17_65
-# #set_property PACKAGE_PIN BB18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_A16_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_A16_65
-# #set_property PACKAGE_PIN BA20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_A19_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_A19_65
-# #set_property PACKAGE_PIN AY20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_A18_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_A18_65
-# #set_property PACKAGE_PIN AY17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T1U_N12_SMBALERT_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T1U_N12_SMBALERT_65
-# #set_property PACKAGE_PIN BF21     [get_ports "VRP_65"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_A28_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_65"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_A28_65
-# #set_property PACKAGE_PIN BD17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_A21_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_A21_65
-# #set_property PACKAGE_PIN BD18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6P_T0U_N10_AD6P_A20_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6P_T0U_N10_AD6P_A20_65
-# #set_property PACKAGE_PIN BD20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5N_T0U_N9_AD14N_A23_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5N_T0U_N9_AD14N_A23_65
-# #set_property PACKAGE_PIN BC20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5P_T0U_N8_AD14P_A22_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5P_T0U_N8_AD14P_A22_65
-# #set_property PACKAGE_PIN BE17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4N_T0U_N7_DBC_AD7N_A25_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4N_T0U_N7_DBC_AD7N_A25_65
-# #set_property PACKAGE_PIN BE18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4P_T0U_N6_DBC_AD7P_A24_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4P_T0U_N6_DBC_AD7P_A24_65
-# #set_property PACKAGE_PIN BF19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3N_T0L_N5_AD15N_A27_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3N_T0L_N5_AD15N_A27_65
-# #set_property PACKAGE_PIN BE19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3P_T0L_N4_AD15P_A26_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3P_T0L_N4_AD15P_A26_65
+#set_property PACKAGE_PIN AW17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T2U_N12_CSI_ADV_B_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T2U_N12_CSI_ADV_B_65
+#set_property PACKAGE_PIN AT19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18N_T2U_N11_AD2N_D13_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18N_T2U_N11_AD2N_D13_65
+#set_property PACKAGE_PIN AT20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18P_T2U_N10_AD2P_D12_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L18P_T2U_N10_AD2P_D12_65
+#set_property PACKAGE_PIN AU17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17N_T2U_N9_AD10N_D15_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17N_T2U_N9_AD10N_D15_65
+#set_property PACKAGE_PIN AT17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17P_T2U_N8_AD10P_D14_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L17P_T2U_N8_AD10P_D14_65
+#set_property PACKAGE_PIN AR19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_A01_D17_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16N_T2U_N7_QBC_AD3N_A01_D17_65
+#set_property PACKAGE_PIN AR20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_A00_D16_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L16P_T2U_N6_QBC_AD3P_A00_D16_65
+#set_property PACKAGE_PIN AW20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15N_T2L_N5_AD11N_A03_D19_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15N_T2L_N5_AD11N_A03_D19_65
+#set_property PACKAGE_PIN AV20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15P_T2L_N4_AD11P_A02_D18_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L15P_T2L_N4_AD11P_A02_D18_65
+#set_property PACKAGE_PIN AU18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14N_T2L_N3_GC_A05_D21_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14N_T2L_N3_GC_A05_D21_65
+#set_property PACKAGE_PIN AU19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14P_T2L_N2_GC_A04_D20_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L14P_T2L_N2_GC_A04_D20_65
+#set_property PACKAGE_PIN AV18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_A07_D23_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13N_T2L_N1_GC_QBC_A07_D23_65
+#set_property PACKAGE_PIN AV19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_A06_D22_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L13P_T2L_N0_GC_QBC_A06_D22_65
+#set_property PACKAGE_PIN AY18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12N_T1U_N11_GC_A09_D25_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12N_T1U_N11_GC_A09_D25_65
+#set_property PACKAGE_PIN AW18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_A08_D24_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_A08_D24_65
+#set_property PACKAGE_PIN BA19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_A11_D27_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_A11_D27_65
+#set_property PACKAGE_PIN AY19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_A10_D26_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_A10_D26_65
+#set_property PACKAGE_PIN BB17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_A13_D29_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_A13_D29_65
+#set_property PACKAGE_PIN BA17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_A12_D28_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_A12_D28_65
+#set_property PACKAGE_PIN BC19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_A15_D31_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_A15_D31_65
+#set_property PACKAGE_PIN BB19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_A14_D30_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_A14_D30_65
+#set_property PACKAGE_PIN BC18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_A17_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_A17_65
+#set_property PACKAGE_PIN BB18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_A16_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_A16_65
+#set_property PACKAGE_PIN BA20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_A19_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_A19_65
+#set_property PACKAGE_PIN AY20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_A18_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_A18_65
+#set_property PACKAGE_PIN AY17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T1U_N12_SMBALERT_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T1U_N12_SMBALERT_65
+#set_property PACKAGE_PIN BF21     [get_ports "VRP_65"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_A28_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_65"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_A28_65
+#set_property PACKAGE_PIN BD17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_A21_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_A21_65
+#set_property PACKAGE_PIN BD18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6P_T0U_N10_AD6P_A20_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L6P_T0U_N10_AD6P_A20_65
+#set_property PACKAGE_PIN BD20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5N_T0U_N9_AD14N_A23_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5N_T0U_N9_AD14N_A23_65
+#set_property PACKAGE_PIN BC20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5P_T0U_N8_AD14P_A22_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L5P_T0U_N8_AD14P_A22_65
+#set_property PACKAGE_PIN BE17     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4N_T0U_N7_DBC_AD7N_A25_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4N_T0U_N7_DBC_AD7N_A25_65
+#set_property PACKAGE_PIN BE18     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4P_T0U_N6_DBC_AD7P_A24_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L4P_T0U_N6_DBC_AD7P_A24_65
+#set_property PACKAGE_PIN BF19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3N_T0L_N5_AD15N_A27_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3N_T0L_N5_AD15N_A27_65
+#set_property PACKAGE_PIN BE19     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3P_T0L_N4_AD15P_A26_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L3P_T0L_N4_AD15P_A26_65
 # set_property PACKAGE_PIN BF16     [get_ports "QSPI1_CS_B"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L2N_T0L_N3_FWE_FCS2_B_65
 # set_property IOSTANDARD  LVCMOS18 [get_ports "QSPI1_CS_B"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L2N_T0L_N3_FWE_FCS2_B_65
 # set_property PACKAGE_PIN BF17     [get_ports "BPI_FLASH_OE_B"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L2P_T0L_N2_FOE_B_65
 # set_property IOSTANDARD  LVCMOS18 [get_ports "BPI_FLASH_OE_B"] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L2P_T0L_N2_FOE_B_65
-# #set_property PACKAGE_PIN BF20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_RS1_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_RS1_65
-# #set_property PACKAGE_PIN BE20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_RS0_65
-# #set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_RS0_65
-# #Other net   PACKAGE_PIN AL17     - 8N8196                    Bank  65 - VREF_65
+#set_property PACKAGE_PIN BF20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_RS1_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_RS1_65
+#set_property PACKAGE_PIN BE20     [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_RS0_65
+#set_property IOSTANDARD  LVCMOSxx [get_ports ""] ;# Bank  65 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_RS0_65
+#Other net   PACKAGE_PIN AL17     - 8N8196                    Bank  65 - VREF_65
 # set_property PACKAGE_PIN AM24     [get_ports "IIC_MAIN_SCL"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "IIC_MAIN_SCL"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L24N_T3U_N11_64
 # set_property PACKAGE_PIN AL24     [get_ports "IIC_MAIN_SDA"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L24P_T3U_N10_64
@@ -840,13 +818,20 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "USER_SI570_CLOCK1_N"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L12N_T1U_N11_GC_64
 # set_property PACKAGE_PIN AW23     [get_ports "USER_SI570_CLOCK1_P"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_64
 # set_property IOSTANDARD  LVDS [get_ports "USER_SI570_CLOCK1_P"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L12P_T1U_N10_GC_64
+# set_property PACKAGE_PIN AY23     [get_ports "CLK_125MHZ_N"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_64
+# set_property IOSTANDARD  LVDS [get_ports "CLK_125MHZ_N"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L11N_T1U_N9_GC_64
+# set_property PACKAGE_PIN AY24     [get_ports "CLK_125MHZ_P"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_64
+# set_property IOSTANDARD  LVDS [get_ports "CLK_125MHZ_P"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L11P_T1U_N8_GC_64
 # set_property PACKAGE_PIN BA22     [get_ports "QSFP1_RESETL_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "QSFP1_RESETL_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L10N_T1U_N7_QBC_AD4N_64
 # set_property PACKAGE_PIN AY22     [get_ports "QSFP2_RESETL_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "QSFP2_RESETL_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L10P_T1U_N6_QBC_AD4P_64
 # set_property PACKAGE_PIN AY25     [get_ports "USB_UART_RTS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "USB_UART_RTS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L9N_T1L_N5_AD12N_64
-
+# set_property PACKAGE_PIN AW25     [get_ports "USB_UART_TX"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_64
+# set_property IOSTANDARD  LVCMOS18 [get_ports "USB_UART_TX"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L9P_T1L_N4_AD12P_64
+# set_property PACKAGE_PIN BB21     [get_ports "USB_UART_RX"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_64
+# set_property IOSTANDARD  LVCMOS18 [get_ports "USB_UART_RX"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L8N_T1L_N3_AD5N_64
 # set_property PACKAGE_PIN BB22     [get_ports "USB_UART_CTS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "USB_UART_CTS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L8P_T1L_N2_AD5P_64
 # set_property PACKAGE_PIN BA24     [get_ports "SYSCTLR_GPIO_7"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L7N_T1L_N1_QBC_AD13N_64
@@ -855,8 +840,8 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVCMOS18 [get_ports "SYSCTLR_GPIO_6"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_64
 # set_property PACKAGE_PIN BA21     [get_ports "PHY1_RESET_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T1U_N12_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "PHY1_RESET_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T1U_N12_64
-# #set_property PACKAGE_PIN BC24     [get_ports "PCIE_WAKE_B_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_64
-# #set_property IOSTANDARD  LVCMOS18 [get_ports "PCIE_WAKE_B_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_64
+#set_property PACKAGE_PIN BC24     [get_ports "PCIE_WAKE_B_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_64
+#set_property IOSTANDARD  LVCMOS18 [get_ports "PCIE_WAKE_B_LS"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_T0U_N12_VRP_64
 # set_property PACKAGE_PIN BD21     [get_ports "SYSCTLR_GPIO_5"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "SYSCTLR_GPIO_5"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L6N_T0U_N11_AD6N_64
 # set_property PACKAGE_PIN BC21     [get_ports "SI5328_RST_LS_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L6P_T0U_N10_AD6P_64
@@ -881,7 +866,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVCMOS18 [get_ports "FIREFLY_INT_LS_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L1N_T0L_N1_DBC_64
 # set_property PACKAGE_PIN BE24     [get_ports "FIREFLY_RESET_LS_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_64
 # set_property IOSTANDARD  LVCMOS18 [get_ports "FIREFLY_RESET_LS_B"] ;# Bank  64 VCCO - VCC1V8_FPGA - IO_L1P_T0L_N0_DBC_64
-# #Other net   PACKAGE_PIN AL22     - 30N4994                   Bank  64 - VREF_64
+#Other net   PACKAGE_PIN AL22     - 30N4994                   Bank  64 - VREF_64
 # set_property PACKAGE_PIN AG33     [get_ports "FMCP_HSPC_LA15_N"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_43
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA15_N"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L24N_T3U_N11_43
 # set_property PACKAGE_PIN AG32     [get_ports "FMCP_HSPC_LA15_P"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L24P_T3U_N10_43
@@ -960,8 +945,8 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA00_CC_P"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L7P_T1L_N0_QBC_AD13P_43
 # set_property PACKAGE_PIN AK35     [get_ports "VADJ_1V8_PGOOD_LS"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_43
 # set_property IOSTANDARD  LVCMOS18 [get_ports "VADJ_1V8_PGOOD_LS"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T1U_N12_43
-# #set_property PACKAGE_PIN AR34     [get_ports "VRP_43"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_43
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_43"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_43
+#set_property PACKAGE_PIN AR34     [get_ports "VRP_43"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_43
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_43"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_T0U_N12_VRP_43
 # set_property PACKAGE_PIN AT37     [get_ports "FMCP_HSPC_LA04_N"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_43
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA04_N"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L6N_T0U_N11_AD6N_43
 # set_property PACKAGE_PIN AR37     [get_ports "FMCP_HSPC_LA04_P"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L6P_T0U_N10_AD6P_43
@@ -986,7 +971,7 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA05_N"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L1N_T0L_N1_DBC_43
 # set_property PACKAGE_PIN AP38     [get_ports "FMCP_HSPC_LA05_P"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_43
 # set_property IOSTANDARD  LVDS [get_ports "FMCP_HSPC_LA05_P"] ;# Bank  43 VCCO - VADJ_1V8_FPGA - IO_L1P_T0L_N0_DBC_43
-# #Other net   PACKAGE_PIN AJ29     - VREF_43                   Bank  43 - VREF_43
+#Other net   PACKAGE_PIN AJ29     - VREF_43                   Bank  43 - VREF_43
 # set_property PACKAGE_PIN AV39     [get_ports "DDR4_C2_DQ63"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_42
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ63"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L24N_T3U_N11_42
 # set_property PACKAGE_PIN AV38     [get_ports "DDR4_C2_DQ62"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L24P_T3U_N10_42
@@ -1065,8 +1050,8 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DM5"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_42
 # set_property PACKAGE_PIN BC40     [get_ports "FAN_OT_LS_B"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T1U_N12_42
 # set_property IOSTANDARD  LVCMOS12 [get_ports "FAN_OT_LS_B"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T1U_N12_42
-# #set_property PACKAGE_PIN BB34     [get_ports "VRP_42"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_42
-# #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_42"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_42
+#set_property PACKAGE_PIN BB34     [get_ports "VRP_42"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_42
+#set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_42"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_42
 # set_property PACKAGE_PIN BF37     [get_ports "DDR4_C2_DQ39"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_42
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ39"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_42
 # set_property PACKAGE_PIN BF36     [get_ports "DDR4_C2_DQ38"] ;# Bank  42 VCCO - VCC1V2_FPGA - IO_L6P_T0U_N10_AD6P_42
@@ -1217,13 +1202,14 @@ set_property -dict {PACKAGE_PIN AC9}  [get_ports SYS_CLK]
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ25"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20N_T3L_N3_AD1N_40
 # set_property PACKAGE_PIN AR33     [get_ports "DDR4_C2_DQ24"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ24"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_40
-set_property -dict { PACKAGE_PIN AT32 IOSTANDARD LVCMOS12 } [get_ports { LED[0] }]; # Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
+# set_property PACKAGE_PIN AT32     [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
+# set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
 # set_property PACKAGE_PIN AR32     [get_ports "DDR4_C2_DM3"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DM3"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_40
 # set_property PACKAGE_PIN AR29     [get_ports "DDR4_C2_ALERT_B"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T3U_N12_40
 # set_property IOSTANDARD  SSTL12 [get_ports "DDR4_C2_ALERT_B"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T3U_N12_40
-# set_property PACKAGE_PIN AV34     [get_ports "GPIO_LED1"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
-# set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED1"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
+set_property PACKAGE_PIN AV34     [get_ports "LED"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
+set_property IOSTANDARD  LVCMOS12 [get_ports "LED"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
 # set_property PACKAGE_PIN AV31     [get_ports "DDR4_C2_DQ23"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ23"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_40
 # set_property PACKAGE_PIN AU31     [get_ports "DDR4_C2_DQ22"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_40
@@ -1321,12 +1307,14 @@ set_property -dict { PACKAGE_PIN AT32 IOSTANDARD LVCMOS12 } [get_ports { LED[0] 
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ33"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20N_T3L_N3_AD1N_73
 # set_property PACKAGE_PIN D17      [get_ports "DDR4_C1_DQ32"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ32"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_73
-set_property -dict { PACKAGE_PIN B17 IOSTANDARD LVCMOS12 } [get_ports { SW_RST }]; # Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
+set_property PACKAGE_PIN B17      [get_ports "SW_RST"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
+set_property IOSTANDARD  LVCMOS12 [get_ports "SW_RST"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
 # set_property PACKAGE_PIN B18      [get_ports "DDR4_C1_DM4"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DM4"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_73
 # set_property PACKAGE_PIN A20      [get_ports "DDR4_C1_TEN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T3U_N12_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_TEN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T3U_N12_73
-set_property -dict { PACKAGE_PIN G16 IOSTANDARD LVCMOS12 } [get_ports { SW_EN }]; # Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
+set_property PACKAGE_PIN G16      [get_ports "SW_EN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
+set_property IOSTANDARD  LVCMOS12 [get_ports "SW_EN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
 # set_property PACKAGE_PIN D16      [get_ports "DDR4_C1_DQ31"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ31"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_73
 # set_property PACKAGE_PIN E17      [get_ports "DDR4_C1_DQ30"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_73
@@ -1375,6 +1363,8 @@ set_property -dict { PACKAGE_PIN G16 IOSTANDARD LVCMOS12 } [get_ports { SW_EN }]
 # set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_DIP_SW3"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L7N_T1L_N1_QBC_AD13N_73
 # set_property PACKAGE_PIN K17      [get_ports "DDR4_C1_DM2"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DM2"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L7P_T1L_N0_QBC_AD13P_73
+# set_property PACKAGE_PIN L19      [get_ports "CPU_RESET"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T1U_N12_73
+# set_property IOSTANDARD  LVCMOS12 [get_ports "CPU_RESET"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T1U_N12_73
 # #set_property PACKAGE_PIN T18      [get_ports "VRP_73"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_73
 # #set_property IOSTANDARD  LVCMOSxx [get_ports "VRP_73"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T0U_N12_VRP_73
 # set_property PACKAGE_PIN M16      [get_ports "DDR4_C1_DQ15"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L6N_T0U_N11_AD6N_73
