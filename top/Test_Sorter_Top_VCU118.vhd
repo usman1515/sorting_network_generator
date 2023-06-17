@@ -11,64 +11,58 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-  use IEEE.STD_LOGIC_1164.all;
-  use IEEE.NUMERIC_STD.all;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
 library work;
-  use work.CustomTypes.all;
+use work.CustomTypes.all;
 
 entity TEST_SORTER_TOP is
   port (
-    SYSCLK : in    std_logic;
-    GPIO_DIP_SW1   : in    std_logic_vector(0 downto 0);
-    GPIO_SW_C : in    std_logic_vector(0 downto 0);
-    GPIO_LED0   : out   std_logic_vector(0 downto 0)
-  );
+    SYSCLK1_300_P : in  std_logic;
+    SYSCLK1_300_N : in  std_logic;
+    GPIO_DIP_SW1  : in  std_logic;
+    GPIO_DIP_SW2  : in  std_logic;
+    GPIO_LED0     : out std_logic
+    );
 end entity TEST_SORTER_TOP;
 
 architecture STRUCTURAL of TEST_SORTER_TOP is
 
-  constant W : integer := 64;
-  -- Number of 18kB BRAM blocks available.
-  constant NUM_BRAM : integer := 4318;
-  -- Debounced reset signal.
-  signal r_i : std_logic;
-  -- Debounced enable signal.
-  signal e_i : std_logic;
+  signal reset  : std_logic;            -- Debounced reset signal.
+  signal enable : std_logic;            -- Debounced enable signal.
 
 begin
 
-  RESETDEBOUNCER : entity work.DEBOUNCER
+
+  RESETDEBOUNCER : entity work.debouncer
     generic map (
       TIMEOUT_CYCLES => 50
-    )
+      )
     port map (
-      CLK    => SYSCLK,
-      RST    => '0',
-      INPUT  => GPIO_SW_C(0),
-      OUTPUT => r_i
-    );
+      CLK_I    => SYSCLK1_300_P,
+      RST_I    => '0',
+      INPUT_I  => GPIO_DIP_SW1,
+      OUTPUT_O => reset
+      );
 
-  ENABLEDEBOUNCER : entity work.DEBOUNCER
+  ENABLEDEBOUNCER : entity work.debouncer
     generic map (
       TIMEOUT_CYCLES => 50
-    )
+      )
     port map (
-      CLK    => SYSCLK,
-      RST    => '0',
-      INPUT  => GPIO_DIP_SW1(0),
-      OUTPUT => e_i
-    );
+      CLK_I    => SYSCLK1_300_P,
+      RST_I    => '0',
+      INPUT_I  => GPIO_DIP_SW2,
+      OUTPUT_O => enable
+      );
 
-  TEST_SORTER_X_1 : entity work.test_sorter_X
-    generic map (
-      W => W
-    )
+  TEST_SORTER_1 : entity work.test_sorter
     port map (
-      CLK   => SYSCLK,
-      RST   => r_i,
-      E     => e_i,
-      VALID => GPIO_LED0(0)
-    );
+      CLK_I      => SYSCLK1_300_P,
+      RST_I      => reset,
+      ENABLE_I   => enable,
+      IN_ORDER_O => GPIO_LED0
+      );
 
 end architecture STRUCTURAL;

@@ -26,10 +26,12 @@ ifeq ($(BOARD), nexys4ddr)
 	XILINX_PART              := xc7a100tcsg324-1
 	XILINX_BOARD             := digilentinc.com:nexys4_ddr:part0:1.1
 	CONSTRAINTS 		     := $(root-dir)/constr/nexys4ddr.xdc
-else ifeq($(BOARD), vcu118)
+	TOPFILE                  := Test_Sorter_Top.vhd
+else ifeq ($(BOARD), vcu118)
 	XILINX_PART              := xcvu9p-flga2104-2L-e
 	XILINX_BOARD             := xilinx.com:vcu118:part0:2.4
 	CONSTRAINTS 		     := $(root-dir)/constr/vcu118.xdc
+	TOPFILE                  := Test_Sorter_Top_VCU118.vhd
 else
 $(error Unknown board - please specify a supported FPGA board)
 endif
@@ -58,8 +60,8 @@ src := \
 			src/Timer/Cycle_Timer.vhd                          \
 			src/CS/SerialCompare.vhd                           \
 			src/Validator/VALIDATOR.vhd                        \
-			src/Debouncer/Debouncer.vhd                        \
-			top/Test_Sorter_Top.vhd
+			src/Debouncer/Debouncer.vhd						   \
+			top/$(TOPFILE)
 
 ifdef SORTER
 	src += $(wildcard $(SORTER)/*.vhd)
@@ -68,6 +70,7 @@ $(error must set SORTER to the desired generated sorter folder)
 endif
 
 src := $(addprefix $(root-dir)/, $(src))
+
 
 work-dir := $(SORTER)/work_dir
 
@@ -98,6 +101,7 @@ fpga: $(src)
 $(bit): fpga
 	cd $(work-dir) && $(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/run.tcl
 	cp $(work-dir)/BitCS.runs/impl_1/$(TOP)* ./$(work-dir)
+
 
 program:
 	$(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/program.tcl

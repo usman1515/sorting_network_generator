@@ -180,10 +180,10 @@
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_BA2"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L14N_T2L_N3_GC_47
 # set_property PACKAGE_PIN G30      [get_ports "RLD3_C3_72B_BA3"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L14P_T2L_N2_GC_47
 # set_property IOSTANDARD  SSTL12 [get_ports "RLD3_C3_72B_BA3"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L14P_T2L_N2_GC_47
-# set_property PACKAGE_PIN F31      [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
-# set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
-set_property PACKAGE_PIN G31      [get_ports "SYS_CLK"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
-set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYS_CLK"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
+set_property PACKAGE_PIN F31      [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
+set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
+set_property PACKAGE_PIN G31      [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
+set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
 # set_property PACKAGE_PIN G32      [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property PACKAGE_PIN H32      [get_ports "USER_SI570_CLOCK_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12P_T1U_N10_GC_47
@@ -1202,14 +1202,14 @@ set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYS_CLK"] ;# Bank  47 VCCO - VC
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ25"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20N_T3L_N3_AD1N_40
 # set_property PACKAGE_PIN AR33     [get_ports "DDR4_C2_DQ24"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ24"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_40
-# set_property PACKAGE_PIN AT32     [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
-# set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
+set_property PACKAGE_PIN AT32     [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
+set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_40
 # set_property PACKAGE_PIN AR32     [get_ports "DDR4_C2_DM3"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DM3"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_40
 # set_property PACKAGE_PIN AR29     [get_ports "DDR4_C2_ALERT_B"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T3U_N12_40
 # set_property IOSTANDARD  SSTL12 [get_ports "DDR4_C2_ALERT_B"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T3U_N12_40
-set_property PACKAGE_PIN AV34     [get_ports "LED"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
-set_property IOSTANDARD  LVCMOS12 [get_ports "LED"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
+# set_property PACKAGE_PIN AV34     [get_ports "GPIO_LED1"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
+# set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED1"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_T2U_N12_40
 # set_property PACKAGE_PIN AV31     [get_ports "DDR4_C2_DQ23"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ23"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_40
 # set_property PACKAGE_PIN AU31     [get_ports "DDR4_C2_DQ22"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_40
@@ -1307,14 +1307,14 @@ set_property IOSTANDARD  LVCMOS12 [get_ports "LED"] ;# Bank  40 VCCO - VCC1V2_FP
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ33"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20N_T3L_N3_AD1N_73
 # set_property PACKAGE_PIN D17      [get_ports "DDR4_C1_DQ32"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ32"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L20P_T3L_N2_AD1P_73
-set_property PACKAGE_PIN B17      [get_ports "SW_RST"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
-set_property IOSTANDARD  LVCMOS12 [get_ports "SW_RST"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
+set_property PACKAGE_PIN B17      [get_ports "GPIO_DIP_SW1"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
+set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_DIP_SW1"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19N_T3L_N1_DBC_AD9N_73
 # set_property PACKAGE_PIN B18      [get_ports "DDR4_C1_DM4"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DM4"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L19P_T3L_N0_DBC_AD9P_73
 # set_property PACKAGE_PIN A20      [get_ports "DDR4_C1_TEN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T3U_N12_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_TEN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T3U_N12_73
-set_property PACKAGE_PIN G16      [get_ports "SW_EN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
-set_property IOSTANDARD  LVCMOS12 [get_ports "SW_EN"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
+set_property PACKAGE_PIN G16      [get_ports "GPIO_DIP_SW2"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
+set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_DIP_SW2"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_T2U_N12_73
 # set_property PACKAGE_PIN D16      [get_ports "DDR4_C1_DQ31"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_73
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C1_DQ31"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18N_T2U_N11_AD2N_73
 # set_property PACKAGE_PIN E17      [get_ports "DDR4_C1_DQ30"] ;# Bank  73 VCCO - VCC1V2_FPGA - IO_L18P_T2U_N10_AD2P_73
