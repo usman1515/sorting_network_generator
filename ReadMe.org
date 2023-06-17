@@ -1,7 +1,5 @@
-#+TITLE: ReadMe MSort
-
 * Sorting Network Generator for VHDL
-VHDL code generator scripts based on python for creating large sorting networks based on the Bitonic and Odd-Even algorithm.
+VHDL code generator scripts based on python for creating large sorting networks based on the Bitonic and Odd-Even algorithm. Primary motivation was the serial-processing of words and the resulting reduction of a CS element to two LUT5 and 4 FFs.
 
 ** Features
 - Arbitrary number of inputs :: Number of inputs is not required to be a power of 2
