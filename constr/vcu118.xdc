@@ -183,7 +183,8 @@
 set_property PACKAGE_PIN F31      [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
 set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
 set_property PACKAGE_PIN G31      [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
-set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
+create_clock -period 3.333 -name SYSCLK1_300_P -waveform {1.666 1.666} -add [get_ports {SYSCLK1_300_P}]
+# set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
 # set_property PACKAGE_PIN G32      [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property PACKAGE_PIN H32      [get_ports "USER_SI570_CLOCK_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12P_T1U_N10_GC_47
@@ -1223,7 +1224,7 @@ set_property IOSTANDARD  LVCMOS12 [get_ports "GPIO_LED0"] ;# Bank  40 VCCO - VCC
 # set_property PACKAGE_PIN AU29     [get_ports "DDR4_C2_DQS2_T"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L16P_T2U_N6_QBC_AD3P_40
 # set_property IOSTANDARD  DIFF_POD12 [get_ports "DDR4_C2_DQS2_T"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L16P_T2U_N6_QBC_AD3P_40
 # set_property PACKAGE_PIN AU34     [get_ports "DDR4_C2_DQ19"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L15N_T2L_N5_AD11N_40
-# set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ19"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L15N_T2L_N5_AD11N_40
+LK
 # set_property PACKAGE_PIN AU33     [get_ports "DDR4_C2_DQ18"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L15P_T2L_N4_AD11P_40
 # set_property IOSTANDARD  POD12 [get_ports "DDR4_C2_DQ18"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L15P_T2L_N4_AD11P_40
 # set_property PACKAGE_PIN AW30     [get_ports "DDR4_C2_DQ17"] ;# Bank  40 VCCO - VCC1V2_FPGA - IO_L14N_T2L_N3_GC_40
