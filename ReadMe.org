@@ -1,18 +1,17 @@
 #+TITLE: ReadMe MSort
 
-* BitCS MSort
-*Warning:* Most files use VHDL2008 features!
-In order to change all files in the Vivado Project to VHDL2008, search and replace all occurrences of =<FileInfo>= with =<FileInfo SFType​="VHDL2008">=.
-With sed simply run:
-#+begin_src bash
-sed -i 's/<FileInfo>/<FileInfo SFType="VHDL2008>/g' ProjectFile.xpr
-#+end_src
-** Folder Structure
-- src :: vhdl sources.
-- sim :: vhdl simulation sources.
-- lib :: vhdl library files.
-- templates :: Templates for network generating script.
-** Network Generator Script
+* Sorting Network Generator for VHDL
+VHDL code generator scripts based on python for creating large sorting networks based on the Bitonic and Odd-Even algorithm.
+
+** Features
+- Arbitrary number of inputs :: Number of inputs is not required to be a power of 2
+- Output pruning :: Desired network outputs can be selected with unnecessary paths removed.
+- Variable throughput Compare-Swap :: Sorting networks processing any number of bits per cylce can be generated.
+- Flip-Flop replacement :: Large FF requirements of the Network can be replaced by other FPGA resources.
+- Network stats reporting :: On network generation, key characteristics are logged automatically.
+- Auto Plot generation :: Using report data, plots for each network can be generated.
+** Usage
+
 *** Installation
 For "netgen.py" to run, install required packages with
 
@@ -20,22 +19,59 @@ For "netgen.py" to run, install required packages with
 pip3 install -r requirements.txt
 #+end_src
 
-*** Usage
+*** Commands
+**** ~list~
+
 For list of available components and templates run
 #+begin_src bash
 python netgen.py list
 #+end_src
-By appending a specific component name, all generics and ports will be listed.
-
-For generating a network, run netgen with generate.
-Example:
+**** ~generate~
+Generate a network of given algorithm and size. SW parameter (sub-word) defines the number of bits processed each cycle by the network. Has no direct influence on the network topology but is required for optimization and code-generation.
 #+begin_src bash
-python netgen.py generate evenodd --N=10 - shape --shape_type=median --num_outputs= 2 - fill_template --template_name=Network.vhd --cs=BITCS_SYNC - write_template
+python netgen.py generate oddeven --N=10 --SW=1
 #+end_src
-This will generate a 10-input Odd-Even network with the middle two values as output.
 
-Alternatively run
+**** ~reshape~
+Reshape a generated network to one of the predifined output configurations: "min", "max" or "median". Number of output elements can be controlled by "num_outputs" parameter. Compare-Swap, Flip-Flops or stages irrelevant to the outputs are removed.
 #+begin_src bash
-./build.sh
+python netgen.py generate oddeven --N=10 --SW=1 -- reshape max --num_outputs=3
 #+end_src
-to build a set of networks from N=4 to 1024.
+**** ~prune~
+Similar to reshape, prune network to only produce indices given by "output_set" parameter. For example, a network for finding min,max and median element can be created using:
+#+begin_src bash
+python netgen.py generate oddeven --N=10 --SW=1 -- prune [0,4,9]
+#+end_src
+**** ~distribute_signal~
+Set maximum fanout of a signal distributed in the network. Will cause tree-based signal replicators to be placed in the generated sorter. Currently only the "START" signal supports this.
+#+begin_src bash
+python netgen.py generate oddeven --N=10 --SW=1 -- distribute_signal START 5
+#+end_src
+**** ~replace_ff~
+Replace network FF with resource given by parameters. Algorithm used attempts to keep a measure of locality at the cost of efficiency in the replacement FF capacity.
+#+begin_src bash
+python netgen.py generate oddeven --N=10 --SW=1 -- replace_ff REGISTER_DSP --limit=5 --entity_ff=48
+#+end_src
+**** ~plot~
+Create plots defined in "scripts/plots.py" using data gathered in "build/reports.csv". Currently only
+supports generation of all plots defined.
+#+begin_src bash
+python netgen.py plot -- all
+#+end_src
+**** ~write~
+Generate and write VHDL-Code of the generated network to the path specified. Also allows to specify the CS implementation to be used and the width/length of the words to be processed. Default parameters will generate a Sorter for 8-bit words using the SWCS implementation place the resulting files in a folder named after the Sorter in build.
+#+begin_src bash
+python netgen.py generate oddeven --N=10 --SW=1 -- write
+#+end_src
+
+**** ~print_network~
+Prints network in the form of network name, permutation layers (-> CS placement), output set and the FF layers.
+#+begin_src bash
+python netgen.py generate oddeven --N=10 -- print_network
+#+end_src
+
+*** Synthesis & Implementation
+Resulting Sorter with test-infrastructure can be automatically build using make:
+#+begin_src bash
+make BOARD=nexys4ddr SORTER=build/ODDEVEN_10X10_FULL
+#+end_src

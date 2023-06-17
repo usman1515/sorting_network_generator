@@ -56,8 +56,7 @@ class Interface:
 
     def __del__(self):
         print_timestamp(
-            "Finished after " +
-            str(time.perf_counter_ns() - self.__start_time) + "ns."
+            "Finished after " + str(time.perf_counter_ns() - self.__start_time) + "ns."
         )
         print()
 
@@ -209,12 +208,10 @@ class Interface:
             )
             N = self.__network.get_N()
             if output_config.lower() == "max":
-                self.__generator.prune(
-                    self.__network, set(range(0, num_outputs)))
+                self.__generator.prune(self.__network, set(range(0, num_outputs)))
                 self.__network.output_config = "max"
             elif output_config.lower() == "min":
-                self.__generator.prune(
-                    self.__network, set(range(N - num_outputs, N)))
+                self.__generator.prune(self.__network, set(range(N - num_outputs, N)))
                 self.__network.output_config = "min"
             elif output_config.lower() == "median":
                 lower_bound = N // 2 - num_outputs // 2
@@ -227,12 +224,12 @@ class Interface:
             self.__reporter.report_network(self.__network)
         return self
 
-    def prune(self, output_set: set[int], name: str = "mixed"):
+    def prune(self, output_set, name: str = "mixed"):
         """Prune network outputs to only contain CS,FF and stages relevant
         to the sorting of the indices given by the output set.
 
         Parameters
-            output_set: set[int]
+            output_set: list[int]
                 Indices of the desired outputs. For a 16-input Sorting
                 Network, to produce a network for min,max and median
                 elements, the set must contain 0,7,15.
@@ -243,7 +240,7 @@ class Interface:
         print_timestamp(
             "Pruning Network outputs...",
         )
-        self.__generator.prune(self.__network, output_set)
+        self.__generator.prune(self.__network, set(output_set))
         self.__network.output_config = name
         print(" done.")
         self.__reporter.report_network(self.__network)
@@ -276,8 +273,7 @@ class Interface:
         )
         entity_obj = self.__entities[entity]
         ralloc = BlockAllocator()
-        ffrepl = ralloc.reallocate_ff(
-            self.__network, entity_obj, limit, entity_ff)
+        ffrepl = ralloc.reallocate_ff(self.__network, entity_obj, limit, entity_ff)
         self.__reporter.report_ff_replacement(ffrepl)
         self.__ffreplacements.append(ffrepl)
         print(" done.")
@@ -295,9 +291,13 @@ class Interface:
         "Test_Sorter.vhd", which contains a test infrastructure.
 
         Parameters:
-            path: str
+            path:
                 Path to place generated files at. Defaults to
                 'build/*NetworkName*/'
+            cs:
+                Name of the CS element instantiated in the code.
+            W:
+                Width or length of the words to be sorted.
         """
         # Templates: Network.vhd, Sorter.vhd, Test_Sorter.vhd
         template_names = ["Sorter.vhd", "Test_Sorter.vhd"]
