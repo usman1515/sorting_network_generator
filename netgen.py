@@ -56,8 +56,7 @@ class Interface:
 
     def __del__(self):
         print_timestamp(
-            "Finished after " +
-            str(time.perf_counter_ns() - self.start_time) + "ns."
+            "Finished after " + str(time.perf_counter_ns() - self.start_time) + "ns."
         )
         print()
 
@@ -163,6 +162,9 @@ class Interface:
     def reshape(self, output_config, num_outputs):
         if output_config.lower() not in ["max", "min", "median"]:
             print("Error: output_config options are max, min, median")
+            return self
+        elif output_config.lower() == "full":
+            return self
         else:
             print_timestamp(
                 "Reshaping Network to {} with {} outputs...".format(
@@ -171,12 +173,10 @@ class Interface:
             )
             N = self.__network.get_N()
             if output_config.lower() == "max":
-                self.__generator.prune(
-                    self.__network, set(range(0, num_outputs)))
+                self.__generator.prune(self.__network, set(range(0, num_outputs)))
                 self.__network.output_config = "max"
             elif output_config.lower() == "min":
-                self.__generator.prune(
-                    self.__network, set(range(N - num_outputs, N)))
+                self.__generator.prune(self.__network, set(range(N - num_outputs, N)))
                 self.__network.output_config = "min"
             elif output_config.lower() == "median":
                 lower_bound = N // 2 - num_outputs // 2
@@ -209,8 +209,7 @@ class Interface:
         )
         entity_obj = self.entities[entity]
         ralloc = BlockAllocator()
-        ffrepl = ralloc.reallocate_ff(
-            self.__network, entity_obj, limit, entity_ff)
+        ffrepl = ralloc.reallocate_ff(self.__network, entity_obj, limit, entity_ff)
         self.__reporter.report_ff_replacement(ffrepl)
         self.__ffreplacements.append(ffrepl)
         print(" done.")

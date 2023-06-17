@@ -33,6 +33,8 @@ entity REGISTER_DSP is
     CLK_I    : in    std_logic;
     -- Reset
     RST_I    : in    std_logic;
+    -- Enable - Dummy port to provide unified interface.
+    ENABLE_I : in    std_logic;
     -- bit serial input
     REG_I    : in    std_logic_vector(NUM_INPUTS - 1 downto 0);
     -- bit-serial output
