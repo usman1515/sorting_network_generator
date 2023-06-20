@@ -275,14 +275,15 @@ class Generator:
 
         if N == network.get_N():
             return network
-        for d in range(network.get_depth()):
+        for s in range(network.get_depth()):
             for i in range(N):
                 # Look for CS elements whose inputs are outside of the target
                 # size. Replace them with bypass elements.
-                if network.pmatrix[d][i] >= N:
-                    network.pmatrix[d][i] = i
+                if network.pmatrix[s][i] >= N:
+                    network.pmatrix[s][i] = i
         # Resize network to target size.
-        network.pmatrix = np.delete(network.pmatrix, range(N, network.get_N()), 1)
+        diff = range(N, network.get_N())
+        network.pmatrix = np.delete(network.pmatrix, diff, axis=1)
         network.output_set = set(
             [
                 i
@@ -291,9 +292,7 @@ class Generator:
             ]
         )
         num_layers = network.ff_layers.shape[0]
-        network.ff_layers = np.resize(
-            network.ff_layers, (num_layers, network.get_depth(), N)
-        )
+        network.ff_layers = np.delete(network.ff_layers, diff, axis=2)
         # for i in range(len(network.ff_layers)):
         #     network.ff_layers[i] = np.delete(network.ff_layers[i], range(N, old_N), 1)
         return network
@@ -336,6 +335,7 @@ class Generator:
             if all(is_in_order(j, p) for j, p in enumerate(stage)):
                 indices.append(i)
         network.pmatrix = np.delete(network.pmatrix, indices, axis=0)
+        network.ff_layers = np.delete(network.ff_layers, indices, axis=1)
         return network
 
 
