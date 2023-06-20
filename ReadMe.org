@@ -17,6 +17,15 @@ For "netgen.py" to run, install required packages with
 pip3 install -r requirements.txt
 #+end_src
 
+*** Example
+The follwing command generates a VHDL code for a network processing 128 inputs in parallel with the START signal replicated and evenly distributed in the network and the free FFs in the network replaced with DSP resources.
+#+begin_src bash
+python netgen.py generated oddeven 128 - distribute signal START 10 - replace_ff REGISTER_DSP --limit=6480 --entity_ff=48 - write
+#+end_src
+The results can be found under build/ODDEVEN_128X128_FULL with the test_sorter implementation synthesiszed using:
+#+begin_src bash
+make BOARD=VCU118 SORTER=build/ODDEVEN_128X128_FULL
+#+end_src
 *** Commands
 **** ~list~
 
@@ -33,39 +42,39 @@ python netgen.py generate oddeven --N=10 --SW=1
 **** ~reshape~
 Reshape a generated network to one of the predifined output configurations: "min", "max" or "median". Number of output elements can be controlled by "num_outputs" parameter. Compare-Swap, Flip-Flops or stages irrelevant to the outputs are removed.
 #+begin_src bash
-python netgen.py generate oddeven --N=10 --SW=1 -- reshape max --num_outputs=3
+python netgen.py generate oddeven --N=10 --SW=1 - reshape max --num_outputs=3
 #+end_src
 **** ~prune~
 Similar to reshape, prune network to only produce indices given by "output_set" parameter. For example, a network for finding min,max and median element can be created using:
 #+begin_src bash
-python netgen.py generate oddeven --N=10 --SW=1 -- prune [0,4,9]
+python netgen.py generate oddeven --N=10 --SW=1 - prune [0,4,9]
 #+end_src
 **** ~distribute_signal~
 Set maximum fanout of a signal distributed in the network. Will cause tree-based signal replicators to be placed in the generated sorter. Currently only the "START" signal supports this.
 #+begin_src bash
-python netgen.py generate oddeven --N=10 --SW=1 -- distribute_signal START 5
+python netgen.py generate oddeven --N=10 --SW=1 - distribute_signal START 5
 #+end_src
 **** ~replace_ff~
 Replace network FF with resource given by parameters. Algorithm used attempts to keep a measure of locality at the cost of efficiency in the replacement FF capacity.
 #+begin_src bash
-python netgen.py generate oddeven --N=10 --SW=1 -- replace_ff REGISTER_DSP --limit=5 --entity_ff=48
+python netgen.py generate oddeven --N=10 --SW=1 - replace_ff REGISTER_DSP --limit=5 --entity_ff=48
 #+end_src
 **** ~plot~
 Create plots defined in "scripts/plots.py" using data gathered in "build/reports.csv". Currently only
 supports generation of all plots defined.
 #+begin_src bash
-python netgen.py plot -- all
+python netgen.py plot - all
 #+end_src
 **** ~write~
 Generate and write VHDL-Code of the generated network to the path specified. Also allows to specify the CS implementation to be used and the width/length of the words to be processed. Default parameters will generate a Sorter for 8-bit words using the SWCS implementation place the resulting files in a folder named after the Sorter in build.
 #+begin_src bash
-python netgen.py generate oddeven --N=10 --SW=1 -- write
+python netgen.py generate oddeven --N=10 --SW=1 - write
 #+end_src
 
 **** ~print_network~
 Prints network in the form of network name, permutation layers (-> CS placement), output set and the FF layers.
 #+begin_src bash
-python netgen.py generate oddeven --N=10 -- print_network
+python netgen.py generate oddeven --N=10 - print_network
 #+end_src
 
 *** Synthesis & Implementation
