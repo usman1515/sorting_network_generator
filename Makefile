@@ -99,12 +99,12 @@ fpga: $(src)
 .PHONY: fpga
 
 $(bit): fpga
-	cd $(work-dir) && $(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/run.tcl
+	cd $(work-dir) && $(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/tcl/run.tcl
 	cp $(work-dir)/BitCS.runs/impl_1/$(TOP)* ./$(work-dir)
 
 
 program:
-	$(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/scripts/program.tcl
+	$(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/tcl/program.tcl
 
 clean:
 	rm -rf $(work-dir)
