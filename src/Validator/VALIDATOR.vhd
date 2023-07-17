@@ -26,27 +26,27 @@ entity VALIDATOR is
     );
   port (
     -- Clock signal
-    CLK_I    : in std_logic;
+    CLK_I : in std_logic;
     -- Synchronous Reset
-    RST_I    : in std_logic;
-    -- Enable signal
-    ENABLE_I : in std_logic;
+    RST_I : in std_logic;
 
     -- M x W-Bit input treated as unsigned
-    DATA_I       : in  SLVArray(0 to M - 1)(W - 1 downto 0);
-    DATA_VALID_I : in  std_logic;
-    DATA_READY_O : out std_logic;
+    DATA_I         : in  SLVArray(0 to M - 1)(W - 1 downto 0);
+    DATA_VALID_I   : in  std_logic;
+    DATA_READY_O   : out std_logic;
     -- Bit indicating validity of received STREAM_I sequence. '1' indicates total ordering of STREAM_I
     -- sequence, '0' an order violation.
-    IN_ORDER_O   : out std_logic
+    IN_ORDER_O     : out std_logic;
+    ALL_IN_ORDER_O : out std_logic
     );
 end entity VALIDATOR;
 
 architecture BEHAVIORAL of VALIDATOR is
 
-  signal data        : SLVArray(0 to M - 1)(W - 1 downto 0);
-  signal cur_lesser : std_logic_vector(0 to M - 2);
-  signal any_lesser : std_logic;
+  signal data                   : SLVArray(0 to M - 1)(W - 1 downto 0);
+  signal cur_greater            : std_logic_vector(0 to M - 2);
+  signal any_greater            : std_logic_vector(0 to M - 2);
+  signal in_order, all_in_order : std_logic;
 
   signal busy         : std_logic;
   constant LIMIT      : integer := (W + SW - 1) / SW;
@@ -55,10 +55,14 @@ architecture BEHAVIORAL of VALIDATOR is
   signal is_new_data  : std_logic;
   signal start        : std_logic;
 
+  signal input_slice : SLVArray(0 to M - 1)(SW-1 downto 0);
+
 begin
 
-  DATA_READY_O <= ready;
-  valid        <= DATA_VALID_I;
+  ALL_IN_ORDER_O <= all_in_order;
+  IN_ORDER_O     <= in_order;
+  DATA_READY_O   <= ready;
+  valid          <= DATA_VALID_I;
 
   REGISTER_DATA_EXCHANGE : process (CLK_I) is
   begin
@@ -72,8 +76,7 @@ begin
 
   end process REGISTER_DATA_EXCHANGE;
 
-  -- start <= '1' when (ready and valid) and not is_new_data else
-  --          '0';
+  start <= is_new_data;
 
   READ_PROCESS : process (CLK_I) is
   begin
@@ -82,13 +85,10 @@ begin
         data    <= (others => (others => '0'));
         busy    <= '0';
         counter <= LIMIT - 1;
-        start <= '0';
       else
-        start <= '0';
         if (busy = '0' and valid = '1') then
           busy <= '1';
           data <= DATA_I;
-          start <= '1';
         else
           if (busy = '1') then
             if (counter = 0) then
@@ -105,6 +105,14 @@ begin
   end process READ_PROCESS;
 
   ready <= not busy;
+  SLICE_INPUT : process (counter, data) is
+  begin
+    for y in 0 to M -1 loop
+      for x in SW-1 downto 0 loop
+        input_slice(y)(x) <= data(y)(counter*SW + x);
+      end loop;
+    end loop;
+  end process;
 
   SW_TO_SW_MUX : for i in 0 to M - 2 generate
 
@@ -114,11 +122,11 @@ begin
         )
       port map (
         CLK_I        => CLK_I,
-        OP_A_I       => data(i)(counter*SW downto (counter + 1)*SW - 1),
-        OP_B_I       => data(i + 1)(counter*SW downto (counter + 1)*SW - 1),
+        OP_A_I       => input_slice(i),
+        OP_B_I       => input_slice(i + 1),
         IS_EQUAL_O   => open,
-        IS_LESS_O    => cur_lesser(i),
-        IS_GREATER_O => open,
+        IS_LESS_O    => open,
+        IS_GREATER_O => cur_greater(i),
         START_I      => start
         );
 
@@ -131,25 +139,32 @@ begin
   -------------------------------------------------------------------------------
   VALIDATE : process (CLK_I) is
   begin
-
     if (rising_edge(CLK_I)) then
       if (RST_I = '1') then
-        any_lesser <= '0';
+        any_greater  <= (others => '0');
+        all_in_order <= '1';
+      elsif (busy = '0' and valid = '1') then
+        any_greater <= (others => '0');
       else
-        if (ENABLE_I = '1') then
+        all_in_order <= in_order and all_in_order;
 
-          for i in 0 to M - 2 loop
-
-            any_lesser <= any_lesser or cur_lesser(i);
-
-          end loop;
-
-        end if;
+        for i in 0 to M - 2 loop
+          any_greater(i) <= any_greater(i) or cur_greater(i);
+        end loop;
       end if;
     end if;
 
   end process VALIDATE;
 
-  IN_ORDER_O <= '1' when not any_lesser else '0';
+  ASSERT_ORDER : process (any_greater) is
+  begin
+    in_order <= '1';
+    for i in 0 to M - 2 loop
+      if any_greater(i) = '1' then
+        in_order <= '0';
+      end if;
+    end loop;
+  end process;
+
 
 end architecture BEHAVIORAL;

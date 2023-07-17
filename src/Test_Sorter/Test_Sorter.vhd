@@ -143,7 +143,6 @@ begin
     port map (
       CLK_I        => CLK_I,
       RST_I        => RST_I,
-      ENABLE_I     => ENABLE_I,
       DATA_I       => data_sorted,
       DATA_VALID_I => data_out_valid,
       DATA_READY_O => data_out_ready,
