@@ -82,7 +82,7 @@ TOP ?= TEST_SORTER_TOP
 
 VIVADOENV := BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CONSTRAINTS=$(CONSTRAINTS) BIT_FILE=$(BIT_FILE)
 VIVADO ?= vivado
-VIVADOFLAGS ?= -nojournal -mode batch -source $(root-dir)/scripts/prologue.tcl
+VIVADOFLAGS ?= -nojournal -mode batch -source $(root-dir)/tcl/prologue.tcl
 
 #==== Default target - running simulation without drawing waveforms ====#
 all: $(bit)
