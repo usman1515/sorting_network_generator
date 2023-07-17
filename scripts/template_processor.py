@@ -73,8 +73,7 @@ class VHDLTemplateWriter:
         len_title = 4 + len(block_title)
         self.write_incremental("-" * self.len_line + "\n")
         self.write_incremental(
-            "-- " + block_title + " " + "-" *
-            (len_title - self.len_line) + "\n"
+            "-- " + block_title + " " + "-" * (len_title - self.len_line) + "\n"
         )
         self.write_incremental("-" * self.len_line + "\n")
 
@@ -238,8 +237,7 @@ class VHDLTemplateProcessor:
                     if network.ff_layers[z, p[1], p[0]]:
                         return True, source_point
                 distance += 1
-                points = __list_points_in_distance(
-                    (x, y), distance, bounds[:1])
+                points = __list_points_in_distance((x, y), distance, bounds[:1])
         return False, source_point
 
     def __map_signal(
@@ -251,8 +249,7 @@ class VHDLTemplateProcessor:
     ) -> str:
         normalized_name = signal_name.split("_")[0].upper()
         if normalized_name not in network.signals:
-            print("Signal '{name}' not found in network signals",
-                  normalized_name)
+            print("Signal '{name}' not found in network signals", normalized_name)
             return "open"
         signal = network.signals[normalized_name]
         if signal.distribution == DistributionType.GLOBAL:
@@ -334,8 +331,7 @@ class VHDLTemplateProcessor:
                 # Data array creation is handled in another function.
                 continue
             if signal.distribution == DistributionType.GLOBAL:
-                def_str += "signal {}_global : std_logic;\n".format(
-                    signal.name.lower())
+                def_str += "signal {}_global : std_logic;\n".format(signal.name.lower())
             else:
                 fmap = {
                     "signal_name": signal.name.lower(),
@@ -361,10 +357,8 @@ class VHDLTemplateProcessor:
             signal_definitions : str
                 VHDL code containing all relevant signal definitions.
         """
-        signal_definitions = self.__get_permutation_layer_definitions(
-            network, **kwargs)
-        signal_definitions += self.__get_control_layer_definitions(
-            network, **kwargs)
+        signal_definitions = self.__get_permutation_layer_definitions(network, **kwargs)
+        signal_definitions += self.__get_control_layer_definitions(network, **kwargs)
         return signal_definitions
 
     def __make_io_assignments(self, network, template):
@@ -506,8 +500,7 @@ class VHDLTemplateProcessor:
         # Start signal is usally replicated and distributed in another layer.
         # Assign each CS its appropriate source register for that signal.
         cs = entities["CS"]
-        unconnected_ports = [
-            port for port in cs.ports.keys() if port not in ports]
+        unconnected_ports = [port for port in cs.ports.keys() if port not in ports]
         for port in unconnected_ports:
             signal_name = port.split("_")[0].upper()
             if signal_name in network.signals:
@@ -516,15 +509,13 @@ class VHDLTemplateProcessor:
             if signal_name.upper() not in network.signals:
                 # Signal is not represented anywhere in the network,
                 # must be global, like f.e. CLK.
-                ports[port] = "{signal_name}_I".format(
-                    signal_name=signal_name.upper())
+                ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
             else:
                 ports[port] = self.__map_signal(
                     network, template, signal_name.upper(), (x, y)
                 )
 
-        self.writer.write_incremental(
-            cs.as_instance(instance_name, generics, ports))
+        self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
 
     def __connect_cs_network(
         self,
@@ -566,6 +557,7 @@ class VHDLTemplateProcessor:
             replacement_id = 0
             # Each group represents one instance of the replacement.
             for group in repl.groups:
+                print(replacement_id)
                 ports = {}
                 for key in repl.entity.ports:
                     ports[key] = ""
@@ -623,7 +615,8 @@ class VHDLTemplateProcessor:
                         if signal.distribution == DistributionType.PER_LINE:
                             if signal.max_fanout:
                                 mapped_y = y // signal.max_fanout
-
+                        if replacement_id == 0:
+                            print(signal, x, y, mapped_x, mapped_y)
                         reg_ports_in[
                             "REG_I({})".format(reg_index)
                         ] = "{signal_name}_array({x})({y})".format(
@@ -641,6 +634,9 @@ class VHDLTemplateProcessor:
                         network.ff_layers[z, y, x] = False
                     reg_index += 1
                 # Done with assigning ports in this group.
+
+                # Use group center to determine signal sources for items in
+                # port list without explicit assignment.
                 c_x = c_x // len(group)
                 c_y = c_y // len(group)
                 for port, assign in ports.items():
@@ -650,6 +646,9 @@ class VHDLTemplateProcessor:
                             network, template, signal_name, (c_x, c_y)
                         )
 
+                if replacement_id == 0:
+                    for port, assign in (ports | reg_ports_in | reg_ports_out).items():
+                        print(port, assign)
                 name = "REPL_" + str(replacement_id)
                 replacement_id += 1
                 generics = {"NUM_INPUTS": str(reg_index)}
@@ -754,15 +753,14 @@ if (rising_edge(CLK_I)) then
         network: Network,
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
-        **kwargs
+        **kwargs,
     ):
         # We need to keep track fo the assigned FFs in the permutation layer,
         # the only layer which contains potentially more than one FF.
         # Since the only information provided by the ff_layers is whether
         # any FF are present at a point, a new matrix has to be created.
         stream_layer_ff = np.zeros(network.ff_layers[0].shape, dtype=int)
-        stream_layer_ff = network.signals["STREAM"].bit_width * \
-            network.ff_layers[0]
+        stream_layer_ff = network.signals["STREAM"].bit_width * network.ff_layers[0]
         if "ff_replacements" in kwargs:
             stream_layer_ff = self.__instantiate_ff_replacements(
                 network, template, stream_layer_ff, kwargs["ff_replacements"]
@@ -775,8 +773,10 @@ if (rising_edge(CLK_I)) then
         network: Network,
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
-        **kwargs
+        **kwargs,
     ):
+        """Process the template of the sorting network. Collects tokens and
+        handles instantiation and connectivity."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = "{}_{}X{}".format(
@@ -811,6 +811,8 @@ if (rising_edge(CLK_I)) then
     def process_template(
         self, output_path: Path, network: Network, template: VHDLTemplate, **kwargs
     ):
+        """Processes all other templates which build upon the sorting
+        network."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = "{}_{}X{}".format(
@@ -832,3 +834,115 @@ if (rising_edge(CLK_I)) then
                 tokens[key] = str(1)
         self.writer.write_tokens(tokens)
         del self.writer
+
+
+class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
+    """Handles interpretation and code generaton of sorting networks but instead of
+    instantiating CS directly, uses the Stage entity."""
+
+    def process_network_template(
+        self,
+        output_path: Path,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        **kwargs,
+    ):
+        """Process the template of the sorting network. Collects tokens and
+        handles instantiation and connectivity."""
+        self.writer = VHDLTemplateWriter(template, output_path)
+        tokens = template.tokens
+        tokens["top_name"] = "{}_{}X{}".format(
+            network.algorithm, network.get_N(), len(network.output_set)
+        )
+        if network.output_config:
+            tokens["top_name"] += "_" + network.output_config.upper()
+        tokens["num_inputs"] = str(network.get_N())
+        tokens["net_depth"] = str(network.get_depth())
+        tokens["num_outputs"] = str(len(network.output_set))
+        tokens["word_width"] = str(kwargs.get("W")) or str(8)
+        tokens["subword_width"] = str(network.signals["STREAM"].bit_width)
+
+        for signal in network.signals.values():
+            tokens["num_" + signal.name.lower()] = str(signal.num_replications)
+
+        for key in tokens.keys():
+            if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
+                tokens[key] = str(1)
+
+        tokens["signal_definitions"] = self.__get_signal_definitions(
+            network, entities, **kwargs
+        )
+        self.writer.write_preamble(tokens)
+        self.__instantiate_signal_distributors(network, template, entities)
+        self.__make_io_assignments(network, template)
+        self.__connect_cs_network(network, template, entities, tokens)
+        # self.__handle_registers(network, template, entities, **kwargs)
+        self.writer.write_footer()
+        del self.writer
+
+    def __make_stage(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        tokens: dict[str, str],
+        y: int,
+    ):
+        """Creates Stage instance in the network at the point provided."""
+        stage = network.pmatrix[y]
+        instance_name = f"STAGE{stage}".format(stage=y)
+
+        generics = {
+            "N": tokens["N"],
+            "SW": tokens["subword_width"],
+            "NUM_START": tokens["num_start"],
+            "NUM_ENABLE": tokens["num_enable"],
+        }
+
+        ports = {}
+        ports["STREAM_I"] = "stream_array({})".format(y)
+        ports["STREAM_O"] = "stream_array({})".format(y + 1)
+
+        # Start signal is usally replicated and distributed in another layer.
+        # Assign each CS its appropriate source register for that signal.
+        cs = entities["CS"]
+        unconnected_ports = [port for port in cs.ports.keys() if port not in ports]
+        for port in unconnected_ports:
+            signal_name = port.split("_")[0].upper()
+            if signal_name in network.signals:
+                signal = network.signals[signal_name]
+                ports[port] = ""
+            if signal_name.upper() not in network.signals:
+                # Signal is not represented anywhere in the network,
+                # must be global, like f.e. CLK.
+                ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
+            else:
+                ports[port] = self.__map_signal(
+                    network, template, signal_name.upper(), (x, y)
+                )
+
+        self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
+
+    def __connect_cs_network(
+        self,
+        network: Network,
+        template: VHDLTemplate,
+        entities: dict[str, VHDLEntity],
+        tokens: dict[str, str],
+    ):
+        """Iterates over permutation matrix and calls __make_cs for each point
+        containing un-ordered index.
+        """
+        self.writer.write_start_comment("Generated CS Network")
+        for y in range(network.pmatrix.shape[0]):
+            stage = network.pmatrix[y]
+            for x in range(stage.shape[0]):
+                if abs(stage[x]) > x:
+                    # The value at each index in the stage represents the index
+                    # with which the current index has to be compared to.
+                    # A CS is only placed when index and value differ.
+                    # As a CS handles two indices, only place an element if
+                    # the value is greater than the index.
+                    self.__make_cs(network, template, entities, tokens, x, y)
+        self.writer.write_end_comment()

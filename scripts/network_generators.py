@@ -248,7 +248,7 @@ class Generator:
                 else:
                     network.ff_layers[index][y][x] = True
             # Deal with remainder
-            if network.get_N() % max_fanout:
+            if max_fanout * num_sig < network.get_N():
                 network.ff_layers[index][y][-1] = True
         network.signals[signal_name].distribution = DistributionType.PER_STAGE
         network.signals[signal_name].is_replicated = True
@@ -466,22 +466,26 @@ class Bitonic(Generator):
 cond = __name__ == "__main__"
 if cond:
     gen = OddEven()
-    nw = gen.create(16)
+    nw = gen.create(128)
     for stage in nw:
         print(stage)
     for i, layer in enumerate(nw.ff_layers):
-        print("\n Layer:", nw.layer_names[i])
         for stage in layer:
             print(["+" if i else " " for i in stage])
 
-    nw = gen.distribute_signals(nw, {"START": 5})
-
+    nw = gen.distribute_signal(nw, "START", 50)
+    print(nw.signals["START"])
     for stage in nw:
         print(stage)
     for i, layer in enumerate(nw.ff_layers):
-        print("\n Layer:", nw.layer_names[i])
+        print("Layer Nr.:", i)
         for stage in layer:
-            print(["+" if i else " " for i in stage])
+            for point in stage:
+                if point:
+                    print("+", end="")
+                else:
+                    print(" ", end="")
+            print()
 
     # start_x = 0
     # start_y = 0
