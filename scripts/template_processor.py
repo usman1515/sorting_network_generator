@@ -557,7 +557,6 @@ class VHDLTemplateProcessor:
             replacement_id = 0
             # Each group represents one instance of the replacement.
             for group in repl.groups:
-                print(replacement_id)
                 ports = {}
                 for key in repl.entity.ports:
                     ports[key] = ""
@@ -615,8 +614,6 @@ class VHDLTemplateProcessor:
                         if signal.distribution == DistributionType.PER_LINE:
                             if signal.max_fanout:
                                 mapped_y = y // signal.max_fanout
-                        if replacement_id == 0:
-                            print(signal, x, y, mapped_x, mapped_y)
                         reg_ports_in[
                             "REG_I({})".format(reg_index)
                         ] = "{signal_name}_array({x})({y})".format(
@@ -646,9 +643,6 @@ class VHDLTemplateProcessor:
                             network, template, signal_name, (c_x, c_y)
                         )
 
-                if replacement_id == 0:
-                    for port, assign in (ports | reg_ports_in | reg_ports_out).items():
-                        print(port, assign)
                 name = "REPL_" + str(replacement_id)
                 replacement_id += 1
                 generics = {"NUM_INPUTS": str(reg_index)}
