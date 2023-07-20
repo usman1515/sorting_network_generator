@@ -39,7 +39,9 @@ begin
       clk_out1 => clk,
       reset    => GPIO_DIP_SW1,
       locked   => open,
-      clk_in1  => SYSCLK1_300_P);
+      clk_in1_p  => SYSCLK1_300_P,
+      clk_in1_n  => SYSCLK1_300_N
+      );
 
   RESETDEBOUNCER : entity work.debouncer
     generic map (
