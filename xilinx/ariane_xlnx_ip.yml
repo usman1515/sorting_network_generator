@@ -1,0 +1,11 @@
+xlnx_clk_gen:
+  ip: clk_wiz
+  vendor: xilinx.com
+  config:
+    prim_in_freq: 300
+    num_out_clks: 1
+    clkout2_used: false
+    clkout3_used: false
+    clkout4_used: false
+    clkout1_requested_out_freq: 300
+    clkin1_jitter_ps: 50

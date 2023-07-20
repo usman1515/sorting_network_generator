@@ -74,15 +74,22 @@ src := $(addprefix $(root-dir)/, $(src))
 
 work-dir := $(SORTER)/work_dir
 
-BIT_FILE := $(work-dir)/$(TOP).bit
-bit := $(BIT_FILE)
 
 # TOP-Module/Component for synthesis & implementation
 TOP ?= TEST_SORTER_TOP
+BIT_FILE := $(work-dir)/$(TOP).bit
+bit := $(BIT_FILE)
 
-VIVADOENV := BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CONSTRAINTS=$(CONSTRAINTS) BIT_FILE=$(BIT_FILE)
+VIVADOENV := BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CONSTRAINTS=$(CONSTRAINTS) BIT_FILE=$(BIT_FILE) ROOTDIR=$(root-dir)
 VIVADO ?= vivado
 VIVADOFLAGS ?= -nojournal -mode batch -source $(root-dir)/tcl/prologue.tcl
+
+#==== IP ======#
+
+ip-dir := xilinx
+ips := xlnx_clk_gen.xci
+
+ips := $(addprefix $(work-dir)/, $(ips))
 
 #==== Default target - running simulation without drawing waveforms ====#
 all: $(bit)
@@ -94,23 +101,31 @@ fpga: $(src)
 	@echo read_vhdl        {$(lib)}    >> $(work-dir)/add_sources.tcl
 	@echo set_property IS_GLOBAL_INCLUDE 0 [get_files $(lib)] >> $(work-dir)/add_sources.tcl
 	@echo set_property TOP ${TOP} [current_fileset] >> $(work-dir)/add_sources.tcl
-	@echo set_property file_type {VHDL 2008} [get_files  *] >> $(work-dir)/add_sources.tcl
+	@echo set_property file_type {VHDL 2008} [get_files  *.vhd] >> $(work-dir)/add_sources.tcl
 	@echo "[FPGA] Generate Bitstream"
 .PHONY: fpga
 
-$(bit): fpga
+$(ips): %.xci :
+	mkdir -p $(work-dir)
+	@echo Generating $(@F)
+	@cd $(ip-dir)/$(basename $(@F)) && make clean &&  make $(VIVADOENV)
+	@cp $(ip-dir)/$(basename $(@F))/$(basename $(@F)).srcs/sources_1/ip/$(basename $(@F))/$(@F) $@
+
+$(bit): fpga $(ips)
 	cd $(work-dir) && $(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/tcl/run.tcl
 	cp $(work-dir)/BitCS.runs/impl_1/$(TOP)* ./$(work-dir)
 
 
 program:
 	$(VIVADOENV) $(VIVADO) $(VIVADOFLAGS) -source $(root-dir)/tcl/program.tcl
+.PHONY: program
 
 clean:
 	rm -rf $(work-dir)
 
 .PHONY:
 	clean
+
 
 
 # end

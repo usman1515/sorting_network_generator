@@ -30,16 +30,22 @@ architecture STRUCTURAL of TEST_SORTER_TOP is
 
   signal reset  : std_logic;            -- Debounced reset signal.
   signal enable : std_logic;            -- Debounced enable signal.
-
+  signal clk    : std_logic;
 begin
 
+  xlnx_clk_gen_1 : entity xlnx_clk_gen
+    port map (
+      clk_out1 => clk,
+      reset    => SW_RST,
+      locked   => open,
+      clk_in1  => SYS_CLK);
 
   RESETDEBOUNCER : entity work.debouncer
     generic map (
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYS_CLK,
+      CLK_I    => clk,
       RST_I    => '0',
       INPUT_I  => SW_RST,
       OUTPUT_O => reset
@@ -50,7 +56,7 @@ begin
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYS_CLK,
+      CLK_I    => clk,
       RST_I    => '0',
       INPUT_I  => SW_EN,
       OUTPUT_O => enable
@@ -58,7 +64,7 @@ begin
 
   TEST_SORTER_1 : entity work.test_sorter
     port map (
-      CLK_I      => SYS_CLK,
+      CLK_I      => clk,
       RST_I      => reset,
       ENABLE_I   => enable,
       IN_ORDER_O => LED
