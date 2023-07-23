@@ -184,7 +184,7 @@ set_property PACKAGE_PIN F31      [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO -
 set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
 set_property PACKAGE_PIN G31      [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
 set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13N_T2L_N1_GC_QBC_47
-create_clock -period 3.333 -name SYSCLK1_300_P -add [get_ports {SYSCLK1_300_P}]
+create_clock -period 3.333333 -name SYSCLK1_300_P -add [get_ports {SYSCLK1_300_P}]
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "SYSCLK1_300_P"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L13P_T2L_N0_GC_QBC_47
 # set_property PACKAGE_PIN G32      [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47
 # set_property IOSTANDARD  DIFF_SSTL12 [get_ports "USER_SI570_CLOCK_N"] ;# Bank  47 VCCO - VCC1V2_FPGA - IO_L12N_T1U_N11_GC_47

@@ -16,7 +16,7 @@ if {$board == "nexys4ddr"} {
 } elseif {$board  == "vcu118"} {
     set sys_clk_freq 50
     set input_clk_source "Differential_clock_capable_pin"
-    set input_clk_freq 200
+    set input_clk_freq 300
 } else {
     set sys_clk_freq 50
     set input_clk_source "Single_ended_clock_capable_pin"
