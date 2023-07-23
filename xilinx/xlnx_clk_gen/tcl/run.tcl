@@ -11,20 +11,20 @@ create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name $ipName
 
 if {$board == "nexys4ddr"} {
     set sys_clk_freq 50
-    set input_clk_source "{Single_ended_clock_capable_pin}"
+    set input_clk_source "Single_ended_clock_capable_pin"
     set input_clk_freq 100
 } elseif {$board  == "vcu118"} {
     set sys_clk_freq 50
-    set input_clk_source "{Differential_clock_capable_pin}"
+    set input_clk_source "Differential_clock_capable_pin"
     set input_clk_freq 200
 } else {
     set sys_clk_freq 50
-    set input_clk_source "{Single_ended_clock_capable_pin}"
+    set input_clk_source "Single_ended_clock_capable_pin"
     set input_clk_freq 200
 }
 
 set_property -dict [list CONFIG.PRIM_IN_FREQ $input_clk_freq \
-                        CONFIG.PRIM_IN_SOURCE $sys_clk_source
+                        CONFIG.PRIM_SOURCE $input_clk_source \
                         CONFIG.NUM_OUT_CLKS {1} \
                         CONFIG.CLKOUT2_USED {false} \
                         CONFIG.CLKOUT3_USED {false} \

@@ -1,0 +1,306 @@
+#-----------------------------------------------------------
+# Vivado v2021.2 (64-bit)
+# SW Build 3367213 on Tue Oct 19 02:47:39 MDT 2021
+# IP Build 3369179 on Thu Oct 21 08:25:16 MDT 2021
+# Start of session at: Sun Jul 23 10:58:10 2023
+# Process ID: 6419
+# Current directory: /home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen
+# Command line: vivado -mode batch -source tcl/run.tcl
+# Log file: /home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/vivado.log
+# Journal file: /home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/vivado.jou
+# Running On: S-PC, OS: Linux, CPU Frequency: 3401.213 MHz, CPU Physical cores: 4, Host memory: 8240 MB
+#-----------------------------------------------------------
+source tcl/run.tcl
+# set partNumber $::env(XILINX_PART)
+# set boardName  $::env(XILINX_BOARD)
+# set board $::env(BOARD)
+# set ipName xlnx_clk_gen
+# create_project $ipName . -force -part $partNumber
+create_project: Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 2861.582 ; gain = 3.961 ; free physical = 985 ; free virtual = 15690
+# set_property board_part $boardName [current_project]
+# create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name $ipName
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/spross/Xilinx/Vivado/2021.2/data/ip'.
+create_ip: Time (s): cpu = 00:00:11 ; elapsed = 00:00:13 . Memory (MB): peak = 3153.992 ; gain = 292.410 ; free physical = 179 ; free virtual = 14577
+# if {$board == "nexys4ddr"} {
+#     set sys_clk_freq 50
+#     set input_clk_source "Single_ended_clock_capable_pin"
+#     set input_clk_freq 100
+# } elseif {$board  == "vcu118"} {
+#     set sys_clk_freq 50
+#     set input_clk_source "Differential_clock_capable_pin"
+#     set input_clk_freq 200
+# } else {
+#     set sys_clk_freq 50
+#     set input_clk_source "Single_ended_clock_capable_pin"
+#     set input_clk_freq 200
+# }
+# set_property -dict [list CONFIG.PRIM_IN_FREQ $input_clk_freq \
+#                         CONFIG.PRIM_SOURCE $input_clk_source \
+#                         CONFIG.NUM_OUT_CLKS {1} \
+#                         CONFIG.CLKOUT2_USED {false} \
+#                         CONFIG.CLKOUT3_USED {false} \
+#                         CONFIG.CLKOUT4_USED {false} \
+#                         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ $sys_clk_freq \
+#                         CONFIG.CLKIN1_JITTER_PS {50.0} \
+#                        ] [get_ips $ipName]
+# generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+INFO: [IP_Flow 19-1686] Generating 'Instantiation Template' target for IP 'xlnx_clk_gen'...
+# generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+INFO: [IP_Flow 19-1686] Generating 'Synthesis' target for IP 'xlnx_clk_gen'...
+INFO: [IP_Flow 19-1686] Generating 'Simulation' target for IP 'xlnx_clk_gen'...
+INFO: [IP_Flow 19-1686] Generating 'Implementation' target for IP 'xlnx_clk_gen'...
+INFO: [IP_Flow 19-1686] Generating 'Change Log' target for IP 'xlnx_clk_gen'...
+# create_ip_run [get_files -of_objects [get_fileset sources_1] ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+# launch_run -jobs 8 ${ipName}_synth_1
+[Sun Jul 23 10:58:42 2023] Launched xlnx_clk_gen_synth_1...
+Run output will be captured here: /home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/runme.log
+# wait_on_run ${ipName}_synth_1
+[Sun Jul 23 10:58:43 2023] Waiting for xlnx_clk_gen_synth_1 to finish...
+
+*** Running vivado
+    with args -log xlnx_clk_gen.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source xlnx_clk_gen.tcl
+
+
+****** Vivado v2021.2 (64-bit)
+  **** SW Build 3367213 on Tue Oct 19 02:47:39 MDT 2021
+  **** IP Build 3369179 on Thu Oct 21 08:25:16 MDT 2021
+    ** Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
+
+source xlnx_clk_gen.tcl -notrace
+create_project: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2860.590 ; gain = 0.000 ; free physical = 928 ; free virtual = 13834
+Command: synth_design -top xlnx_clk_gen -part xcvu9p-flga2104-2L-e -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcvu9p'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcvu9p'
+INFO: [Common 17-1540] The version limit for your license is '2023.04' and has expired for new software. A version limit expiration means that, although you may be able to continue to use the current version of tools or IP with this license, you will not be eligible for new releases.
+INFO: [Device 21-403] Loading part xcvu9p-flga2104-2L-e
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 6679
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 3362.227 ; gain = 301.797 ; free physical = 114 ; free virtual = 12190
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'xlnx_clk_gen' [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen.v:70]
+INFO: [Synth 8-6157] synthesizing module 'xlnx_clk_gen_clk_wiz' [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_clk_wiz.v:68]
+INFO: [Synth 8-6157] synthesizing module 'IBUFDS' [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:55219]
+INFO: [Synth 8-6155] done synthesizing module 'IBUFDS' (1#1) [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:55219]
+INFO: [Synth 8-6157] synthesizing module 'MMCME4_ADV' [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:63903]
+	Parameter BANDWIDTH bound to: OPTIMIZED - type: string 
+	Parameter CLKFBOUT_MULT_F bound to: 6.000000 - type: double 
+	Parameter CLKFBOUT_PHASE bound to: 0.000000 - type: double 
+	Parameter CLKFBOUT_USE_FINE_PS bound to: FALSE - type: string 
+	Parameter CLKIN1_PERIOD bound to: 5.000000 - type: double 
+	Parameter CLKOUT0_DIVIDE_F bound to: 24.000000 - type: double 
+	Parameter CLKOUT0_DUTY_CYCLE bound to: 0.500000 - type: double 
+	Parameter CLKOUT0_PHASE bound to: 0.000000 - type: double 
+	Parameter CLKOUT0_USE_FINE_PS bound to: FALSE - type: string 
+	Parameter CLKOUT4_CASCADE bound to: FALSE - type: string 
+	Parameter COMPENSATION bound to: AUTO - type: string 
+	Parameter DIVCLK_DIVIDE bound to: 1 - type: integer 
+	Parameter STARTUP_WAIT bound to: FALSE - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'MMCME4_ADV' (2#1) [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:63903]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:1083]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (3#1) [/home/spross/Xilinx/Vivado/2021.2/scripts/rt/data/unisim_comp.v:1083]
+INFO: [Synth 8-6155] done synthesizing module 'xlnx_clk_gen_clk_wiz' (4#1) [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_clk_wiz.v:68]
+INFO: [Synth 8-6155] done synthesizing module 'xlnx_clk_gen' (5#1) [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen.v:70]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:08 . Memory (MB): peak = 3409.195 ; gain = 348.766 ; free physical = 175 ; free virtual = 11780
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:06 ; elapsed = 00:00:09 . Memory (MB): peak = 3427.008 ; gain = 366.578 ; free physical = 113 ; free virtual = 11634
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:09 . Memory (MB): peak = 3427.008 ; gain = 366.578 ; free physical = 113 ; free virtual = 11634
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3432.945 ; gain = 0.000 ; free physical = 109 ; free virtual = 11535
+INFO: [Netlist 29-17] Analyzing 3 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_ooc.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_ooc.xdc] for cell 'inst'
+Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_board.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen_board.xdc] for cell 'inst'
+Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen.xdc] for cell 'inst'
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.gen/sources_1/ip/xlnx_clk_gen/xlnx_clk_gen.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/xlnx_clk_gen_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/xlnx_clk_gen_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+INFO: [Timing 38-2] Deriving generated clocks
+Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3509.523 ; gain = 0.000 ; free physical = 991 ; free virtual = 11851
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2 instances were transformed.
+  BUFG => BUFGCE: 1 instance 
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3509.523 ; gain = 0.000 ; free physical = 991 ; free virtual = 11850
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:16 ; elapsed = 00:00:21 . Memory (MB): peak = 3509.523 ; gain = 449.094 ; free physical = 1091 ; free virtual = 11952
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcvu9p-flga2104-2L-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:16 ; elapsed = 00:00:21 . Memory (MB): peak = 3509.523 ; gain = 449.094 ; free physical = 1091 ; free virtual = 11952
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+Applied set_property KEEP_HIERARCHY = SOFT for inst. (constraint file  /home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/dont_touch.xdc, line 9).
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:16 ; elapsed = 00:00:21 . Memory (MB): peak = 3509.523 ; gain = 449.094 ; free physical = 1091 ; free virtual = 11952
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:16 ; elapsed = 00:00:22 . Memory (MB): peak = 3509.523 ; gain = 449.094 ; free physical = 1092 ; free virtual = 11954
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 6840 (col length:120)
+BRAMs: 4320 (col length: RAMB18 360 RAMB36 180)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:17 ; elapsed = 00:00:23 . Memory (MB): peak = 3509.523 ; gain = 449.094 ; free physical = 1091 ; free virtual = 11959
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:26 ; elapsed = 00:00:33 . Memory (MB): peak = 3796.914 ; gain = 736.484 ; free physical = 501 ; free virtual = 11454
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:26 ; elapsed = 00:00:33 . Memory (MB): peak = 3796.914 ; gain = 736.484 ; free physical = 501 ; free virtual = 11454
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:26 ; elapsed = 00:00:33 . Memory (MB): peak = 3815.945 ; gain = 755.516 ; free physical = 497 ; free virtual = 11450
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----------+------+
+|      |Cell       |Count |
++------+-----------+------+
+|1     |BUFG       |     1|
+|2     |MMCME4_ADV |     1|
+|3     |IBUFDS     |     1|
++------+-----------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:29 ; elapsed = 00:00:36 . Memory (MB): peak = 3821.883 ; gain = 761.453 ; free physical = 481 ; free virtual = 11448
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 1 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:23 ; elapsed = 00:00:28 . Memory (MB): peak = 3821.883 ; gain = 678.938 ; free physical = 513 ; free virtual = 11479
+Synthesis Optimization Complete : Time (s): cpu = 00:00:29 ; elapsed = 00:00:37 . Memory (MB): peak = 3821.891 ; gain = 761.453 ; free physical = 513 ; free virtual = 11479
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3821.891 ; gain = 0.000 ; free physical = 506 ; free virtual = 11473
+INFO: [Netlist 29-17] Analyzing 3 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-326] The CLKFBOUT to CLKFBIN net for instance inst/mmcme4_adv_inst with COMPENSATION=INTERNAL is optimized away to aid design routability
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3901.008 ; gain = 0.000 ; free physical = 476 ; free virtual = 11449
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2 instances were transformed.
+  BUFG => BUFGCE: 1 instance 
+  IBUFDS => IBUFDS (DIFFINBUF, IBUFCTRL): 1 instance 
+
+Synth Design complete, checksum: 42c2243
+INFO: [Common 17-83] Releasing license: Synthesis
+31 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:44 ; elapsed = 00:00:48 . Memory (MB): peak = 3901.008 ; gain = 1040.418 ; free physical = 661 ; free virtual = 11635
+INFO: [Common 17-1381] The checkpoint '/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/xlnx_clk_gen.dcp' has been generated.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP xlnx_clk_gen, cache-ID = c19a889db1a5a2d4
+INFO: [Common 17-1381] The checkpoint '/home/spross/Workspace/VHDL/BitSerialCompareSwap/xilinx/xlnx_clk_gen/xlnx_clk_gen.runs/xlnx_clk_gen_synth_1/xlnx_clk_gen.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file xlnx_clk_gen_utilization_synth.rpt -pb xlnx_clk_gen_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sun Jul 23 10:59:58 2023...
+[Sun Jul 23 11:00:02 2023] xlnx_clk_gen_synth_1 finished
+wait_on_runs: Time (s): cpu = 00:01:07 ; elapsed = 00:01:19 . Memory (MB): peak = 3162.250 ; gain = 0.000 ; free physical = 2649 ; free virtual = 13848
+INFO: [Common 17-206] Exiting Vivado at Sun Jul 23 11:00:02 2023...

@@ -48,7 +48,7 @@ begin
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYSCLK1_300_P,
+      CLK_I    => clk,
       RST_I    => '0',
       INPUT_I  => GPIO_DIP_SW1,
       OUTPUT_O => reset
@@ -59,7 +59,7 @@ begin
       TIMEOUT_CYCLES => 50
       )
     port map (
-      CLK_I    => SYSCLK1_300_P,
+      CLK_I    => clk,
       RST_I    => '0',
       INPUT_I  => GPIO_DIP_SW2,
       OUTPUT_O => enable
@@ -67,7 +67,7 @@ begin
 
   TEST_SORTER_1 : entity work.test_sorter
     port map (
-      CLK_I      => SYSCLK1_300_P,
+      CLK_I      => clk,
       RST_I      => reset,
       ENABLE_I   => enable,
       IN_ORDER_O => GPIO_LED0
