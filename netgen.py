@@ -9,7 +9,7 @@ import time
 from scripts import vhdl
 import scripts.network_generators as generators
 from scripts.reporter import Reporter, Report
-from scripts.template_processor import VHDLTemplateProcessor
+from scripts.template_processor import VHDLTemplateProcessor, VHDLTemplateProcessorStagewise
 from scripts.resource_allocator import BlockAllocator, is_ff
 from scripts.plotter import PlotWrapper
 
@@ -284,6 +284,7 @@ class Interface:
         path: str = "",
         cs: str = "SWCS",
         W: int = 8,
+        stagewise: bool = False,
     ):
         """Generate and write VHDL code from the network. Produces
         "Network.vhd" containing the Sorting Network, "Sorter.vhd"
@@ -314,10 +315,16 @@ class Interface:
             path = "build/{}/".format(name)
         path_obj = Path(path)
         path_obj.mkdir(parents=True, exist_ok=True)
-        template_processor = VHDLTemplateProcessor()
+        template_processor = None
+        if stagewise:
+            template_processor = VHDLTemplateProcessorStagewise()
+        else:
+            template_processor = VHDLTemplateProcessor()
+
         entities = {
             "CS": cs_entity,
             "Signal_Distributor": self.__entities["SIGNAL_DISTRIBUTOR"],
+            "Stage": self.__entities["Stage"],
         }
         kwargs = {"W": W, "ff_replacements": self.__ffreplacements}
         template_processor.process_network_template(

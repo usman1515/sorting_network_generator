@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-from datetime import datetime
 from pathlib import Path
 import numpy as np
-import math
 
 from scripts.vhdl import VHDLEntity, VHDLTemplate, parseVHDLEntity
 from scripts.network_generators import Network, NetworkSignal, DistributionType
@@ -50,8 +48,7 @@ class VHDLTemplateWriter:
         return self.preamble_written
 
     def write_tokens(self, tokens: dict[str, str]) -> bool:
-        """Write template with tokens for generics and other
-        parameters.
+        """Write template with tokens for generics and other parameters.
 
         Parameters:
             tokens : dict[str:str]
@@ -240,7 +237,7 @@ class VHDLTemplateProcessor:
                 points = __list_points_in_distance((x, y), distance, bounds[:1])
         return False, source_point
 
-    def __map_signal(
+    def map_signal(
         self,
         network: Network,
         template: VHDLTemplate,
@@ -254,7 +251,7 @@ class VHDLTemplateProcessor:
         signal = network.signals[normalized_name]
         if signal.distribution == DistributionType.GLOBAL:
             return "{s_name}_global".format(
-                name=signal_name, s_name=normalized_name.lower()
+                s_name=normalized_name.lower()
             )
         if signal.distribution == DistributionType.UNCONNECTED:
             print("UNCONNECTED")
@@ -343,7 +340,7 @@ class VHDLTemplateProcessor:
                 )
         return def_str
 
-    def __get_signal_definitions(
+    def get_signal_definitions(
         self, network: Network, entities: dict[str, VHDLEntity], **kwargs
     ) -> str:
         """Build signal definitions string from supplied paramters
@@ -361,7 +358,7 @@ class VHDLTemplateProcessor:
         signal_definitions += self.__get_control_layer_definitions(network, **kwargs)
         return signal_definitions
 
-    def __make_io_assignments(self, network, template):
+    def make_io_assignments(self, network, template):
         """Generates code connecting module inputs and outputs to
         appropriate internal signals.
         """
@@ -406,7 +403,7 @@ class VHDLTemplateProcessor:
         self.writer.write_incremental(inputs + outputs)
         self.writer.write_end_comment()
 
-    def __instantiate_signal_distributors(
+    def instantiate_signal_distributors(
         self, network: Network, template: VHDLTemplate, entities: dict[str, VHDLEntity]
     ):
         """Generates code instantiating signal distributor modules and connects
@@ -435,7 +432,7 @@ class VHDLTemplateProcessor:
                         )
                     for port in ports:
                         if not ports[port]:
-                            ports[port] = self.__map_signal(
+                            ports[port] = self.map_signal(
                                 network, template, port, (0, 0)
                             )
                     self.writer.write_incremental(
@@ -504,20 +501,19 @@ class VHDLTemplateProcessor:
         for port in unconnected_ports:
             signal_name = port.split("_")[0].upper()
             if signal_name in network.signals:
-                signal = network.signals[signal_name]
                 ports[port] = ""
             if signal_name.upper() not in network.signals:
                 # Signal is not represented anywhere in the network,
                 # must be global, like f.e. CLK.
                 ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
             else:
-                ports[port] = self.__map_signal(
+                ports[port] = self.map_signal(
                     network, template, signal_name.upper(), (x, y)
                 )
 
         self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
 
-    def __connect_cs_network(
+    def connect_cs_network(
         self,
         network: Network,
         template: VHDLTemplate,
@@ -639,7 +635,7 @@ class VHDLTemplateProcessor:
                 for port, assign in ports.items():
                     if not assign:
                         signal_name = port.split("_")[0].upper()
-                        ports[port] = self.__map_signal(
+                        ports[port] = self.map_signal(
                             network, template, signal_name, (c_x, c_y)
                         )
 
@@ -689,7 +685,6 @@ class VHDLTemplateProcessor:
                     print("No signal associated with layer {z}!".format(z=z))
                     continue
                 signal_name = signal.name
-                num_signals = signal.num_replications
                 max_fan_out = signal.max_fanout
                 for x, start, end in group:
                     # print(x, start, end)
@@ -791,13 +786,13 @@ if (rising_edge(CLK_I)) then
             if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
                 tokens[key] = str(1)
 
-        tokens["signal_definitions"] = self.__get_signal_definitions(
+        tokens["signal_definitions"] = self.get_signal_definitions(
             network, entities, **kwargs
         )
         self.writer.write_preamble(tokens)
-        self.__instantiate_signal_distributors(network, template, entities)
-        self.__make_io_assignments(network, template)
-        self.__connect_cs_network(network, template, entities, tokens)
+        self.instantiate_signal_distributors(network, template, entities)
+        self.make_io_assignments(network, template)
+        self.connect_cs_network(network, template, entities, tokens)
         self.__handle_registers(network, template, entities, **kwargs)
         self.writer.write_footer()
         del self.writer
@@ -864,13 +859,13 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
             if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
                 tokens[key] = str(1)
 
-        tokens["signal_definitions"] = self.__get_signal_definitions(
+        tokens["signal_definitions"] = self.get_signal_definitions(
             network, entities, **kwargs
         )
         self.writer.write_preamble(tokens)
-        self.__instantiate_signal_distributors(network, template, entities)
-        self.__make_io_assignments(network, template)
-        self.__connect_cs_network(network, template, entities, tokens)
+        self.instantiate_signal_distributors(network, template, entities)
+        self.make_io_assignments(network, template)
+        self.connect_cs_network(network, template, entities, tokens)
         # self.__handle_registers(network, template, entities, **kwargs)
         self.writer.write_footer()
         del self.writer
@@ -884,12 +879,14 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         y: int,
     ):
         """Creates Stage instance in the network at the point provided."""
-        stage = network.pmatrix[y]
-        instance_name = f"STAGE{stage}".format(stage=y)
+        instance_name = f"STAGE{y}".format(y)
 
+        stage = network.pmatrix[y]
+        permutation = "(" + ", ".join([str(i) for i in stage]) +")"
         generics = {
-            "N": tokens["N"],
+            "N": tokens["num_inputs"],
             "SW": tokens["subword_width"],
+            "PERM" : permutation,
             "NUM_START": tokens["num_start"],
             "NUM_ENABLE": tokens["num_enable"],
         }
@@ -899,26 +896,25 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         ports["STREAM_O"] = "stream_array({})".format(y + 1)
 
         # Start signal is usally replicated and distributed in another layer.
-        # Assign each CS its appropriate source register for that signal.
-        cs = entities["CS"]
-        unconnected_ports = [port for port in cs.ports.keys() if port not in ports]
+        # Assign each Stage its appropriate source registers for that signal.
+        stage = entities["Stage"]
+        unconnected_ports = [port for port in stage.ports.keys() if port not in ports]
         for port in unconnected_ports:
             signal_name = port.split("_")[0].upper()
             if signal_name in network.signals:
-                signal = network.signals[signal_name]
                 ports[port] = ""
             if signal_name.upper() not in network.signals:
                 # Signal is not represented anywhere in the network,
                 # must be global, like f.e. CLK.
                 ports[port] = "{signal_name}_I".format(signal_name=signal_name.upper())
             else:
-                ports[port] = self.__map_signal(
-                    network, template, signal_name.upper(), (x, y)
+                ports[port] = self.map_signal(
+                    network, template, signal_name.upper(), (0, y)
                 )
 
-        self.writer.write_incremental(cs.as_instance(instance_name, generics, ports))
+        self.writer.write_incremental(stage.as_instance(instance_name, generics, ports))
 
-    def __connect_cs_network(
+    def connect_cs_network(
         self,
         network: Network,
         template: VHDLTemplate,
@@ -930,13 +926,5 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         """
         self.writer.write_start_comment("Generated CS Network")
         for y in range(network.pmatrix.shape[0]):
-            stage = network.pmatrix[y]
-            for x in range(stage.shape[0]):
-                if abs(stage[x]) > x:
-                    # The value at each index in the stage represents the index
-                    # with which the current index has to be compared to.
-                    # A CS is only placed when index and value differ.
-                    # As a CS handles two indices, only place an element if
-                    # the value is greater than the index.
-                    self.__make_cs(network, template, entities, tokens, x, y)
+            self.__make_stage(network, template, entities, tokens, y)
         self.writer.write_end_comment()
