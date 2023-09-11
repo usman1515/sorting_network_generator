@@ -24,11 +24,15 @@ architecture TB of TB_Stage is
   constant CKTIME : time := 10 ns;
   signal clk      : std_logic;
 
-  constant N          : integer := 8;
-  constant W          : integer := 8;
-  constant SW         : integer := 1;
-  constant NUM_START  : integer := 8;
-  constant NUM_ENABLE : integer := 4;
+  constant W         : integer     := 8;
+  constant N         : integer     := 8;
+  constant SW        : integer     := 1;
+  constant PERM      : Permutation := (0, 1, 5, 4, 3, 2, 6, 7);
+  constant NUM_DELAY : integer     := 4;
+  constant NUM_START       : integer := 2;
+  constant NUM_ENABLE      : integer := 2;
+  constant NUM_DSP         : integer := 1;
+  constant NUM_REG_PER_DSP : integer := 2;
 
   signal rst    : std_logic;            -- Debounced reset signal.
   signal enable : std_logic_vector(0 to NUM_ENABLE-1);  -- Debounced enable signal.
@@ -36,21 +40,21 @@ architecture TB of TB_Stage is
 
   signal stream_o, stream_i : SLVArray(0 to N -1)(SW-1 downto 0);
 
-  constant NUM_DATA : integer     := 8;
-  constant PERM     : Permutation := (0, 1, 5, 4, 3, 2, 7, 6);
 
   signal data_output : SLVArray(0 to N-1)(W-1 downto 0);
   signal data_input  : SLVArray(0 to N-1)(W-1 downto 0);
 
 begin
-
   Stage_1 : entity work.Stage
     generic map (
-      N          => N,
-      SW         => SW,
-      PERM       => PERM,
-      NUM_START  => NUM_START,
-      NUM_ENABLE => NUM_ENABLE)
+      N               => N,
+      SW              => SW,
+      PERM            => PERM,
+      NUM_DELAY       => NUM_DELAY,
+      NUM_START       => NUM_START,
+      NUM_ENABLE      => NUM_ENABLE,
+      NUM_DSP         => NUM_DSP,
+      NUM_REG_PER_DSP => NUM_REG_PER_DSP)
     port map (
       CLK_I    => clk,
       RST_I    => rst,

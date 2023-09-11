@@ -43,19 +43,18 @@ end entity VALIDATOR;
 
 architecture BEHAVIORAL of VALIDATOR is
 
-  signal data                   : SLVArray(0 to M - 1)(W - 1 downto 0);
   signal cur_greater            : std_logic_vector(0 to M - 2);
   signal any_greater            : std_logic_vector(0 to M - 2);
   signal in_order, all_in_order : std_logic;
+  constant LIMIT                : integer := (W + SW - 1) / SW;
 
-  signal busy         : std_logic;
-  constant LIMIT      : integer := (W + SW - 1) / SW;
-  signal counter      : integer range 0 to LIMIT;
   signal ready, valid : std_logic;
-  signal is_new_data  : std_logic;
   signal start        : std_logic;
 
   signal input_slice : SLVArray(0 to M - 1)(SW-1 downto 0);
+
+  signal counter, counter_next : integer range 0 to LIMIT;
+  signal data, data_next       : SLVArray(0 to M - 1)(W - 1 downto 0);
 
 begin
 
@@ -64,54 +63,58 @@ begin
   DATA_READY_O   <= ready;
   valid          <= DATA_VALID_I;
 
-  REGISTER_DATA_EXCHANGE : process (CLK_I) is
+  start <= ready and valid;
+
+  READ_FSR : process (CLK_I) is
   begin
     if (rising_edge(CLK_I)) then
       if (RST_I = '1') then
-        is_new_data <= '0';
-      else
-        is_new_data <= (ready and valid);
-      end if;
-    end if;
-
-  end process REGISTER_DATA_EXCHANGE;
-
-  start <= is_new_data;
-
-  READ_PROCESS : process (CLK_I) is
-  begin
-    if (rising_edge(CLK_I)) then
-      if (RST_I = '1') then
-        data    <= (others => (others => '0'));
-        busy    <= '0';
         counter <= LIMIT - 1;
+        data <= (others => (others => '0'));
       else
-        if (busy = '0' and valid = '1') then
-          busy <= '1';
-          data <= DATA_I;
-        else
-          if (busy = '1') then
-            if (counter = 0) then
-              counter <= LIMIT - 1;
-              busy    <= '0';
-            else
-              counter <= counter - 1;
-            end if;
-          end if;
-        end if;
+        counter <= counter_next;
+        data <= data_next;
+      end if;
+    end if;
+  end process READ_FSR;
+
+  READ_COMB : process (start, counter) is
+  begin
+
+    data_next    <= data;
+    counter_next <= counter;
+
+    if (start = '1') then
+      data_next <= DATA_I;
+    end if;
+
+    if (counter < LIMIT -1 or start = '1') then
+      if (counter = 0 ) then
+        counter_next <= LIMIT - 1;
+      else
+        counter_next <= counter - 1;
       end if;
     end if;
 
-  end process READ_PROCESS;
+  end process READ_COMB;
 
-  ready <= not busy;
-  SLICE_INPUT : process (counter, data) is
+  ready <= '1' when counter = LIMIT -1 or counter = 0 else '0';
+
+  SLICE_INPUT : process (start, DATA_I, counter, data) is
   begin
-    for y in 0 to M -1 loop
-      for x in SW-1 downto 0 loop
-        input_slice(y)(x) <= data(y)(counter*SW + x);
+    if (start = '1') then
+      for y in 0 to M -1 loop
+        for x in SW-1 downto 0 loop
+          input_slice(y)(x) <= DATA_I(y)((LIMIT-1)*SW + x);
+        end loop;
       end loop;
-    end loop;
+    else
+      for y in 0 to M -1 loop
+        for x in SW-1 downto 0 loop
+          input_slice(y)(x) <= data(y)(counter*SW + x);
+        end loop;
+      end loop;
+    end if;
   end process;
 
   SW_TO_SW_MUX : for i in 0 to M - 2 generate
@@ -143,7 +146,7 @@ begin
       if (RST_I = '1') then
         any_greater  <= (others => '0');
         all_in_order <= '1';
-      elsif (busy = '0' and valid = '1') then
+      elsif (ready = '1' and valid = '1') then
         any_greater <= (others => '0');
       else
         all_in_order <= in_order and all_in_order;

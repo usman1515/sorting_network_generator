@@ -8,8 +8,7 @@ from scripts.resource_allocator import FFReplacement, FFAssignment
 
 
 class VHDLTemplateWriter:
-    """Class encapsulating writing the template to a file in an incremental
-    fashion"""
+    """Class encapsulating incremental writing the template to a file."""
 
     def __init__(self, template: VHDLTemplate, output_file: Path):
         self.template = template
@@ -154,17 +153,29 @@ class VHDLTemplateProcessor:
 
     def __init__(self):
         self.writer: VHDLTemplateWriter
+        # Mapped dimension order. Relevant during code generation.
+        self.mdim_order: tuple[int, int, int] = (0, 1, 2)
+
+    def __map_dim(self, point: list[int]):
+        mapped_point = list(point)
+        for i in range(len(point)):
+            if self.mdim_order[i] < len(point):
+                mapped_point[i] = point[self.mdim_order[i]]
+        return mapped_point
 
     def __get_signal_source(
         self, network: Network, signal_name: str, point: tuple[int, int]
     ) -> tuple[bool, tuple[int, int, int]]:
+        """Find signal source point in network signal layers."""
+        # Check whether the given point is in bounds of the network.
         bounds = list(network.ff_layers.shape)
         bounds.reverse()
         for coord, bound in zip(point, bounds):
             if coord < 0 or coord >= bound:
                 return False, (-1, -1, -1)
-        x, y = point
 
+        x, y = point
+        # z layer is found through the signal name.
         z = -1
         assoc_signal = None
         if signal_name.upper() in network.signals:
@@ -174,7 +185,8 @@ class VHDLTemplateProcessor:
             else:
                 return False, (-1, -1, -1)
         source_point = (x, y, z)
-
+        # Search for signal sources dependent on definition of
+        # DistributionType.
         if assoc_signal.distribution == DistributionType.GLOBAL:
             # Signal source is global and either provided through ports
             # or generated locally to entity. Should be caught earlier,
@@ -235,6 +247,11 @@ class VHDLTemplateProcessor:
                         return True, source_point
                 distance += 1
                 points = __list_points_in_distance((x, y), distance, bounds[:1])
+
+        if assoc_signal.distribution == DistributionType.STAGEWISE_FLAT:
+            # Signal source is handled in the vhdl entity.
+            return True, source_point
+
         return False, source_point
 
     def map_signal(
@@ -250,9 +267,7 @@ class VHDLTemplateProcessor:
             return "open"
         signal = network.signals[normalized_name]
         if signal.distribution == DistributionType.GLOBAL:
-            return "{s_name}_global".format(
-                s_name=normalized_name.lower()
-            )
+            return "{s_name}_global".format(s_name=normalized_name.lower())
         if signal.distribution == DistributionType.UNCONNECTED:
             print("UNCONNECTED")
             return "open"
@@ -268,25 +283,34 @@ class VHDLTemplateProcessor:
                 )
             )
             return "open"
+
         if signal.is_replicated:
             # While all signals are defined inside fully sized matrices,
             # definitions in the template may be smaller in dimensions.
             if signal.distribution == DistributionType.PER_STAGE:
                 x, y, z = source_point
                 x = x // signal.max_fanout
+                x, y, z = self.__map_dim([x, y, z])
                 return "{s_name}_array({x})({y})".format(
                     s_name=signal.name.lower(), x=x, y=y
                 )
             if signal.distribution == DistributionType.PER_LINE:
                 x, y, z = source_point
                 y = y // signal.max_fanout
+                x, y, z = self.__map_dim([x, y, z])
                 # print(signal.name, source_point, x, y)
+                return "{s_name}_array({x})({y})".format(
+                    s_name=signal.name.lower(), x=x, y=y
+                )
+            if signal.distribution == DistributionType.STAGEWISE_FLAT:
+                x, y, z = self.__map_dim(source_point)
                 return "{s_name}_array({x})({y})".format(
                     s_name=signal.name.lower(), x=x, y=y
                 )
             # The remaining options for distribution are PER_AREA or
             # ONE_TO_ONE.
-            x, y, z = source_point
+            x, y, z = self.__map_dim(source_point)
+
             return "{s_name}_array({x})({y})".format(
                 s_name=signal.name.lower(), x=x, y=y
             )
@@ -305,20 +329,33 @@ class VHDLTemplateProcessor:
         #     "N": network.get_N(),
         #     "depth": network.get_depth(),
         # }
+        xyz = ["x", "y", "z"]
+        xyz = [xyz[i] for i in self.mdim_order]
+        names = ["Input", "Stage", "Subword"]
+        names = [names[i] for i in self.mdim_order]
+        bounds = ["0 to N-1", "0 to DEPTH", "SW-1 downto 0"]
+        bounds = [bounds[i] for i in self.mdim_order]
         sdef = """
-
-  -- Generator scripts array is indexed using (z,y,x) = (Layer, Stage, N)
-  -- but here perm_arr is indexed with (z,x,y) = (N,Stage,Subword) to allow
-  -- compact shift register definition.
-  type stream_array_t is array (0 to N-1) of SLVArray(0 to DEPTH)(SW-1 downto 0);
-  -- Wire grid with the dimensions of NxDepthxSubword
+  -- Generator scripts array is indexed using (x,y,z) = (Input, Stage, Layer)
+  -- but here stream_array is indexed with ({0},{1},{2}) = ({3}, {4}, {5}).""".format(
+            *xyz, *names
+        )
+        sdef += """
+  type stream_array_t is array ({}) of SLVArray({})({});
+""".format(
+            *bounds
+        )
+        sdef += """
+  -- Wire grid with the dimensions of DepthxNxSubword
   signal stream_array     : stream_array_t;
-
 """
+
         # return sdef.format_map(fmap)
         return sdef
 
-    def __get_control_layer_definitions(self, network: Network, **kwargs) -> str:
+    def __get_control_layer_definitions(
+        self, network: Network, reverse_dim=True, **kwargs
+    ) -> str:
         """Generates code for the control signal definition as an array of
         (replicated) an delayed registers.
         """
@@ -330,12 +367,15 @@ class VHDLTemplateProcessor:
             if signal.distribution == DistributionType.GLOBAL:
                 def_str += "signal {}_global : std_logic;\n".format(signal.name.lower())
             else:
+                x = signal.num_replications - 1
+                y = network.get_depth()
+                mx, my = self.__map_dim([x, y])
                 fmap = {
                     "signal_name": signal.name.lower(),
-                    "depth": str(network.get_depth()),
-                    "N": signal.num_replications,
+                    "mx": mx,
+                    "my": my,
                 }
-                def_str += "signal {signal_name}_array : SLVArray(0 to {N}-1)(0 to {depth});\n".format_map(
+                def_str += "signal {signal_name}_array : SLVArray(0 to {mx})(0 to {my});\n".format_map(
                     fmap
                 )
         return def_str
@@ -364,13 +404,16 @@ class VHDLTemplateProcessor:
         """
         # Handle data io from an to the permutation layer first
         inputs = "\n"
-        for i in range(network.get_N()):
-            inputs += "stream_array({n})(0) <= STREAM_I({n});\n".format(n=i)
+        y = 0
+        for x in range(network.get_N()):
+            mx, my = self.__map_dim([x, y])
+            inputs += "stream_array({1})({2}) <= STREAM_I({0});\n".format(x, mx, my)
         outputs = "\n"
         for entry in network.output_set:
-            outputs += "STREAM_O({m}) <= stream_array({m})({depth});\n".format(
-                m=entry, depth=network.get_depth()
-            )
+            x = entry
+            y = network.get_depth()
+            mx, my = self.__map_dim([x, y])
+            outputs += "STREAM_O({0}) <= stream_array({1})({2});\n".format(x, mx, my)
 
         # Handle output of control signals
         for signal in network.signals.values():
@@ -392,14 +435,17 @@ class VHDLTemplateProcessor:
                 if port.split("_")[1] == "O"
             ]
             if signal.name.upper() in output_ports:
-                for i in range(signal.num_replications):
-                    outputs += "{pname}_O({i}) <= {name}_array({i})({depth});\n".format(
+                for x in range(signal.num_replications):
+                    y = network.get_depth()
+                    mx, my = self.__map_dim([x, y])
+                    outputs += "{pname}_O({x}) <= {name}_array({mx})({my});\n".format(
                         pname=signal.name.upper(),
                         name=signal.name.lower(),
-                        i=i,
-                        depth=network.get_depth(),
+                        x=x,
+                        mx=mx,
+                        my=my,
                     )
-        self.writer.write_start_comment("Generated I/O Assignments")
+        self.writer.write_start_comment("Generated mx/O Assignments")
         self.writer.write_incremental(inputs + outputs)
         self.writer.write_end_comment()
 
@@ -424,11 +470,13 @@ class VHDLTemplateProcessor:
                     }
                     ports["SOURCE_I"] = signal.name.upper() + "_I"
                     ports["FEEDBACK_O"] = signal.name.upper() + "_FEEDBACK_O"
-                    for j in range(signal.num_replications):
+                    for x in range(signal.num_replications):
+                        y = 0
+                        mx, my = self.__map_dim([x, y])
                         ports[
-                            "REPLIC_O({})".format(j)
-                        ] = "{signal_name}_array({j})(0)".format(
-                            j=j, signal_name=signal.name.lower()
+                            "REPLIC_O({})".format(x)
+                        ] = "{signal_name}_array({mx})({my})".format(
+                            mx=mx, my=my, signal_name=signal.name.lower()
                         )
                     for port in ports:
                         if not ports[port]:
@@ -562,30 +610,28 @@ class VHDLTemplateProcessor:
                 reg_index = 0
                 # Group center coordinates used to determine mapping of
                 # control signals.
-                c_x, c_y = (-1, -1)
+                c_x, c_y = (0, 0)
                 reg_ports_in = {}
                 reg_ports_out = {}
                 for assignment in group:
                     x, y, z = assignment.point
-                    if not c_x:
-                        c_x = x
-                    else:
-                        c_x += x
-                    if not c_y:
-                        c_y = y
-                    else:
-                        c_y += y
+
+                    c_x += x
+                    c_y += y
 
                     start, end = assignment.ff_range
                     # Special handling of the first layer
                     if z == 0:
-                        for i in range(start, end):
+                        for z_i in range(start, end):
+                            mx, my, mz = self.__map_dim([x, y, z_i])
                             reg_ports_in[
                                 "REG_I({})".format(reg_index)
-                            ] = "stream_array({x})({y})({i})".format(x=x, y=y, i=i)
+                            ] = "stream_array({x})({y})({z})".format(x=mx, y=my, z=mz)
                             reg_ports_out[
                                 "REG_O({})".format(reg_index)
-                            ] = "stream_array({x})({y})({i})".format(x=x, y=y + 1, i=i)
+                            ] = "stream_array({x})({y})({z})".format(
+                                x=mx, y=my + 1, z=mz
+                            )
                         stream_layer_ff[y][x] -= end - start
                         if stream_layer_ff[y][x] == 0:
                             network.ff_layers[z, y, x] = False
@@ -602,27 +648,20 @@ class VHDLTemplateProcessor:
                                 )
                             )
                             continue
-                        mapped_x = x
-                        mapped_y = y
-                        if signal.distribution == DistributionType.PER_STAGE:
-                            if signal.max_fanout:
-                                mapped_x = x // signal.max_fanout
-                        if signal.distribution == DistributionType.PER_LINE:
-                            if signal.max_fanout:
-                                mapped_y = y // signal.max_fanout
+                        mx, my, mz = self.__map_dim([x, y, z_i])
                         reg_ports_in[
                             "REG_I({})".format(reg_index)
                         ] = "{signal_name}_array({x})({y})".format(
                             signal_name=signal.name.lower(),
-                            x=mapped_x,
-                            y=mapped_y,
+                            x=mx,
+                            y=my,
                         )
                         reg_ports_out[
                             "REG_O({})".format(reg_index)
                         ] = "{signal_name}_array({x})({y})".format(
                             signal_name=signal.name.lower(),
-                            x=mapped_x,
-                            y=mapped_y + 1,
+                            x=mx,
+                            y=my + 1,
                         )
                         network.ff_layers[z, y, x] = False
                     reg_index += 1
@@ -657,7 +696,19 @@ class VHDLTemplateProcessor:
         stream_layer_ff: np.ndarray,
         ff_chains: list[list[tuple[int, int, int]]],
     ):
-        reg_assign = "{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
+        """Create shift register chains in data flow direction using short notation.
+        Only works if dimension order is 1,0,2 (y,x,z) due to limitations of vhdl.
+        """
+        # Format string for register assignment with the following tokens:
+        # signal_name: Name of the signal
+        # x: x-coordinate of register assignemnt
+        # y_s, y_e: start and and y coordinate.
+        reg_assign = f"{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
+        # Format string for register assignment in stream layer with the following tokens:
+        # signal_name: Name of the signal
+        # x: x-coordinate of register assignemnt
+        # y_s, y_e: start and and y coordinate.
+        # sw_s, sw_e: SubWord start and end.
         reg_assign_sw = "{signal_name}_array({x})({y_e})({sw_e} downto {sw_s}) <= {signal_name}_array({x})({y_s})({sw_e} downto {sw_s});\n"
 
         for z, group in enumerate(ff_chains):
@@ -671,7 +722,7 @@ class VHDLTemplateProcessor:
                                 x=x,
                                 y_s=y,
                                 y_e=y + 1,
-                                sw_s=stream_layer_ff[y][x] - 1,
+                                sw_s=sw - stream_layer_ff[y][x],
                                 sw_e=sw - 1,
                             )
                         )
@@ -697,6 +748,42 @@ class VHDLTemplateProcessor:
                         )
                     )
 
+    def __process_reg(
+        self,
+        network: Network,
+        stream_layer_ff: np.ndarray,
+        point: tuple[int, int],
+    ):
+        # Format string for register assignment in stream layer with the following tokens:
+        # signal_name: Name of the signal
+        # x,y: x,y-coordinate of register assignemnt
+        # sw_s, sw_e: SubWord start and end.
+        reg_assign_sw = f"{signal_name}_array({x})({y})({sw_e} downto {sw_s}) <= {signal_name}_array({x})({y})({sw_e} downto {sw_s});\n"
+        x, y, z = point
+        if z == 0:
+            sw = network.signals["STREAM"].bit_width
+            self.writer.write_incremental(
+                reg_assign_sw.format(
+                    signal_name="stream",
+                    x=x,
+                    y=y,
+                    sw_s=sw - stream_layer_ff[y][x],
+                    sw_e=sw - 1,
+                )
+            )
+        else:
+            signal = None
+            for s in network.signals.values():
+                if s.layer_index == z:
+                    signal = s
+                    break
+            if not signal:
+                print("No signal associated with layer {z}!".format(z=z))
+                return
+            s = self.map_signal(network, signal.name, [x, y + 1]) + " <= "
+            s += self.map_signal(network, signal.name, [x, y]) + ";"
+            self.writer.write_incremental(s)
+
     def __make_registers(
         self,
         network: Network,
@@ -712,28 +799,35 @@ begin
 if (rising_edge(CLK_I)) then
 """
         )
-        for z, layer in enumerate(network.ff_layers):
-            # Iterate over the layer stage wise.
-            ff_chains.append([])
-            # print(z)
-            for x in range(layer.shape[1]):
-                start = 0
-                end = 0
-                # Find lateral register chains in the layer.
-                # print(layer[0:-1, x])
-                for y in range(layer.shape[0]):
-                    if layer[y, x]:
-                        if start == end:
-                            start = y
-                        end = y + 1
-                    elif start < end:
+        if self.mdim_order == (0, 1, 2):
+            for z, layer in enumerate(network.ff_layers):
+                # Iterate over the layer stage wise.
+                ff_chains.append([])
+                # print(z)
+                for x in range(layer.shape[1]):
+                    start = 0
+                    end = 0
+                    # Find lateral register chains in the layer.
+                    # print(layer[0:-1, x])
+                    for y in range(layer.shape[0]):
+                        if layer[y, x]:
+                            if start == end:
+                                start = y
+                            end = y + 1
+                        elif start < end:
+                            ff_chains[z].append((x, start, end))
+                            start = end
+                    if start < end:
                         ff_chains[z].append((x, start, end))
-                        start = end
-                if start < end:
-                    ff_chains[z].append((x, start, end))
+            # print(ff_chains)
+            self.__process_reg_chains(network, stream_layer_ff, ff_chains)
+        else:
+            for z, layer in enumerate(network.ff_layers):
+                for x in range(layer.shape[1]):
+                    for y in range(layer.shape[0]):
+                        if layer[y, x]:
+                            self.__process_reg(network, stream_layer_ff, (x, y, z))
 
-        # print(ff_chains)
-        self.__process_reg_chains(network, stream_layer_ff, ff_chains)
         self.writer.write_incremental("\nend if;\nend process;\n")
         self.writer.write_end_comment()
 
@@ -829,6 +923,10 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
     """Handles interpretation and code generaton of sorting networks but instead of
     instantiating CS directly, uses the Stage entity."""
 
+    def __init__(self):
+        super(VHDLTemplateProcessorStagewise, self).__init__()
+        self.mdim_order = (1, 0, 2)
+
     def process_network_template(
         self,
         output_path: Path,
@@ -841,7 +939,7 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         handles instantiation and connectivity."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
-        tokens["top_name"] = "{}_{}X{}".format(
+        tokens["top_name"] = "{}_{}X{}_STAGEWISE".format(
             network.algorithm, network.get_N(), len(network.output_set)
         )
         if network.output_config:
@@ -862,12 +960,46 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         tokens["signal_definitions"] = self.get_signal_definitions(
             network, entities, **kwargs
         )
+
+        for k, v in tokens.items():
+            print(k, " : ", v)
+
         self.writer.write_preamble(tokens)
         self.instantiate_signal_distributors(network, template, entities)
         self.make_io_assignments(network, template)
-        self.connect_cs_network(network, template, entities, tokens)
+        ff_replacements = []
+        if "ff_replacements" in kwargs:
+            ff_replacements = kwargs["ff_replacements"]
+        self.connect_cs_network(network, template, entities, tokens, ff_replacements)
         # self.__handle_registers(network, template, entities, **kwargs)
         self.writer.write_footer()
+        del self.writer
+
+    def process_template(
+        self, output_path: Path, network: Network, template: VHDLTemplate, **kwargs
+    ):
+        """Processes all other templates which build upon the sorting
+        network."""
+        self.writer = VHDLTemplateWriter(template, output_path)
+        tokens = template.tokens
+        tokens["top_name"] = "{}_{}X{}_STAGEWISE".format(
+            network.algorithm, network.get_N(), len(network.output_set)
+        )
+        if network.output_config:
+            tokens["top_name"] += "_" + network.output_config
+        tokens["num_inputs"] = str(network.get_N())
+        tokens["net_depth"] = str(network.get_depth())
+        tokens["num_outputs"] = str(len(network.output_set))
+        tokens["word_width"] = str(kwargs.get("W")) or str(8)
+        tokens["subword_width"] = str(network.signals["STREAM"].bit_width)
+
+        for signal in network.signals.values():
+            tokens["num_" + signal.name.lower()] = str(signal.num_replications)
+
+        for key in tokens.keys():
+            if key.split("_")[0] == "num" and tokens[key] == "{" + key + "}":
+                tokens[key] = str(1)
+        self.writer.write_tokens(tokens)
         del self.writer
 
     def __make_stage(
@@ -877,23 +1009,34 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         entities: dict[str, VHDLEntity],
         tokens: dict[str, str],
         y: int,
+        num_dsp: int,
+        num_reg_per_dsp: int,
     ):
         """Creates Stage instance in the network at the point provided."""
         instance_name = f"STAGE{y}".format(y)
 
         stage = network.pmatrix[y]
-        permutation = "(" + ", ".join([str(i) for i in stage]) +")"
+        print(stage)
+        print(sum([stage[i] == i for i in range(len(stage))]))
+        permutation = "(" + ", ".join([str(i) for i in stage]) + ")"
         generics = {
             "N": tokens["num_inputs"],
             "SW": tokens["subword_width"],
-            "PERM" : permutation,
+            "PERM": permutation,
+            "NUM_DELAY": sum([stage[i] == i for i in range(len(stage))]),
             "NUM_START": tokens["num_start"],
             "NUM_ENABLE": tokens["num_enable"],
+            "NUM_DSP": "2",
+            "NUM_REG_PER_DSP": "48",
         }
 
         ports = {}
         ports["STREAM_I"] = "stream_array({})".format(y)
         ports["STREAM_O"] = "stream_array({})".format(y + 1)
+        ports["ENABLE_I"] = "enable_array({})".format(y)
+        ports["ENABLE_O"] = "enable_array({})".format(y + 1)
+        ports["START_I"] = "start_array({})".format(y)
+        ports["START_O"] = "start_array({})".format(y + 1)
 
         # Start signal is usally replicated and distributed in another layer.
         # Assign each Stage its appropriate source registers for that signal.
@@ -920,11 +1063,37 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
         tokens: dict[str, str],
+        ff_replacements: list[FFReplacement],
     ):
         """Iterates over permutation matrix and calls __make_cs for each point
         containing un-ordered index.
         """
         self.writer.write_start_comment("Generated CS Network")
+        # Compute how many FF-Replacements are assigned to each stage
+        # Only FF replacements using DSPs are currently supported.
+        dsp_repl = None
+        for repl in ff_replacements:
+            if "DSP" in repl.entity.name:
+                dsp_repl = repl
+
+        numdsp_stagewise = [0 for i in range(network.get_depth())]
+        num_reg_per_dsp = 0
+        if dsp_repl:
+            num_reg_per_dsp = dsp_repl.ff_per_entity
+            for group in dsp_repl.groups:
+                # We assume that all assignments in a group have the same
+                # y-index as they should be in the same stage
+                ffassign = group[0]
+                numdsp_stagewise[ffassign.point[1]] += 1
+
         for y in range(network.pmatrix.shape[0]):
-            self.__make_stage(network, template, entities, tokens, y)
+            self.__make_stage(
+                network,
+                template,
+                entities,
+                tokens,
+                y,
+                num_reg_per_dsp,
+                numdsp_stagewise[y],
+            )
         self.writer.write_end_comment()

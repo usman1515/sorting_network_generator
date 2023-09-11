@@ -9,7 +9,10 @@ import time
 from scripts import vhdl
 import scripts.network_generators as generators
 from scripts.reporter import Reporter, Report
-from scripts.template_processor import VHDLTemplateProcessor, VHDLTemplateProcessorStagewise
+from scripts.template_processor import (
+    VHDLTemplateProcessor,
+    VHDLTemplateProcessorStagewise,
+)
 from scripts.resource_allocator import BlockAllocator, is_ff
 from scripts.plotter import PlotWrapper
 
@@ -53,6 +56,7 @@ class Interface:
         self.__network = None
         self.__ffreplacements = []
         self.__reporter = Reporter()
+        self.__stagewise = False
 
     def __del__(self):
         print_timestamp(
@@ -116,7 +120,7 @@ class Interface:
                 print("\t" + template.name)
         return self
 
-    def generate(self, algorithm: str, N: int, SW: int = 1):
+    def generate(self, algorithm: str, N: int, SW: int = 1, stagewise :bool = False):
         """Generate a Sorting Network based on parameters given.
 
         Parameters:
@@ -131,6 +135,10 @@ class Interface:
                 Number of bits of the subword to be processed in a cycle.
                 Has no effect on the network topology but is required during
                 FF optimization and VHDL-code generation.
+            stagewise:
+                Instead of a piecewise CS generation, generate a network using
+                a stage element. Becomes a relevant parameter during
+                replacement of FF and writing to VHDL.
         """
         # Multiple generates withine one call should cause the
         # reporter to commit its aggregated stats to memory.
@@ -157,6 +165,11 @@ class Interface:
             self.__network = generators.Network(N, depth)
         else:
             print("Options: oddeven, bitonic, blank")
+
+        self.__stagewise = stagewise
+        if stagewise:
+            self.__network = self.__generator.make_stagewise(self.__network)
+
         if algorithm.lower() in valid_types:
             self.__reporter.report_network(self.__network)
             print(" done.")
@@ -284,7 +297,6 @@ class Interface:
         path: str = "",
         cs: str = "SWCS",
         W: int = 8,
-        stagewise: bool = False,
     ):
         """Generate and write VHDL code from the network. Produces
         "Network.vhd" containing the Sorting Network, "Sorter.vhd"
@@ -310,13 +322,15 @@ class Interface:
             name = self.__network.algorithm
             name += "_" + str(self.__network.get_N())
             name += "X" + str(len(self.__network.output_set))
+            if self.__stagewise:
+                name += "_STAGEWISE"
             if self.__network.output_config:
                 name += "_" + self.__network.output_config.upper()
             path = "build/{}/".format(name)
         path_obj = Path(path)
         path_obj.mkdir(parents=True, exist_ok=True)
         template_processor = None
-        if stagewise:
+        if self.__stagewise:
             template_processor = VHDLTemplateProcessorStagewise()
         else:
             template_processor = VHDLTemplateProcessor()

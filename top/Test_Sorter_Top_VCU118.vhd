@@ -34,7 +34,7 @@ architecture STRUCTURAL of TEST_SORTER_TOP is
   signal clk    : std_logic;
 begin
 
-  xlnx_clk_gen_1 : entity xlnx_clk_gen
+  xlnx_clk_gen_1 : entity work.xlnx_clk_gen
     port map (
       clk_out1 => clk,
       reset    => GPIO_DIP_SW1,

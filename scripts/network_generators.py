@@ -18,6 +18,7 @@ class DistributionType(Enum):
     PER_LINE = 4
     PER_AREA = 5
     UNCONNECTED = 6
+    STAGEWISE_FLAT = 7
 
 
 @dataclass
@@ -126,6 +127,7 @@ class Network:
             max_fanout=max_fanout,
         )
 
+
     def add_layer(self, layer_name: str) -> int:
         """Add an additional ff layer with specified purpose/usage through the layer name."""
         new_layer_index = self.ff_layers.shape[0]
@@ -218,22 +220,20 @@ class Generator:
         return ""
 
     def create(self, N):
-        network = Network()
-        self.distribute_signals(
-            network,
-        )
         return Network()
 
     def distribute_signal(self, network: Network, signal_name: str, max_fanout: int):
+        """Replicate and distribute signal in the network using FF according to
+        max_fanout."""
         index = -1
         if signal_name in network.signals:
             index = network.signals[signal_name].layer_index
-            if not index:
-                index = network.add_layer(signal_name)
-                network.signals[signal_name].layer_index = index
+        else:
+            network.add_signal(signal_name)
 
         if not index:
             index = network.add_layer(signal_name)
+            network.signals[signal_name].layer_index = index
 
         # We need to calculate the incurred delay by the
         # signal distributor
@@ -337,6 +337,13 @@ class Generator:
         network.pmatrix = np.delete(network.pmatrix, indices, axis=0)
         network.ff_layers = np.delete(network.ff_layers, indices, axis=1)
         return network
+
+    def make_stagewise(self, network: Network):
+        """Change signal distribution of the ENABLE and START signal to STAGEWISE_FLAT."""
+        network.signals["START"].distribution = DistributionType.STAGEWISE_FLAT
+        network.signals["ENABLE"].distribution = DistributionType.STAGEWISE_FLAT
+        return network
+
 
 
 class OddEven(Generator):

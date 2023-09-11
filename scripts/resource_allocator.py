@@ -25,18 +25,28 @@ def is_inbounds(nw, point):
 
 @dataclass
 class FFAssignment:
+    """Container marking position and range of FF assigned to replacement
+    entity. Since a point may contain multiple FF through a larger datapath,
+    the range of ff assigned at that point is required as well."""
     point: tuple[int, int, int]
     ff_range: tuple[int, int]
 
 
 @dataclass
 class FFReplacement:
+    """Container wrapping information about ff replacing entities and total
+    list of all assignments."""
     entity: VHDLEntity
     ff_per_entity: int
+    # Groups is a list with each element representing one instance of the
+    # replacing entity. Each instance is itself a list of multiple assignments
+    # whose total FFs may not exceed ff_per_entity.
     groups: list[list[FFAssignment]]
 
 
 class ResourceAllocator(ABC):
+    """Abstract class describing functions common functions of the
+    ResourceAllocator."""
     @abstractmethod
     def allocate_ff_groups(
         self, network: Network, max_ff_per_group: int, max_entities: int
@@ -95,6 +105,9 @@ class Block:
 
 
 class BlockAllocator(ResourceAllocator):
+    """Allocator performing recursive subdivision of the FFs in the network into
+    2d rectangles. Compromises using utilization of the replacement resources to
+    in favor of locality."""
     def __init__(self):
         self.ff_matrix = None
         self.groups: list[list[FFAssignment]] = []
@@ -360,6 +373,127 @@ class BlockAllocator(ResourceAllocator):
         return grp_i
 
 
+class StageAllocator(ResourceAllocator):
+    """Ignores spatial distribution of FF and allocates FF replacement entities stagewise."""
+    def __init__(self):
+        self.ff_matrix = None
+        self.groups: list[list[FFAssignment]] = []
+
+    def __print_block(self, dim_x, dim_y, block: Block):
+        for y in range(dim_y):
+            line = "|"
+            for x in range(dim_x):
+                elem = " "
+                if x >= block.start[0] and x < block.start[0] + block.size[0]:
+                    if y >= block.start[1] and y < block.start[1] + block.size[1]:
+                        elem = "+"
+                line += elem
+            line += "|"
+            print(line)
+
+    def allocate_ff_groups(
+            self, network: Network, num_ff_per_group: int, max_entities: int, max_entities_per_stage: int
+    ) -> list[list[FFAssignment]]:
+        """Allocate FF present in the entire network (delay and replicated
+        signals) to groups later replaced by other means.
+        Parameters: network : Network object
+                    num_ff_per_group : int
+                        Number of a single group may contain
+        Returns:   groups : list[list[FFAssignment]]
+                        List of groups themselves consisting of a list of FFAssignments.
+        """
+
+        self.groups = []
+        # Create 2d matrix containing total number of FFs at a point, excluding
+        # all but the first stream layer due to stagewise allocation handling
+        # the other layers differently.
+        self.ff_matrix = network.ff_layers[0] * network.signals["STREAM"].bit_width
+        # Create list of ff per stage.
+        ff_list = np.sum(self.ff_matrix, axis=1)
+        print(ff_list)
+        # print(self.ff_matrix)
+        N = network.get_N()
+        depth = network.get_depth()
+
+        for y in range(depth):
+            num_groups_in_stage = ceil(ff_list[y] / num_ff_per_group)
+            print(depth, y, num_groups_in_stage)
+            self.groups += [[] for i in range(num_groups_in_stage)]
+
+        print(self.groups)
+
+        group_index = 0
+        # Begin subdivision procedure.
+        for y in range(depth):
+            if len(self.groups) > max_entities:
+                self.groups = self.groups[:max_entities]
+                break
+            else:
+                for x in range(0, N):
+                    group_index = self.__add_ff_to_group(network, self.groups, group_index, num_ff_per_group, x,y)
+                if self.groups[group_index]:
+                    # If the group is not empty after completing stage assignment
+                    # increment the index. Prevents assignment of replacements containing
+                    # ff from multiple stages.
+                    group_index += 1
+
+        return self.groups
+
+    def __add_ff_to_group(
+        self,
+        network: Network,
+        groups: list[list[FFAssignment]],
+        grp_i: int,
+        max_ff: int,
+        x: int,
+        y: int,
+    ):
+        """Takes a point and adds FF to group indicated by group index until
+        either the target number of FF is reached or no FF remain at that
+        point.
+
+        Parameters:
+            network: Network
+                Sorting Network on which to work on.
+            groups: list[list[FFAssignment]]
+                List of groups to operate on.
+            grp_i: int
+                Index of the group to operate on.
+            max_ff: int
+                Maximum numbers of FF per group.
+            x: int
+                X coordinate in the network.
+            y: int
+                Y coordinate in the network.
+        Returns:
+            grp_i: int
+                Group index of the next group to operate on. Increment happens
+                when the maximum number of FFs of the current group has been
+                reached but unassigned FFs at the point remain.
+        """
+        point = (x, y, 0)
+        ff_start = 0
+        ff_end = 0
+        while ff_end < network.ff_layers[0, y, x]:
+            ff_at_point = network.signals["STREAM"].bit_width
+            # Find the current number of FF assigned to the group.
+            print(grp_i, len(groups))
+            cur_group_ff = sum(
+                [a.ff_range[1] - a.ff_range[0] for a in groups[grp_i]]
+            )
+            # The new endpoint of the range is either the full amount of FF
+            # at that point or at least all FF that still fit into the group.
+            # Since we need the old value of ff_end, make a copy.
+            ff_end_prev = ff_end
+            ff_end = min(ff_at_point, max_ff - cur_group_ff)
+            groups[grp_i].append(FFAssignment(point, (ff_start, ff_end)))
+            ff_start = ff_end_prev
+            if cur_group_ff + ff_end >= max_ff:
+                # if the group is full increment grp_i.
+                grp_i += 1
+        return grp_i
+
+
 def norm2square(point):
     return np.dot(point, point)
 
@@ -482,3 +616,14 @@ def print_layers_with_ffgroups(network, groups):
                 line += elem
             line += "|"
             print(line)
+
+# Elpy shenanigans
+cond = __name__ == "__main__"
+if cond:
+    gen = OddEven()
+    nw = gen.create(16)
+    nw = gen.distribute_signal(nw, "START", 4)
+    print(nw)
+    alloc = StageAllocator()
+    groups = alloc.allocate_ff_groups(nw, 48, 6840, 2)
+    print_layers_with_ffgroups(nw, groups)
