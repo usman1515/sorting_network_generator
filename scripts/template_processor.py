@@ -961,9 +961,6 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
             network, entities, **kwargs
         )
 
-        for k, v in tokens.items():
-            print(k, " : ", v)
-
         self.writer.write_preamble(tokens)
         self.instantiate_signal_distributors(network, template, entities)
         self.make_io_assignments(network, template)
@@ -1016,8 +1013,6 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         instance_name = f"STAGE{y}".format(y)
 
         stage = network.pmatrix[y]
-        print(stage)
-        print(sum([stage[i] == i for i in range(len(stage))]))
         permutation = "(" + ", ".join([str(i) for i in stage]) + ")"
         generics = {
             "N": tokens["num_inputs"],

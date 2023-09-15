@@ -54,6 +54,8 @@ src := \
 			src/Shift_Registers/Store_Shift_Register.vhd       \
 			src/Shift_Registers/Load_Shift_Register.vhd        \
 			src/Shift_Registers/Register_DSP.vhd               \
+			src/Shift_Registers/WordRegister.vhd               \
+			src/Stage/STAGE.vhd					               \
 			src/DeSerializer/Serializer_SR.vhd                 \
 			src/DeSerializer/Deserializer_SR.vhd               \
 			src/LFSR/LFSR.vhd                                  \
