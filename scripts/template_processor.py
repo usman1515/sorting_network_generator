@@ -900,17 +900,18 @@ if (rising_edge(CLK_I)) then
         del self.writer
 
     def process_template(
-        self, output_path: Path, network: Network, template: VHDLTemplate, **kwargs
+        self,
+        output_path: Path,
+        network: Network,
+        top_name: str,
+        template: VHDLTemplate,
+        **kwargs,
     ):
         """Processes all other templates which build upon the sorting
         network."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
-        tokens["top_name"] = "{}_{}X{}".format(
-            network.algorithm, network.get_N(), len(network.output_set)
-        )
-        if network.output_config:
-            tokens["top_name"] += "_" + network.output_config
+        tokens["top_name"] = top_name
         tokens["num_inputs"] = str(network.get_N())
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))
@@ -949,11 +950,6 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
         tokens["top_name"] = top_name
-        # "{}_{}X{}_STAGEWISE".format(
-        #    network.algorithm, network.get_N(), len(network.output_set)
-        # )
-        if network.output_config:
-            tokens["top_name"] += "_" + network.output_config.upper()
         tokens["num_inputs"] = str(network.get_N())
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))
@@ -983,17 +979,18 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         del self.writer
 
     def process_template(
-        self, output_path: Path, network: Network, template: VHDLTemplate, **kwargs
+        self,
+        output_path: Path,
+        network: Network,
+        top_name: str,
+        template: VHDLTemplate,
+        **kwargs,
     ):
         """Processes all other templates which build upon the sorting
         network."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
-        tokens["top_name"] = "{}_{}X{}_STAGEWISE".format(
-            network.algorithm, network.get_N(), len(network.output_set)
-        )
-        if network.output_config:
-            tokens["top_name"] += "_" + network.output_config
+        tokens["top_name"] = top_name
         tokens["num_inputs"] = str(network.get_N())
         tokens["net_depth"] = str(network.get_depth())
         tokens["num_outputs"] = str(len(network.output_set))

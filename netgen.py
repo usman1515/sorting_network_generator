@@ -392,6 +392,7 @@ class Interface:
             template_processor.process_template(
                 path_obj / temp,
                 self.__network,
+                name,
                 self.__templates[temp],
                 **kwargs,
             )
