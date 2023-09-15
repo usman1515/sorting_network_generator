@@ -28,6 +28,7 @@ class FFAssignment:
     """Container marking position and range of FF assigned to replacement
     entity. Since a point may contain multiple FF through a larger datapath,
     the range of ff assigned at that point is required as well."""
+
     point: tuple[int, int, int]
     ff_range: tuple[int, int]
 
@@ -36,6 +37,7 @@ class FFAssignment:
 class FFReplacement:
     """Container wrapping information about ff replacing entities and total
     list of all assignments."""
+
     entity: VHDLEntity
     ff_per_entity: int
     # Groups is a list with each element representing one instance of the
@@ -47,6 +49,7 @@ class FFReplacement:
 class ResourceAllocator(ABC):
     """Abstract class describing functions common functions of the
     ResourceAllocator."""
+
     @abstractmethod
     def allocate_ff_groups(
         self, network: Network, max_ff_per_group: int, max_entities: int
@@ -108,6 +111,7 @@ class BlockAllocator(ResourceAllocator):
     """Allocator performing recursive subdivision of the FFs in the network into
     2d rectangles. Compromises using utilization of the replacement resources to
     in favor of locality."""
+
     def __init__(self):
         self.ff_matrix = None
         self.groups: list[list[FFAssignment]] = []
@@ -142,10 +146,11 @@ class BlockAllocator(ResourceAllocator):
         # Stream layer is treated differently as bit_width has to be considered.
         self.ff_matrix += network.ff_layers[0] * network.signals["STREAM"].bit_width
 
-        # print(self.ff_matrix)
         N = network.get_N()
         depth = network.get_depth()
-
+        # print(N)
+        # print(depth)
+        # print(self.ff_matrix)
         # Begin subdivision procedure.
         self.divide_block(
             network, Block(True, (0, 0), (N, depth)), num_ff_per_group, max_entities
@@ -251,7 +256,7 @@ class BlockAllocator(ResourceAllocator):
                         ]
                     )
                     diff_y = abs(total // 2 - half_sum_y)
-                    if diff_x < diff_y:
+                    if diff_x < diff_y or size_y <= 1:
                         start_x += ceil(size_x / 2)
                         size_x = size_x // 2
                     else:
@@ -375,6 +380,7 @@ class BlockAllocator(ResourceAllocator):
 
 class StageAllocator(ResourceAllocator):
     """Ignores spatial distribution of FF and allocates FF replacement entities stagewise."""
+
     def __init__(self):
         self.ff_matrix = None
         self.groups: list[list[FFAssignment]] = []
@@ -392,7 +398,11 @@ class StageAllocator(ResourceAllocator):
             print(line)
 
     def allocate_ff_groups(
-            self, network: Network, num_ff_per_group: int, max_entities: int, max_entities_per_stage: int
+        self,
+        network: Network,
+        num_ff_per_group: int,
+        max_entities: int,
+        max_entities_per_stage: int,
     ) -> list[list[FFAssignment]]:
         """Allocate FF present in the entire network (delay and replicated
         signals) to groups later replaced by other means.
@@ -430,7 +440,9 @@ class StageAllocator(ResourceAllocator):
                 break
             else:
                 for x in range(0, N):
-                    group_index = self.__add_ff_to_group(network, self.groups, group_index, num_ff_per_group, x,y)
+                    group_index = self.__add_ff_to_group(
+                        network, self.groups, group_index, num_ff_per_group, x, y
+                    )
                 if self.groups[group_index]:
                     # If the group is not empty after completing stage assignment
                     # increment the index. Prevents assignment of replacements containing
@@ -478,9 +490,7 @@ class StageAllocator(ResourceAllocator):
             ff_at_point = network.signals["STREAM"].bit_width
             # Find the current number of FF assigned to the group.
             print(grp_i, len(groups))
-            cur_group_ff = sum(
-                [a.ff_range[1] - a.ff_range[0] for a in groups[grp_i]]
-            )
+            cur_group_ff = sum([a.ff_range[1] - a.ff_range[0] for a in groups[grp_i]])
             # The new endpoint of the range is either the full amount of FF
             # at that point or at least all FF that still fit into the group.
             # Since we need the old value of ff_end, make a copy.
@@ -616,6 +626,7 @@ def print_layers_with_ffgroups(network, groups):
                 line += elem
             line += "|"
             print(line)
+
 
 # Elpy shenanigans
 cond = __name__ == "__main__"

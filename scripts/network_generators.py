@@ -127,7 +127,6 @@ class Network:
             max_fanout=max_fanout,
         )
 
-
     def add_layer(self, layer_name: str) -> int:
         """Add an additional ff layer with specified purpose/usage through the layer name."""
         new_layer_index = self.ff_layers.shape[0]
@@ -270,7 +269,7 @@ class Generator:
         return network
 
     def reduce(self, network, N):
-        """Reduces size connection matrix to N inputs."""
+        """Reduces number of inputs of connection matrix to N."""
         # Nothing to do of target and actual size are the same.
 
         if N == network.get_N():
@@ -344,6 +343,16 @@ class Generator:
         network.signals["ENABLE"].distribution = DistributionType.STAGEWISE_FLAT
         return network
 
+    def delete_stages(self, network: Network, stage_list: list[int]):
+        """Delete stages with indices given by stage_list."""
+        network.pmatrix = np.delete(network.pmatrix, stage_list, axis=0)
+        network.ff_layers = np.delete(network.ff_layers, stage_list, axis=1)
+        return network
+
+    def limit_stages(self, network: Network, stage_list: list[int]):
+        """Remove all but the indices given by stage_list."""
+        stage_list = [i for i in range(network.get_depth()) if i not in stage_list]
+        return self.delete_stages(network, stage_list)
 
 
 class OddEven(Generator):

@@ -404,16 +404,22 @@ class VHDLTemplateProcessor:
         """
         # Handle data io from an to the permutation layer first
         inputs = "\n"
-        y = 0
-        for x in range(network.get_N()):
-            mx, my = self.__map_dim([x, y])
-            inputs += "stream_array({1})({2}) <= STREAM_I({0});\n".format(x, mx, my)
         outputs = "\n"
-        for entry in network.output_set:
-            x = entry
-            y = network.get_depth()
-            mx, my = self.__map_dim([x, y])
-            outputs += "STREAM_O({0}) <= stream_array({1})({2});\n".format(x, mx, my)
+        if self.mdim_order == (1, 0, 2):
+            inputs += "stream_array(0) <= STREAM_I;\n"
+            outputs += "STREAM_O <= stream_array({0});\n".format(network.get_depth())
+        else:
+            for x in range(network.get_N()):
+                y = 0
+                mx, my = self.__map_dim([x, y])
+                inputs += "stream_array({1})({2}) <= STREAM_I({0});\n".format(x, mx, my)
+            for entry in network.output_set:
+                x = entry
+                y = network.get_depth()
+                mx, my = self.__map_dim([x, y])
+                outputs += "STREAM_O({0}) <= stream_array({1})({2});\n".format(
+                    x, mx, my
+                )
 
         # Handle output of control signals
         for signal in network.signals.values():
@@ -703,7 +709,7 @@ class VHDLTemplateProcessor:
         # signal_name: Name of the signal
         # x: x-coordinate of register assignemnt
         # y_s, y_e: start and and y coordinate.
-        reg_assign = f"{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
+        reg_assign = "{signal_name}_array({x})({y_s}+1 to {y_e}) <= {signal_name}_array({x})({y_s} to {y_e}-1);\n"
         # Format string for register assignment in stream layer with the following tokens:
         # signal_name: Name of the signal
         # x: x-coordinate of register assignemnt
@@ -1021,8 +1027,8 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
             "NUM_DELAY": sum([stage[i] == i for i in range(len(stage))]),
             "NUM_START": tokens["num_start"],
             "NUM_ENABLE": tokens["num_enable"],
-            "NUM_DSP": "2",
-            "NUM_REG_PER_DSP": "48",
+            "NUM_DSP": num_dsp,
+            "NUM_REG_PER_DSP": num_reg_per_dsp,
         }
 
         ports = {}
@@ -1075,6 +1081,7 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         num_reg_per_dsp = 0
         if dsp_repl:
             num_reg_per_dsp = dsp_repl.ff_per_entity
+            # print(dsp_repl)
             for group in dsp_repl.groups:
                 # We assume that all assignments in a group have the same
                 # y-index as they should be in the same stage
@@ -1088,7 +1095,7 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
                 entities,
                 tokens,
                 y,
-                num_reg_per_dsp,
                 numdsp_stagewise[y],
+                num_reg_per_dsp,
             )
         self.writer.write_end_comment()

@@ -67,7 +67,7 @@ class Interface:
     def __str__(self):
         return ""
 
-    def list(self, listtype=""):
+    def print_list(self, listtype=""):
         """List available components and templates.
         Searches "src/" for components, "templates/" for templates and lists
         results.
@@ -120,7 +120,7 @@ class Interface:
                 print("\t" + template.name)
         return self
 
-    def generate(self, algorithm: str, N: int, SW: int = 1, stagewise :bool = False):
+    def generate(self, algorithm: str, N: int, SW: int = 1, stagewise: bool = False):
         """Generate a Sorting Network based on parameters given.
 
         Parameters:
@@ -262,6 +262,24 @@ class Interface:
     def print_network(self):
         """Print network. Divides output into CS configuration and FF layers."""
         print(self.__network)
+        return self
+
+    def delete_stages(self, stage_indices: list[int]):
+        """Delete stages with indices given by stage_indices list."""
+        stage_indices = [
+            i for i in stage_indices if i >= 0 and i < self.__network.get_depth()
+        ]
+        self.__generator.delete_stages(self.__network, stage_indices)
+        return self
+
+    def limit_stages(self, stage_indices: list[int]):
+        """Limit stages to indices given by stage_indices list."""
+        self.__generator.limit_stages(self.__network, stage_indices)
+        return self
+
+    def limit_stages_range(self, beg: int, end: int):
+        """Limit stages to indices given by range between beg and end."""
+        self.__generator.limit_stages(self.__network, range(beg, end))
         return self
 
     def replace_ff(self, entity: str, limit=1500, entity_ff=48):
