@@ -860,6 +860,7 @@ if (rising_edge(CLK_I)) then
         self,
         output_path: Path,
         network: Network,
+        top_name: str,
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
         **kwargs,
@@ -868,9 +869,10 @@ if (rising_edge(CLK_I)) then
         handles instantiation and connectivity."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
-        tokens["top_name"] = "{}_{}X{}".format(
-            network.algorithm, network.get_N(), len(network.output_set)
-        )
+        tokens["top_name"] = top_name
+        # tokens["top_name"] = "{}_{}X{}".format(
+        #     network.algorithm, network.get_N(), len(network.output_set)
+        # )
         if network.output_config:
             tokens["top_name"] += "_" + network.output_config.upper()
         tokens["num_inputs"] = str(network.get_N())
@@ -937,6 +939,7 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         self,
         output_path: Path,
         network: Network,
+        top_name: str,
         template: VHDLTemplate,
         entities: dict[str, VHDLEntity],
         **kwargs,
@@ -945,9 +948,10 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
         handles instantiation and connectivity."""
         self.writer = VHDLTemplateWriter(template, output_path)
         tokens = template.tokens
-        tokens["top_name"] = "{}_{}X{}_STAGEWISE".format(
-            network.algorithm, network.get_N(), len(network.output_set)
-        )
+        tokens["top_name"] = top_name
+        # "{}_{}X{}_STAGEWISE".format(
+        #    network.algorithm, network.get_N(), len(network.output_set)
+        # )
         if network.output_config:
             tokens["top_name"] += "_" + network.output_config.upper()
         tokens["num_inputs"] = str(network.get_N())

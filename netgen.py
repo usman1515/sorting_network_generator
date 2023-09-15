@@ -57,6 +57,7 @@ class Interface:
         self.__ffreplacements = []
         self.__reporter = Reporter()
         self.__stagewise = False
+        self.__stage_set: set[int] = []
 
     def __del__(self):
         print_timestamp(
@@ -169,7 +170,7 @@ class Interface:
         self.__stagewise = stagewise
         if stagewise:
             self.__network = self.__generator.make_stagewise(self.__network)
-
+        self.__stage_set = set(range(self.__network.get_depth()))
         if algorithm.lower() in valid_types:
             self.__reporter.report_network(self.__network)
             print(" done.")
@@ -269,16 +270,19 @@ class Interface:
         stage_indices = [
             i for i in stage_indices if i >= 0 and i < self.__network.get_depth()
         ]
+        self.__stage_set = self.__stage_set.difference(stage_indices)
         self.__generator.exclude_stages(self.__network, stage_indices)
         return self
 
     def include_stages(self, stage_indices: list[int]):
         """Include only stages with indices given by stage_indices list."""
+        self.__stage_set = self.__stage_set.intersection(stage_indices)
         self.__generator.include_stages(self.__network, stage_indices)
         return self
 
     def include_stages_range(self, beg: int, end: int):
         """Include only stages to indices given by range between beg and end."""
+        self.__stage_set = self.__stage_set.intersection(range(beg, end))
         self.__generator.include_stages(self.__network, range(beg, end))
         return self
 
@@ -350,6 +354,15 @@ class Interface:
             name += "X" + str(len(self.__network.output_set))
             if self.__stagewise:
                 name += "_STAGEWISE"
+
+            logp = int(math.ceil((math.log2(self.__network.get_N()))))
+            if self.__network.get_depth() < logp * (logp + 1) // 2:
+                if len(self.__stage_set) == 1:
+                    s = self.__stage_set.copy()
+                    elem = s.pop()
+                    name += "_STAGE" + str(elem)
+                else:
+                    name += "_S" + str(len(self.__stage_set))
             if self.__network.output_config:
                 name += "_" + self.__network.output_config.upper()
             path = "build/{}/".format(name)
@@ -370,6 +383,7 @@ class Interface:
         template_processor.process_network_template(
             path_obj / "Network.vhd",
             self.__network,
+            name,
             self.__templates["Network.vhd"],
             entities,
             **kwargs,
