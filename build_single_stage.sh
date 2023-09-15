@@ -20,7 +20,7 @@ replace_ff REGISTER_DSP --entity_ff=48 --limit=6840 - ""\
 write - "
         #python netgen.py $param
         echo "python netgen.py $param"
-        #make BOARD=vcu118 SORTER="build/ODDEVEN_${i}X${i}_STAGEWISE_FULL"
+        make BOARD=vcu118 SORTER="build/ODDEVEN_${i}X${i}_STAGEWISE_FULL"
     done
 done
 
@@ -28,7 +28,7 @@ for alg in "${nettype[@]}"; do
     for ((i = 2; i <= log_p; i++)); do
         p=$((2 ** i))
         hw=$(((i * (i - 1)) / 2))
-        #make BOARD=vcu118 SORTER="build/${alg}_${p}X${p}_STAGEWISE_STAGE${hw}_FULL"
         echo "make BOARD=vcu118 SORTER=\"build/${alg}_${p}X${p}_STAGEWISE_STAGE${hw}_FULL\""
+        make BOARD=vcu118 SORTER="build/${alg}_${p}X${p}_STAGEWISE_STAGE${hw}_FULL"
     done
 done
