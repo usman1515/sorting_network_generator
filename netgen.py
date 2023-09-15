@@ -13,7 +13,7 @@ from scripts.template_processor import (
     VHDLTemplateProcessor,
     VHDLTemplateProcessorStagewise,
 )
-from scripts.resource_allocator import BlockAllocator, is_ff
+from scripts.resource_allocator import BlockAllocator, StageAllocator, is_ff
 from scripts.plotter import PlotWrapper
 
 
@@ -264,22 +264,22 @@ class Interface:
         print(self.__network)
         return self
 
-    def delete_stages(self, stage_indices: list[int]):
-        """Delete stages with indices given by stage_indices list."""
+    def exclude_stages(self, stage_indices: list[int]):
+        """Excludes stages with indices given by stage_indices list."""
         stage_indices = [
             i for i in stage_indices if i >= 0 and i < self.__network.get_depth()
         ]
-        self.__generator.delete_stages(self.__network, stage_indices)
+        self.__generator.exclude_stages(self.__network, stage_indices)
         return self
 
-    def limit_stages(self, stage_indices: list[int]):
-        """Limit stages to indices given by stage_indices list."""
-        self.__generator.limit_stages(self.__network, stage_indices)
+    def include_stages(self, stage_indices: list[int]):
+        """Include only stages with indices given by stage_indices list."""
+        self.__generator.include_stages(self.__network, stage_indices)
         return self
 
-    def limit_stages_range(self, beg: int, end: int):
-        """Limit stages to indices given by range between beg and end."""
-        self.__generator.limit_stages(self.__network, range(beg, end))
+    def include_stages_range(self, beg: int, end: int):
+        """Include only stages to indices given by range between beg and end."""
+        self.__generator.include_stages(self.__network, range(beg, end))
         return self
 
     def replace_ff(self, entity: str, limit=1500, entity_ff=48):
@@ -304,7 +304,15 @@ class Interface:
         )
         entity_obj = self.__entities[entity]
         ralloc = BlockAllocator()
-        ffrepl = ralloc.reallocate_ff(self.__network, entity_obj, limit, entity_ff)
+        ffrepl = []
+        if self.__stagewise:
+            ralloc = StageAllocator()
+        ffrepl = ralloc.reallocate_ff(
+            self.__network,
+            entity=entity_obj,
+            max_entities=limit,
+            ff_per_entity=entity_ff,
+        )
         self.__reporter.report_ff_replacement(ffrepl)
         self.__ffreplacements.append(ffrepl)
         print(" done.")

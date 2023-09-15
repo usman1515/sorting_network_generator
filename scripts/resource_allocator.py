@@ -398,11 +398,7 @@ class StageAllocator(ResourceAllocator):
             print(line)
 
     def allocate_ff_groups(
-        self,
-        network: Network,
-        num_ff_per_group: int,
-        max_entities: int,
-        max_entities_per_stage: int,
+        self, network: Network, num_ff_per_group: int, max_entities: int
     ) -> list[list[FFAssignment]]:
         """Allocate FF present in the entire network (delay and replicated
         signals) to groups later replaced by other means.
@@ -412,7 +408,7 @@ class StageAllocator(ResourceAllocator):
         Returns:   groups : list[list[FFAssignment]]
                         List of groups themselves consisting of a list of FFAssignments.
         """
-
+        max_entities_per_stage = ceil(max_entities / network.get_depth())
         self.groups = []
         # Create 2d matrix containing total number of FFs at a point, excluding
         # all but the first stream layer due to stagewise allocation handling
@@ -420,17 +416,15 @@ class StageAllocator(ResourceAllocator):
         self.ff_matrix = network.ff_layers[0] * network.signals["STREAM"].bit_width
         # Create list of ff per stage.
         ff_list = np.sum(self.ff_matrix, axis=1)
-        print(ff_list)
         # print(self.ff_matrix)
         N = network.get_N()
-        depth = network.get_depth()
+        depth = network.get_depth() or 1
 
         for y in range(depth):
-            num_groups_in_stage = ceil(ff_list[y] / num_ff_per_group)
-            print(depth, y, num_groups_in_stage)
+            num_groups_in_stage = min(
+                max_entities_per_stage, ceil(ff_list[y] / num_ff_per_group)
+            )
             self.groups += [[] for i in range(num_groups_in_stage)]
-
-        print(self.groups)
 
         group_index = 0
         # Begin subdivision procedure.
@@ -439,11 +433,12 @@ class StageAllocator(ResourceAllocator):
                 self.groups = self.groups[:max_entities]
                 break
             else:
-                for x in range(0, N):
-                    group_index = self.__add_ff_to_group(
-                        network, self.groups, group_index, num_ff_per_group, x, y
-                    )
-                if self.groups[group_index]:
+                if ff_list[y]:
+                    for x in range(N):
+                        group_index = self.__add_ff_to_group(
+                            network, self.groups, group_index, num_ff_per_group, x, y
+                        )
+                if self.groups and self.groups[group_index]:
                     # If the group is not empty after completing stage assignment
                     # increment the index. Prevents assignment of replacements containing
                     # ff from multiple stages.
@@ -489,7 +484,6 @@ class StageAllocator(ResourceAllocator):
         while ff_end < network.ff_layers[0, y, x]:
             ff_at_point = network.signals["STREAM"].bit_width
             # Find the current number of FF assigned to the group.
-            print(grp_i, len(groups))
             cur_group_ff = sum([a.ff_range[1] - a.ff_range[0] for a in groups[grp_i]])
             # The new endpoint of the range is either the full amount of FF
             # at that point or at least all FF that still fit into the group.

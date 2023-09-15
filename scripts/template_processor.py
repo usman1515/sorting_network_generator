@@ -1085,8 +1085,9 @@ class VHDLTemplateProcessorStagewise(VHDLTemplateProcessor):
             for group in dsp_repl.groups:
                 # We assume that all assignments in a group have the same
                 # y-index as they should be in the same stage
-                ffassign = group[0]
-                numdsp_stagewise[ffassign.point[1]] += 1
+                if group:
+                    ffassign = group[0]
+                    numdsp_stagewise[ffassign.point[1]] += 1
 
         for y in range(network.pmatrix.shape[0]):
             self.__make_stage(

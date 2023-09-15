@@ -343,16 +343,16 @@ class Generator:
         network.signals["ENABLE"].distribution = DistributionType.STAGEWISE_FLAT
         return network
 
-    def delete_stages(self, network: Network, stage_list: list[int]):
+    def exclude_stages(self, network: Network, stage_list: list[int]):
         """Delete stages with indices given by stage_list."""
         network.pmatrix = np.delete(network.pmatrix, stage_list, axis=0)
         network.ff_layers = np.delete(network.ff_layers, stage_list, axis=1)
         return network
 
-    def limit_stages(self, network: Network, stage_list: list[int]):
+    def include_stages(self, network: Network, stage_list: list[int]):
         """Remove all but the indices given by stage_list."""
         stage_list = [i for i in range(network.get_depth()) if i not in stage_list]
-        return self.delete_stages(network, stage_list)
+        return self.exclude_stages(network, stage_list)
 
 
 class OddEven(Generator):
