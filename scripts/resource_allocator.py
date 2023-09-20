@@ -425,7 +425,6 @@ class StageAllocator(ResourceAllocator):
                 max_entities_per_stage, ceil(ff_list[y] / num_ff_per_group)
             )
             self.groups += [[] for i in range(num_groups_in_stage)]
-        print(len(self.groups))
         group_index = 0
         # Begin subdivision procedure.
         for y in range(depth):
@@ -438,6 +437,8 @@ class StageAllocator(ResourceAllocator):
                         group_index = self.__add_ff_to_group(
                             network, self.groups, group_index, num_ff_per_group, x, y
                         )
+                        if not group_index < len(self.groups):
+                            break
                 if group_index < len(self.groups) and self.groups[group_index]:
                     # If the group is not empty after completing stage assignment
                     # increment the index. Prevents assignment of replacements containing
