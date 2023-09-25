@@ -434,10 +434,16 @@ class StageAllocator(ResourceAllocator):
             else:
                 if ff_list[y]:
                     for x in range(N):
-                        group_index = self.__add_ff_to_group(
-                            network, self.groups, group_index, num_ff_per_group, x, y
-                        )
-                        if not group_index < len(self.groups):
+                        if group_index < len(self.groups):
+                            group_index = self.__add_ff_to_group(
+                                network,
+                                self.groups,
+                                group_index,
+                                num_ff_per_group,
+                                x,
+                                y,
+                            )
+                        else:
                             break
                 if group_index < len(self.groups) and self.groups[group_index]:
                     # If the group is not empty after completing stage assignment
