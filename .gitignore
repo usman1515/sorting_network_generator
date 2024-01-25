@@ -5,3 +5,10 @@
 /.hdl_checker/
 /.hdl_checker.config
 *__pycache__*
+
+# venv
+venv*
+pyvenv*
+
+# build
+build*/ODDEVEN_*
