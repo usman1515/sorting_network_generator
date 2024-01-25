@@ -1,0 +1,48 @@
+{
+    "recommendations": [
+        // c++
+        "jeff-hykin.better-cpp-syntax",
+        "ms-vscode.cpptools",
+        // python
+        "njpwerner.autodocstring",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "KevinRose.vsc-python-indent",
+        // markdown
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-preview-github-styles",
+        "bierner.markdown-shiki",
+        // verilog
+        "mshr-h.veriloghdl",
+        // git
+        "mhutchie.git-graph",
+        // docker
+        "ms-vscode-remote.remote-containers",
+        "ms-azuretools.vscode-docker",
+        // xml
+        "redhat.vscode-xml",
+        // yaml
+        "redhat.vscode-yaml",
+        // others
+        "VisualStudioExptTeam.vscodeintellicode",
+        "VisualStudioExptTeam.intellicode-api-usage-examples",
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker",
+        // remote access
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode-remote.remote-ssh-edit",
+        "ms-vscode.remote-explorer",
+        // UI
+        "aaron-bond.better-comments",
+        "oderwat.indent-rainbow",
+        "PKief.material-icon-theme",
+        // themes
+        "sldobri.bunker",
+        "fabiospampinato.vscode-monokai-night"
+    ]
+}
